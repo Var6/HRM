@@ -1,0 +1,395 @@
+# Payslip Generator - Integration Guide
+
+A production-ready payslip generator for Citizen Co-operative Society using React PDF Renderer.
+
+## 📦 Installation
+
+```bash
+npm install @react-pdf/renderer
+npm install jszip  # Optional: for bulk download feature
+```
+
+## 📁 File Structure
+
+Place these files in your project:
+
+```
+lib/
+├── PayslipDocument.tsx      # Main PDF component
+├── payslip-utils.ts         # Helper functions
+└── PayslipGenerator.tsx     # React UI component
+```
+
+## 🚀 Quick Start
+
+### 1. Basic Usage - Download Button
+
+```tsx
+import { downloadPayslip } from '@/lib/payslip-utils';
+
+const MyComponent = () => {
+  const employee = {
+    employeeId: 'EMP001',
+    employeeName: 'ALAKA KUMARI',
+    department: 'HR',
+    designation: 'Dy. Manager-HR',
+    // ... other fields
+  };
+
+  const handleDownload = async () => {
+    await downloadPayslip(employee, 'January', '2026');
+  };
+
+  return (
+    <button onClick={handleDownload}>
+      Download Payslip
+    </button>
+  );
+};
+```
+
+### 2. Using the PayslipButton Component
+
+```tsx
+import { PayslipButton } from '@/lib/PayslipGenerator';
+
+<PayslipButton
+  employee={employeeData}
+  month="January"
+  year="2026"
+  variant="download" // or "preview" or "email"
+  className="px-4 py-2 bg-green-100 text-green-600 rounded-lg"
+/>
+```
+
+### 3. Using the Full PayslipGenerator Component
+
+```tsx
+import { PayslipGenerator } from '@/lib/PayslipGenerator';
+
+<PayslipGenerator
+  employee={employeeData}
+  month="January"
+  year="2026"
+/>
+```
+
+## 🔧 Integration with Your Payroll Page
+
+### Update your payroll-page.tsx
+
+```tsx
+'use client';
+import React, { useState } from 'react';
+import { PayslipButton } from '@/lib/PayslipGenerator';
+import { downloadBulkPayslips } from '@/lib/payslip-utils';
+import type { EmployeeSalaryData } from '@/lib/payslip-utils';
+
+// In your employee cards or table rows:
+<button
+  onClick={() => setShowPayslipModal(true)}
+  className="px-4 py-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-all flex items-center gap-2"
+>
+  <Receipt className="w-4 h-4" />
+  Generate Payslip
+</button>
+
+// Or use the PayslipButton directly:
+<PayslipButton
+  employee={convertToEmployeeSalaryData(employee)}
+  month={months[selectedMonth]}
+  year={selectedYear.toString()}
+  variant="download"
+  className="p-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition-all"
+/>
+```
+
+### Convert Your Data Format
+
+```tsx
+const convertToEmployeeSalaryData = (emp: SalaryStructure): EmployeeSalaryData => {
+  return {
+    employeeId: emp.employeeCode,
+    employeeName: emp.employeeName,
+    department: emp.department,
+    designation: emp.designation,
+    fatherName: 'N/A', // Add to your data model
+    dateOfJoining: '2020-01-01', // Add to your data model
+    panNumber: emp.panNumber || 'N/A',
+    uanNumber: emp.uanNumber,
+    esiNumber: emp.esiNumber,
+    aadharNumber: 'N/A', // Add to your data model
+    presentDays: 28, // Calculate from attendance
+    totalDaysInMonth: 31,
+    modeOfPay: emp.bankAccount ? 'Bank Transfer' : 'Cash',
+    accountNumber: emp.bankAccount,
+    basic: emp.earnings.basic,
+    hra: emp.earnings.hra,
+    conveyance: emp.earnings.conveyance,
+    specialAllowance: emp.earnings.specialAllowance,
+    monthlyBonus: emp.earnings.monthlyBonus,
+    quarterlyBonus: emp.earnings.quarterlyBonus,
+    pf: emp.deductions.pf,
+    esic: emp.deductions.esic,
+    advance: emp.deductions.salaryAdvance,
+    loan: emp.deductions.loan,
+    lop: emp.deductions.lop,
+    tds: emp.deductions.tds,
+  };
+};
+```
+
+## 📋 Complete Example - Payslip Modal
+
+```tsx
+{showPayslipModal && selectedEmployee && (
+  <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="p-6 border-b border-slate-200">
+        <div className="flex items-center justify-between">
+          <h3 className="text-2xl font-bold text-slate-900">
+            Generate Payslip
+          </h3>
+          <button
+            onClick={() => setShowPayslipModal(false)}
+            className="p-2 hover:bg-slate-100 rounded-lg transition-all"
+          >
+            <X className="w-6 h-6 text-slate-600" />
+          </button>
+        </div>
+      </div>
+
+      <div className="p-6">
+        <PayslipGenerator
+          employee={convertToEmployeeSalaryData(selectedEmployee)}
+          month={months[selectedMonth]}
+          year={selectedYear.toString()}
+        />
+      </div>
+    </div>
+  </div>
+)}
+```
+
+## 🔄 Bulk Download Feature
+
+```tsx
+import { downloadBulkPayslips } from '@/lib/payslip-utils';
+
+const handleBulkDownload = async () => {
+  const employeesData = mockSalaryData.map(convertToEmployeeSalaryData);
+  const result = await downloadBulkPayslips(
+    employeesData,
+    'January',
+    '2026'
+  );
+  
+  if (result.success) {
+    alert('All payslips downloaded successfully!');
+  }
+};
+
+// In your UI:
+<button
+  onClick={handleBulkDownload}
+  className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-lg"
+>
+  <Download className="w-5 h-5" />
+  Download All Payslips
+</button>
+```
+
+## 🎨 Customization
+
+### Change Company Details
+
+Edit `payslip-utils.ts`:
+
+```tsx
+return {
+  companyName: 'Your Company Name',
+  companyAddress: 'Your Company Address',
+  // ...
+};
+```
+
+### Modify PDF Styling
+
+Edit `PayslipDocument.tsx` styles:
+
+```tsx
+const styles = StyleSheet.create({
+  // Modify colors, fonts, spacing, etc.
+  tableHeader: {
+    backgroundColor: '#0ea5e9', // Change this color
+    // ...
+  },
+});
+```
+
+### Add/Remove Salary Components
+
+1. Update the `PayslipData` interface in `PayslipDocument.tsx`
+2. Add rows in the table section
+3. Update calculations in `payslip-utils.ts`
+
+## 📧 Email Integration (Backend Required)
+
+### Frontend Code (Already Included)
+
+```tsx
+import { emailPayslip } from '@/lib/payslip-utils';
+
+await emailPayslip(employee, 'January', '2026', 'employee@example.com');
+```
+
+### Backend API Example (Node.js/Next.js)
+
+```typescript
+// app/api/send-payslip-email/route.ts
+import { NextResponse } from 'next/server';
+import nodemailer from 'nodemailer';
+
+export async function POST(request: Request) {
+  const { email, employeeName, month, year, pdfBase64 } = await request.json();
+
+  // Configure your email transport
+  const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: parseInt(process.env.SMTP_PORT || '587'),
+    secure: false,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+  });
+
+  // Send email with PDF attachment
+  await transporter.sendMail({
+    from: process.env.SMTP_FROM,
+    to: email,
+    subject: `Payslip for ${month} ${year}`,
+    html: `
+      <p>Dear ${employeeName},</p>
+      <p>Please find attached your payslip for ${month} ${year}.</p>
+      <p>Best regards,<br/>HR Department</p>
+    `,
+    attachments: [
+      {
+        filename: `Payslip_${month}_${year}.pdf`,
+        content: pdfBase64,
+        encoding: 'base64',
+      },
+    ],
+  });
+
+  return NextResponse.json({ success: true });
+}
+```
+
+## 🔍 Preview in Browser
+
+```tsx
+import { generatePayslipURL } from '@/lib/payslip-utils';
+
+const handlePreview = async () => {
+  const url = await generatePayslipURL(employee, 'January', '2026');
+  window.open(url, '_blank');
+};
+```
+
+## 📱 Mobile Considerations
+
+The PDF renders perfectly on all devices. For mobile users:
+
+```tsx
+// Add this check for better mobile UX
+const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+if (isMobile) {
+  // Directly download instead of preview
+  await downloadPayslip(employee, month, year);
+} else {
+  // Show preview option
+  setShowPreview(true);
+}
+```
+
+## 🐛 Troubleshooting
+
+### PDF not rendering?
+- Make sure `@react-pdf/renderer` is installed correctly
+- Check that all required employee data fields are populated
+- Verify date formats are valid
+
+### Download not working?
+- Check browser console for errors
+- Ensure pop-ups are not blocked
+- Verify all numeric fields are numbers, not strings
+
+### Styling issues?
+- @react-pdf/renderer uses its own styling system (similar to React Native)
+- Standard CSS won't work - use the StyleSheet.create() API
+- Flexbox is supported but has limitations
+
+## 📄 Sample Data
+
+```tsx
+const sampleEmployee = {
+  employeeId: 'EMP001',
+  employeeName: 'ALAKA KUMARI',
+  department: 'HR',
+  designation: 'Dy. Manager-HR',
+  fatherName: 'Mr. Kumar',
+  dateOfJoining: '2014-01-01',
+  panNumber: 'ABCDE1234F',
+  uanNumber: '100123456789',
+  esiNumber: 'ESI123456789',
+  aadharNumber: '1234-5678-9012',
+  presentDays: 28,
+  totalDaysInMonth: 31,
+  modeOfPay: 'BANK OF INDIA',
+  accountNumber: '1234567890',
+  basic: 35000,
+  hra: 14000,
+  conveyance: 2400,
+  specialAllowance: 5600,
+  monthlyBonus: 3000,
+  pf: 4200,
+  esic: 525,
+  advance: 0,
+  loan: 2000,
+  tds: 1500,
+};
+```
+
+## 🚀 Performance Tips
+
+1. **Lazy Loading**: Load PDFViewer only when needed
+```tsx
+import dynamic from 'next/dynamic';
+const PDFViewer = dynamic(
+  () => import('@react-pdf/renderer').then((mod) => mod.PDFViewer),
+  { ssr: false }
+);
+```
+
+2. **Caching**: Cache generated PDFs if they won't change
+3. **Batch Processing**: Use `downloadBulkPayslips` for multiple employees
+
+## 📞 Support
+
+For issues or questions:
+- Check the @react-pdf/renderer documentation
+- Review error messages in browser console
+- Ensure all data types match the TypeScript interfaces
+
+## 🎉 Ready to Use!
+
+You now have a complete, production-ready payslip system that:
+- ✅ Matches your company's format exactly
+- ✅ Supports download, preview, and email
+- ✅ Handles bulk operations
+- ✅ Includes proper number-to-words conversion (Indian system)
+- ✅ Has TypeScript support
+- ✅ Is fully customizable

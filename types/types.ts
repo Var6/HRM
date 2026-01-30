@@ -81,3 +81,95 @@ export interface EmployeeFormData {
     extraordinaryLeave: number;
   };
 }
+export type TimesheetStatus = 'draft' | 'submitted' | 'approved' | 'rejected';
+export type TaskStatus = 'in-progress' | 'completed' | 'paused';
+
+export interface TimeEntry {
+  id: number;
+  date: string;
+  project: string;
+  task: string;
+  startTime: string;
+  endTime: string;
+  hours: number;
+  breakTime: number;
+  description: string;
+  status: TaskStatus;
+  billable: boolean;
+}
+
+export interface DailyTimesheet {
+  date: string;
+  entries: TimeEntry[];
+  totalHours: number;
+  regularHours: number;
+  overtimeHours: number;
+  status: TimesheetStatus;
+}
+
+export interface WeeklyTimesheet {
+  employeeId: number;
+  employeeName: string;
+  designation: string;
+  department: string;
+  weekStart: string;
+  weekEnd: string;
+  dailyTimesheets: DailyTimesheet[];
+  totalWeekHours: number;
+  totalRegularHours: number;
+  totalOvertimeHours: number;
+  totalBillableHours: number;
+  status: TimesheetStatus;
+  submittedDate?: string;
+  approvedDate?: string;
+  rejectionReason?: string;
+}
+export type PayrollStatus = 'draft' | 'processing' | 'approved' | 'paid' | 'hold';
+export type SalaryComponent = 'basic' | 'hra' | 'conveyance' | 'monthly_bonus' | 'quarterly_bonus' | 'special_allowance';
+export type DeductionComponent = 'pf' | 'esic' | 'lop' | 'salary_advance' | 'loan' | 'tds';
+
+export interface SalaryStructure {
+  employeeId: number;
+  employeeName: string;
+  employeeCode: string;
+  designation: string;
+  department: string;
+  branch: string;
+  earnings: {
+    basic: number;
+    hra: number;
+    conveyance: number;
+    monthlyBonus: number;
+    quarterlyBonus: number;
+    specialAllowance: number;
+  };
+  deductions: {
+    pf: number;
+    esic: number;
+    lop: number;
+    salaryAdvance: number;
+    loan: number;
+    tds: number;
+  };
+  grossSalary: number;
+  totalDeductions: number;
+  netSalary: number;
+  bankAccount: string;
+  pfNumber: string;
+  uanNumber: string;
+  esiNumber: string;
+}
+
+export interface PayrollRecord {
+  id: number;
+  month: string;
+  year: number;
+  processedDate: string;
+  totalEmployees: number;
+  totalGrossSalary: number;
+  totalDeductions: number;
+  totalNetSalary: number;
+  status: PayrollStatus;
+  approvedBy?: string;
+  paidDate?: string;
+}
