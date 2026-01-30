@@ -1,3 +1,4 @@
+```sh
 # Payslip Generator - Integration Guide
 
 A production-ready payslip generator for Citizen Co-operative Society using React PDF Renderer.
@@ -13,7 +14,7 @@ npm install jszip  # Optional: for bulk download feature
 
 Place these files in your project:
 
-```
+```ini
 lib/
 ├── PayslipDocument.tsx      # Main PDF component
 ├── payslip-utils.ts         # Helper functions
@@ -318,16 +319,19 @@ if (isMobile) {
 ## 🐛 Troubleshooting
 
 ### PDF not rendering?
+
 - Make sure `@react-pdf/renderer` is installed correctly
 - Check that all required employee data fields are populated
 - Verify date formats are valid
 
 ### Download not working?
+
 - Check browser console for errors
 - Ensure pop-ups are not blocked
 - Verify all numeric fields are numbers, not strings
 
 ### Styling issues?
+
 - @react-pdf/renderer uses its own styling system (similar to React Native)
 - Standard CSS won't work - use the StyleSheet.create() API
 - Flexbox is supported but has limitations
@@ -366,6 +370,7 @@ const sampleEmployee = {
 ## 🚀 Performance Tips
 
 1. **Lazy Loading**: Load PDFViewer only when needed
+
 ```tsx
 import dynamic from 'next/dynamic';
 const PDFViewer = dynamic(
@@ -380,6 +385,7 @@ const PDFViewer = dynamic(
 ## 📞 Support
 
 For issues or questions:
+
 - Check the @react-pdf/renderer documentation
 - Review error messages in browser console
 - Ensure all data types match the TypeScript interfaces
@@ -387,9 +393,14 @@ For issues or questions:
 ## 🎉 Ready to Use!
 
 You now have a complete, production-ready payslip system that:
+
 - ✅ Matches your company's format exactly
 - ✅ Supports download, preview, and email
 - ✅ Handles bulk operations
 - ✅ Includes proper number-to-words conversion (Indian system)
 - ✅ Has TypeScript support
 - ✅ Is fully customizable
+
+```text
+
+```

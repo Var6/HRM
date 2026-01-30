@@ -7,89 +7,83 @@ import {
 } from 'lucide-react';
 import type { EmployeeFormData, WorkExperience, ActiveTab } from '@/types/types';
 
+const emptyEmployee: EmployeeFormData = {
+  name: '',
+  photograph: null,
+  dateOfBirth: '',
+  fatherName: '',
+  motherName: '',
+  spouseName: '',
+  category: '',
+  fatherOccupation: '',
+  permanentAddress: '',
+  correspondenceAddress: '',
+  EcontactNo: '',
+  bloodGroup: '',
+  identificationMark: '',
+  panCardNo: '',
+  aadharCardNo: '',
+  drivingLicenseNo: '',
+  maritalStatus: '',
+  educationQualification: '',
+
+  workExperience: [{ organization: '', designation: '', periodOfStay: '' }],
+
+  dateOfInterview: '',
+  dateOfJoining: '',
+  employeeCode: '',
+  department: '',
+  designation: '',
+  branchName: '',
+  modeOfPayment: '',
+  bankAccountNo: '',
+  pfNo: '',
+  uanNo: '',
+  esiNo: '',
+  exitDate: '',
+
+  email: '',
+  mobileNumber: '',
+
+  idCardProvided: false,
+  diaryProvided: false,
+  visitingCardProvided: false,
+  emailProvided: '',
+  mobileNumberProvided: '',
+
+  salary: {
+    earnings: {
+      basic: '',
+      hra: '',
+      conveyance: '',
+      monthlyBonus: '',
+      quarterlyBonus: '',
+      specialAllowance: ''
+    },
+    deductions: {
+      pf: '',
+      esic: '',
+      lop: '',
+      salaryAdvance: '',
+      loan: ''
+    }
+  },
+
+  leaves: {
+    casualLeave: 12,
+    earnedLeave: 15,
+    halfDayLeave: 0,
+    sickLeave: 0,
+    extraordinaryLeave: 0
+  }
+};
 
 export default function CreateEmployee() {
- const [formData, setFormData] = useState<EmployeeFormData>({
-    // Personal Information
-    name: '',
-    photograph: null,
-    dateOfBirth: '',
-    fatherName: '',
-    motherName: '',
-    spouseName: '',
-    category: '',
-    fatherOccupation: '',
-    permanentAddress: '',
-    correspondenceAddress: '',
-    EcontactNo: '',
-    bloodGroup: '',
-    identificationMark: '',
-    panCardNo: '',
-    aadharCardNo: '',
-    drivingLicenseNo: '',
-    maritalStatus: '',
-    educationQualification: '',
-    
-    // Previous Work Experience (Array)
-    workExperience: [
-      { organization: '', designation: '', periodOfStay: '' }
-    ],
-    
-    // Employment Details
-    dateOfInterview: '',
-    dateOfJoining: '',
-    employeeCode: '',
-    department: '',
-    designation: '',
-    branchName: '',
-    modeOfPayment: '',
-    bankAccountNo: '',
-    pfNo: '',
-    uanNo: '',
-    esiNo: '',
-    exitDate: '',
-    
-    // Additional Contact Details
-    email: '',
-    mobileNumber: '',
-    
-    // Boolean Fields
-    idCardProvided: false,
-    diaryProvided: false,
-    visitingCardProvided: false,
-    emailProvided: '',
-    mobileNumberProvided: '',
-    
-    // Salary Structure
-    salary: {
-      earnings: {
-        basic: '',
-        hra: '',
-        conveyance: '',
-        monthlyBonus: '',
-        quarterlyBonus: '',
-        specialAllowance: ''
-      },
-      deductions: {
-        pf: '',
-        esic: '',
-        lop: '',
-        salaryAdvance: '',
-        loan: ''
-      }
-    },
-    
-    // Leave Allocation
-    leaves: {
-      casualLeave: 12,
-      earnedLeave: 15,
-      halfDayLeave: 0,
-      sickLeave: 0,
-      extraordinaryLeave: 0
-    }
-  });
+  const [formData, setFormData] = useState<EmployeeFormData>(emptyEmployee);
 
   const [activeTab, setActiveTab] = useState<ActiveTab>('personal');
+  const [employeeId, setEmployeeId] = useState<string | null>(null);
+  const [isEditMode, setIsEditMode] = useState(false);
   const [sameAsPermAddress, setSameAsPermAddress] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
@@ -97,26 +91,17 @@ export default function CreateEmployee() {
   
 
   // Handle input changes
- const handleInputChange = (
-  e: React.ChangeEvent<
-    HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-  >
+const handleInputChange = (
+  e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
 ) => {
-  const target = e.target;
-  const name = target.name;
+  const { name, value, type, checked } = e.target as HTMLInputElement;
 
-  if (target instanceof HTMLInputElement && target.type === 'checkbox') {
-    setFormData(prev => ({
-      ...prev,
-      [name]: target.checked
-    }));
-  } else {
-    setFormData(prev => ({
-      ...prev,
-      [name]: target.value
-    }));
-  }
+  setFormData(prev => ({
+    ...prev,
+    [name]: type === 'checkbox' ? checked : value
+  }));
 };
+
 
   // Handle nested salary changes
  const handleSalaryChange = (
@@ -124,33 +109,31 @@ export default function CreateEmployee() {
   field: string,
   value: string
 ) => {
-
-    setFormData(prev => ({
-      ...prev,
-      salary: {
-        ...prev.salary,
-        [category]: {
-          ...prev.salary[category],
-          [field]: value
-        }
+  setFormData(prev => ({
+    ...prev,
+    salary: {
+      ...prev.salary,
+      [category]: {
+        ...prev.salary[category],
+        [field]: value
       }
-    }));
-  };
+    }
+  }));
+};
+
 
   // Handle work experience changes
- const handleWorkExperienceChange = (
+const handleWorkExperienceChange = (
   index: number,
   field: keyof WorkExperience,
   value: string
 ) => {
-
-    const updatedExperience = [...formData.workExperience];
-    updatedExperience[index][field] = value;
-    setFormData(prev => ({
-      ...prev,
-      workExperience: updatedExperience
-    }));
-  };
+  setFormData(prev => {
+    const updated = [...prev.workExperience];
+    updated[index] = { ...updated[index], [field]: value };
+    return { ...prev, workExperience: updated };
+  });
+};
 
   // Add new work experience entry
   const addWorkExperience = () => {
@@ -170,19 +153,66 @@ export default function CreateEmployee() {
   };
 
   // Handle photo upload
-const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
   const file = e.target.files?.[0];
   if (!file) return;
 
-  setFormData(prev => ({ ...prev, photograph: file }));
+  const form = new FormData();
+  form.append('file', file);
 
-  const reader = new FileReader();
-  reader.onloadend = () => {
-    setPhotoPreview(reader.result as string);
-  };
-  reader.readAsDataURL(file);
+  const res = await fetch('/api/upload', { method: 'POST', body: form });
+
+if (!res.ok) {
+  console.error('Image upload failed');
+  return;
+}
+
+const text = await res.text();
+if (!text) {
+  console.error('Empty upload response');
+  return;
+}
+
+const data = JSON.parse(text);
+
+setFormData(prev => ({ ...prev, photograph: data.url }));
+setPhotoPreview(data.url);
+
 };
 
+
+React.useEffect(() => {
+  const id = window.location.pathname.split('/').pop();
+  if (!id || id === 'create') {
+    setFormData(emptyEmployee);
+    return;
+  }
+
+  setEmployeeId(id);
+  setIsEditMode(true);
+
+  const fetchEmployee = async () => {
+  const res = await fetch(`/api/employees/${id}`);
+
+  if (!res.ok) {
+    console.error('Failed to fetch employee');
+    return;
+  }
+
+  const text = await res.text();
+  if (!text) {
+    console.error('Empty response from server');
+    return;
+  }
+
+  const data = JSON.parse(text);
+  setFormData(data);
+  setPhotoPreview(data.photograph || null);
+};
+
+
+  fetchEmployee();
+}, []);
 
   // Copy permanent address to correspondence address
 React.useEffect(() => {
@@ -195,27 +225,25 @@ React.useEffect(() => {
 }, [sameAsPermAddress]);
 
 
+
   // Handle form submission
 const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
+  if (!formData) return;
 
-    e.preventDefault();
-    
-    // Prepare data for MongoDB
-    const employeeData = {
-      ...formData,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      status: 'active'
-    };
+  const method = isEditMode ? 'PUT' : 'POST';
+  const url = isEditMode ? `/api/employees/${employeeId}` : '/api/employees';
 
-    console.log('Employee Data for MongoDB:', employeeData);
-    
-    // Here you would send the data to your MongoDB backend
-    // Example: await fetch('/api/employees', { method: 'POST', body: JSON.stringify(employeeData) })
-    
-    setShowSuccess(true);
-    setTimeout(() => setShowSuccess(false), 3000);
-  };
+  await fetch(url, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(formData)
+  });
+
+  setShowSuccess(true);
+  setTimeout(() => setShowSuccess(false), 3000);
+};
+
 
   // Tab navigation
  const tabs: { id: ActiveTab; label: string; icon: any }[] = [
@@ -235,7 +263,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-slate-900 mb-2">Create New Employee</h1>
+              <h1 className="text-3xl font-bold text-slate-900 mb-2">{isEditMode ? 'Edit Employee' : 'Create New Employee'}</h1>
               <p className="text-slate-600">Fill in the employee details to add them to the system</p>
             </div>
             <div className="flex items-center gap-3">
@@ -252,7 +280,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                 className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-lg hover:from-cyan-600 hover:to-blue-700 transition-all flex items-center gap-2 shadow-lg shadow-cyan-500/25"
               >
                 <Save className="w-5 h-5" />
-                Save Employee
+                {isEditMode ? 'Update Employee' : 'Create Employee'}
               </button>
             </div>
           </div>
@@ -263,7 +291,10 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
           <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4 flex items-center gap-3 animate-in slide-in-from-top">
             <CheckCircle className="w-6 h-6 text-green-600" />
             <div>
-              <h4 className="font-semibold text-green-900">Employee Created Successfully!</h4>
+              <h4 className="font-semibold text-green-900">
+  {isEditMode ? 'Employee Updated Successfully!' : 'Employee Created Successfully!'}
+</h4>
+
               <p className="text-sm text-green-700">The employee has been added to the database.</p>
             </div>
           </div>
