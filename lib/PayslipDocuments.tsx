@@ -124,6 +124,7 @@ const styles = StyleSheet.create({
     padding: 8,
     fontWeight: 'bold',
     color: '#ffffff',
+    margineLeft:10,
     borderTopLeftRadius: 4,
     borderTopRightRadius: 4,
   },
@@ -154,6 +155,7 @@ const styles = StyleSheet.create({
   deductionsColumn: {
     width: '25%',
     fontSize: 9,
+    marginLeft: 10,
     color: '#1e293b',
   },
   
@@ -169,6 +171,7 @@ const styles = StyleSheet.create({
     width: '25%',
     fontSize: 10,
     fontWeight: 'bold',
+    marginLeft: 10,
     color: '#0c4a6e',
   },
   totalAmount: {
