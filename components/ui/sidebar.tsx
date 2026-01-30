@@ -12,6 +12,7 @@ import {
   Home,
   ChevronDown,
 } from 'lucide-react';
+import Link from 'next/link';
 
 export default function Sidebar() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -61,7 +62,10 @@ export default function Sidebar() {
           >
             <item.icon className="w-5 h-5" />
             {sidebarOpen && (
+                <Link href={`/Dashboard/${item.label}`}>
+
               <span className="text-sm font-medium">{item.label}</span>
+                </Link>
             )}
           </button>
         ))}
