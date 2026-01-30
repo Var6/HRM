@@ -21,7 +21,7 @@ export default function CreateEmployee() {
     fatherOccupation: '',
     permanentAddress: '',
     correspondenceAddress: '',
-    contactNo: '',
+    EcontactNo: '',
     bloodGroup: '',
     identificationMark: '',
     panCardNo: '',
@@ -57,6 +57,8 @@ export default function CreateEmployee() {
     idCardProvided: false,
     diaryProvided: false,
     visitingCardProvided: false,
+    emailProvided: '',
+    mobileNumberProvided: '',
     
     // Salary Structure
     salary: {
@@ -226,8 +228,9 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="h-screen flex flex-col bg-gradient-to-br from-slate-50 to-slate-100 pt-7">
+  <div className="w-full px-6 flex flex-col h-full">
+
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between">
@@ -267,7 +270,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         )}
 
         {/* Tab Navigation */}
-        <div className="bg-white rounded-t-2xl border border-slate-200 border-b-0 p-2">
+        <div className="bg-white border border-slate-200 border-b-0 p-2 sticky top-0 z-20">
           <div className="flex gap-2 overflow-x-auto">
             {tabs.map((tab) => (
               <button
@@ -289,7 +292,11 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         </div>
 
         {/* Form */}
-        <form id="employee-form" onSubmit={handleSubmit} className="bg-white rounded-b-2xl border border-slate-200 p-8 shadow-sm">
+        <form
+  id="employee-form"
+  onSubmit={handleSubmit}
+  className="bg-white rounded-b-2xl border border-slate-200 p-8 shadow-sm flex-1 overflow-y-auto"
+>
           
           {/* Personal Information Tab */}
           {activeTab === 'personal' && (
@@ -478,14 +485,14 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 
                   <div>
                     <label className="block text-sm font-semibold text-slate-700 mb-2">
-                      Contact Number <span className="text-red-500">*</span>
+                      Emergency Contact Number <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="tel"
-                      name="contactNo"
-                      value={formData.contactNo}
+                      name="EcontactNo"
+                      value={formData.EcontactNo}
                       onChange={handleInputChange}
-                      placeholder="Enter contact number"
+                      placeholder="Enter Emergency Contact Number"
                       className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
                       required
                     />
@@ -1159,6 +1166,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                         <p className="text-xs text-slate-600 mt-1">Company diary provided</p>
                       </div>
                     </label>
+
                   </div>
 
                   {/* Visiting Card Checkbox */}
@@ -1185,6 +1193,36 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                     </label>
                   </div>
                 </div>
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 my-3">
+
+                
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2 ">
+                    Official Email Address
+                  </label>
+                  <input
+                    type="text"
+                    name="emailProvided"
+                    value={formData.emailProvided}
+                    onChange={handleInputChange}
+                    placeholder="Enter Official Email Address"
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                   Office Mobile Number
+                  </label>
+                  <input
+                    type="text"
+                    name="mobileNumberProvided"
+                    value={formData.mobileNumberProvided}
+                    onChange={handleInputChange}
+                    placeholder="Enter Office Mobile Number"
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
+                  />
+                </div>
+              </div>
               </div>
 
               {/* Leave Allocation Info */}

@@ -29,7 +29,7 @@ export interface EmployeeFormData {
   fatherOccupation: string;
   permanentAddress: string;
   correspondenceAddress: string;
-  contactNo: string;
+  EcontactNo: string;
   bloodGroup: string;
   identificationMark: string;
   panCardNo: string;
@@ -60,6 +60,8 @@ export interface EmployeeFormData {
   mobileNumber: string;
 
   /* ---------- Assets ---------- */
+  emailProvided?: string;
+  mobileNumberProvided?: string;
   idCardProvided: boolean;
   diaryProvided: boolean;
   visitingCardProvided: boolean;

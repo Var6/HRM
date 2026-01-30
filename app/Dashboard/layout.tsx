@@ -10,8 +10,15 @@ export default function DashboardLayout({
 }) {
   return (
     <div className="flex h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
+      
+      {/* Sidebar */}
       <Sidebar />
-      <div className="flex-1 overflow-hidden">{children}</div>
+
+      {/* Main Content Area */}
+      <main className="flex-1 overflow-y-auto transition-all duration-300">
+        {children}
+      </main>
+
     </div>
   );
 }

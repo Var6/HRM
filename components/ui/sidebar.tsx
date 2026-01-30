@@ -13,9 +13,24 @@ import {
   ChevronDown,
 } from 'lucide-react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+
 
 export default function Sidebar() {
+  const pathname = usePathname();
+
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const navItems = [
+  { icon: Home, label: 'Dashboard', href: '/Dashboard' },
+  { icon: Users, label: 'Employees', href: '/Dashboard/employees' },
+  { icon: Calendar, label: 'Attendance', href: '/Dashboard/attendance' },
+  { icon: Clock, label: 'Timesheet', href: '/Dashboard/timesheet' },
+  { icon: FileText, label: 'Payroll', href: '/Dashboard/payroll' },
+  { icon: BarChart3, label: 'Reports', href: '/Dashboard/reports' },
+  { icon: Briefcase, label: 'Recruitment', href: '/Dashboard/recruitment' },
+  { icon: Award, label: 'Performance', href: '/Dashboard/performance' },
+];
+
 
   return (
     <aside
@@ -42,33 +57,24 @@ export default function Sidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-        {[
-          { icon: Home, label: 'Dashboard', active: true },
-          { icon: Users, label: 'Employees' },
-          { icon: Calendar, label: 'Attendance' },
-          { icon: Clock, label: 'Timesheet' },
-          { icon: FileText, label: 'Payroll' },
-          { icon: BarChart3, label: 'Reports' },
-          { icon: Briefcase, label: 'Recruitment' },
-          { icon: Award, label: 'Performance' },
-        ].map((item, idx) => (
-          <button
-            key={idx}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
-              item.active
-                ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg'
-                : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
-            }`}
-          >
-            <item.icon className="w-5 h-5" />
-            {sidebarOpen && (
-                <Link href={`/Dashboard/${item.label}`}>
+        {navItems.map((item, idx) => {
+    const isActive = pathname === item.href;
 
-              <span className="text-sm font-medium">{item.label}</span>
-                </Link>
-            )}
-          </button>
-        ))}
+    return (
+      <Link key={idx} href={item.href}>
+        <button
+          className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+            isActive
+              ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg'
+              : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+          }`}
+        >
+          <item.icon className="w-5 h-5" />
+          {sidebarOpen && <span className="text-sm font-medium">{item.label}</span>}
+        </button>
+      </Link>
+    );
+  })}
       </nav>
 
       {/* Toggle Button */}
