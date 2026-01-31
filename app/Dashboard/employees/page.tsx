@@ -10,116 +10,33 @@ import {
 import Link from 'next/link';
 
 // Mock employee data - replace with actual API call
-const mockEmployees = [
-  {
-    id: 1,
-    employeeCode: 'EMP001',
-    name: 'Rajesh Kumar',
-    designation: 'Senior Developer',
-    department: 'Engineering',
-    email: 'rajesh.kumar@company.com',
-    phone: '+91 98765 43210',
-    dateOfJoining: '2023-01-15',
-    status: 'active',
-    photograph: null,
-    salary: 85000,
-    branch: 'Patna',
-    notifications: [
-      { type: 'warning', message: 'PF number pending' },
-      { type: 'info', message: 'Appraisal due next month' }
-    ]
-  },
-  {
-    id: 2,
-    employeeCode: 'EMP002',
-    name: 'Priya Sharma',
-    designation: 'HR Manager',
-    department: 'HR',
-    email: 'priya.sharma@company.com',
-    phone: '+91 98765 43211',
-    dateOfJoining: '2022-06-20',
-    status: 'active',
-    photograph: null,
-    salary: 75000,
-    branch: 'Arrah',
-    notifications: [
-      { type: 'success', message: 'All documents complete' }
-    ]
-  },
-  {
-    id: 3,
-    employeeCode: 'EMP003',
-    name: 'Amit Patel',
-    designation: 'Sales Executive',
-    department: 'Sales',
-    email: 'amit.patel@company.com',
-    phone: '+91 98765 43212',
-    dateOfJoining: '2023-03-10',
-    status: 'active',
-    photograph: null,
-    salary: 55000,
-    branch: 'Patna',
-    notifications: [
-      { type: 'error', message: 'Salary payment overdue by 2 days' },
-      { type: 'warning', message: 'Aadhar card not submitted' }
-    ]
-  },
-  {
-    id: 4,
-    employeeCode: 'EMP004',
-    name: 'Sneha Gupta',
-    designation: 'Marketing Lead',
-    department: 'Marketing',
-    email: 'sneha.gupta@company.com',
-    phone: '+91 98765 43213',
-    dateOfJoining: '2021-11-05',
-    status: 'active',
-    photograph: null,
-    salary: 92000,
-    branch: 'Arrah',
-    notifications: []
-  },
-  {
-    id: 5,
-    employeeCode: 'EMP005',
-    name: 'Vikram Singh',
-    designation: 'Finance Manager',
-    department: 'Finance',
-    email: 'vikram.singh@company.com',
-    phone: '+91 98765 43214',
-    dateOfJoining: '2020-08-15',
-    status: 'active',
-    photograph: null,
-    salary: 110000,
-    branch: 'Patna',
-    notifications: [
-      { type: 'info', message: 'Quarterly bonus calculation pending' }
-    ]
-  },
-  {
-    id: 6,
-    employeeCode: 'EMP006',
-    name: 'Anita Verma',
-    designation: 'Junior Developer',
-    department: 'Engineering',
-    email: 'anita.verma@company.com',
-    phone: '+91 98765 43215',
-    dateOfJoining: '2024-01-10',
-    status: 'active',
-    photograph: null,
-    salary: 45000,
-    branch: 'Arrah',
-    notifications: [
-      { type: 'warning', message: 'Probation ends in 15 days' },
-      { type: 'info', message: 'Training completion pending' }
-    ]
-  }
-];
+
 
 type NotificationType = 'error' | 'warning' | 'info' | 'success';
 
 export default function EmployeesList() {
-  const [employees] = useState(mockEmployees);
+  const [employees, setEmployees] = useState<any[]>([]);
+const [loading, setLoading] = useState(true);
+
+React.useEffect(() => {
+  const fetchEmployees = async () => {
+    try {
+      const res = await fetch('/api/employees');
+      if (!res.ok) {
+        console.error('Failed to fetch employees');
+        return;
+      }
+      const data = await res.json();
+      setEmployees(data.employees);
+    } catch (error) {
+      console.error('Error fetching employees:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchEmployees();
+}, []);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
@@ -143,7 +60,7 @@ export default function EmployeesList() {
   const stats = {
     total: employees.length,
     active: employees.filter(e => e.status === 'active').length,
-    withIssues: employees.filter(e => e.notifications.some(n => n.type === 'error' || n.type === 'warning')).length,
+    withIssues: 0,
     newJoiners: employees.filter(e => {
       const joinDate = new Date(e.dateOfJoining);
       const monthsAgo = new Date();
@@ -170,6 +87,13 @@ export default function EmployeesList() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
       <div className="max-w-7xl mx-auto">
+        {loading && (
+          <div className="text-center py-20">
+            <p className="text-slate-500 text-lg">Loading employees...</p>
+          </div>
+        )}
+        {!loading && (
+        <>
         
         {/* Header */}
         <div className="mb-8">
@@ -307,7 +231,7 @@ export default function EmployeesList() {
           ) : (
             filteredEmployees.map((employee) => (
               <div
-                key={employee.id}
+                key={employee._id}
                 className="bg-white rounded-xl border border-slate-200 hover:border-cyan-300 hover:shadow-lg transition-all group"
               >
                 <div className="p-6">
@@ -342,7 +266,7 @@ export default function EmployeesList() {
                         </div>
 
                         <Link
-                          href={`/Dashboard/employees/${employee.id}`}
+                          href={`/Dashboard/employees/${employee._id}`}
                           className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-lg hover:from-cyan-600 hover:to-blue-700 transition-all flex items-center gap-2 opacity-0 group-hover:opacity-100"
                         >
                           <Eye className="w-4 h-4" />
@@ -364,7 +288,7 @@ export default function EmployeesList() {
                           <MapPin className="w-4 h-4 text-slate-400" />
                           <div>
                             <p className="text-xs text-slate-500">Branch</p>
-                            <p className="text-sm font-medium text-slate-900">{employee.branch}</p>
+                           <p className="text-sm font-medium text-slate-900">{employee.branchName}</p>
                           </div>
                         </div>
 
@@ -386,7 +310,9 @@ export default function EmployeesList() {
                           <DollarSign className="w-4 h-4 text-slate-400" />
                           <div>
                             <p className="text-xs text-slate-500">Salary</p>
-                            <p className="text-sm font-medium text-slate-900">₹{employee.salary.toLocaleString('en-IN')}</p>
+                            <p className="text-sm font-medium text-slate-900">
+  ₹{(Object.values(employee.salary?.earnings || {}).reduce((sum: number, val: any) => sum + (parseFloat(val) || 0), 0)).toLocaleString('en-IN')}
+</p>
                           </div>
                         </div>
                       </div>
@@ -399,14 +325,14 @@ export default function EmployeesList() {
                         </div>
                         <div className="flex items-center gap-2 text-sm text-slate-600">
                           <Phone className="w-4 h-4" />
-                          {employee.phone}
+                          {employee.mobileNumber}
                         </div>
                       </div>
 
-                      {/* Notifications */}
+                      {/* Notifications
                       {employee.notifications.length > 0 && (
                         <div className="space-y-2">
-                          {employee.notifications.map((notification, idx) => {
+                          {employee.notifications.map((notification: any, idx: number) => {
                             const style = getNotificationStyle(notification.type);
                             const Icon = style.icon;
                             
@@ -423,7 +349,7 @@ export default function EmployeesList() {
                             );
                           })}
                         </div>
-                      )}
+                      )} */}
                     </div>
                   </div>
                 </div>
@@ -437,6 +363,8 @@ export default function EmployeesList() {
           <div className="mt-6 text-center text-sm text-slate-600">
             Showing {filteredEmployees.length} of {employees.length} employees
           </div>
+        )}
+        </>
         )}
       </div>
     </div>

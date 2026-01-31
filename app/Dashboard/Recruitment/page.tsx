@@ -182,11 +182,14 @@ setPhotoPreview(data.url);
 
 
 React.useEffect(() => {
-  const id = window.location.pathname.split('/').pop();
-  if (!id || id === 'create') {
+  const pathParts = window.location.pathname.split('/');
+  const id = pathParts[pathParts.length - 1];
+  const isMongoId = /^[0-9a-fA-F]{24}$/.test(id);
+
+  if (!isMongoId) {
     setFormData(emptyEmployee);
-    return;
-  }
+  return;
+}
 
   setEmployeeId(id);
   setIsEditMode(true);
@@ -194,10 +197,11 @@ React.useEffect(() => {
   const fetchEmployee = async () => {
   const res = await fetch(`/api/employees/${id}`);
 
-  if (!res.ok) {
-    console.error('Failed to fetch employee');
-    return;
-  }
+ if (!res.ok) {
+  const errorText = await res.text();
+  console.error('Failed to fetch employee. Status:', res.status, 'Response:', errorText);
+  return;
+}
 
   const text = await res.text();
   if (!text) {
@@ -206,8 +210,8 @@ React.useEffect(() => {
   }
 
   const data = JSON.parse(text);
-  setFormData(data);
-  setPhotoPreview(data.photograph || null);
+  setFormData(data.employee);
+  setPhotoPreview(data.employee.photograph || null);
 };
 
 
