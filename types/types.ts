@@ -54,6 +54,7 @@ export interface EmployeeFormData {
   uanNo: string;
   esiNo: string;
   exitDate: string;
+  status: string;
 
   /* ---------- Contact ---------- */
   email: string;

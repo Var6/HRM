@@ -257,9 +257,14 @@ React.useEffect(() => {
                         <div>
                           <div className="flex items-center gap-3 mb-1">
                             <h3 className="text-xl font-bold text-slate-900">{employee.name}</h3>
-                            <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">
-                              {employee.status}
-                            </span>
+                            <span className={`px-3 py-1 text-sm font-semibold rounded-full ${
+    employee.status === 'Active' ? 'bg-green-100 text-green-700' :
+    employee.status === 'On Probation' ? 'bg-yellow-100 text-yellow-700' :
+    employee.status === 'Notice Period' ? 'bg-orange-100 text-orange-700' :
+    'bg-red-100 text-red-700'
+  }`}>
+    {employee.status}
+  </span>
                           </div>
                           <p className="text-slate-600 mb-1">{employee.designation}</p>
                           <p className="text-sm text-slate-500">{employee.employeeCode}</p>

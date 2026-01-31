@@ -26,6 +26,7 @@ const emptyEmployee: EmployeeFormData = {
   drivingLicenseNo: '',
   maritalStatus: '',
   educationQualification: '',
+  status: 'Active', // Add this line
 
   workExperience: [{ organization: '', designation: '', periodOfStay: '' }],
 
@@ -180,17 +181,18 @@ setPhotoPreview(data.url);
 
 };
 
-
 React.useEffect(() => {
-  const pathParts = window.location.pathname.split('/');
+  const pathParts = window.location.pathname.split('/').filter(Boolean);
   const id = pathParts[pathParts.length - 1];
-  const isMongoId = /^[0-9a-fA-F]{24}$/.test(id);
-
-  if (!isMongoId) {
+  
+  // If no ID, id is 'recruitment', or not a valid MongoDB ID
+  if (!id || id === 'recruitment' || !/^[0-9a-fA-F]{24}$/.test(id)) {
     setFormData(emptyEmployee);
-  return;
-}
-
+    setIsEditMode(false);
+    setEmployeeId(null);
+    setPhotoPreview(null);
+    return;
+  }
   setEmployeeId(id);
   setIsEditMode(true);
 
@@ -833,6 +835,24 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                       className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
                     />
                   </div>
+                  <div>
+  <label className="block text-sm font-semibold text-slate-700 mb-2">
+    Employee Status <span className="text-red-500">*</span>
+  </label>
+  <select
+    name="status"
+    value={formData.status}
+    onChange={handleInputChange}
+    className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
+    required
+  >
+    <option value="">Select Status</option>
+    <option value="Active">Active</option>
+    <option value="On Probation">On Probation</option>
+    <option value="Notice Period">Notice Period</option>
+    <option value="Inactive">Inactive</option>
+  </select>
+</div>
                 </div>
               </div>
             </div>

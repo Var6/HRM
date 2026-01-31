@@ -138,11 +138,16 @@ export default function EmployeeDetail() {
                 <div className="flex items-start justify-between mb-4">
                   <div>
                     <div className="flex items-center gap-3 mb-2">
-                      <h1 className="text-3xl font-bold text-slate-900">{employee.name}</h1>
-                      <span className="px-3 py-1 bg-green-100 text-green-700 text-sm font-semibold rounded-full">
-                        {employee.status}
-                      </span>
-                    </div>
+  <h1 className="text-3xl font-bold text-slate-900">{employee.name}</h1>
+  <span className={`px-3 py-1 text-sm font-semibold rounded-full ${
+    employee.status === 'Active' ? 'bg-green-100 text-green-700' :
+    employee.status === 'On Probation' ? 'bg-yellow-100 text-yellow-700' :
+    employee.status === 'Notice Period' ? 'bg-orange-100 text-orange-700' :
+    'bg-red-100 text-red-700'
+  }`}>
+    {employee.status}
+  </span>
+</div>
                     <p className="text-xl text-slate-600 mb-1">{employee.designation}</p>
                     <p className="text-slate-500">{employee.employeeCode} • {employee.department}</p>
                   </div>
@@ -155,7 +160,7 @@ export default function EmployeeDetail() {
                       <Download className="w-5 h-5" />
                     </button>
                     <Link
-                    href={`/Dashboard/recruitment`}
+                    href={`/Dashboard/recruitment/${employee._id}`}
                       className="px-4 py-2 bg-cyan-500 text-white rounded-lg hover:bg-cyan-600 transition-all flex items-center gap-2"
                     >
                       <Edit className="w-4 h-4" />
@@ -666,15 +671,11 @@ export default function EmployeeDetail() {
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
               <h2 className="text-xl font-bold text-slate-900 mb-4">Quick Actions</h2>
               <div className="space-y-2">
-                <button className="w-full px-4 py-3 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-lg transition-all text-left flex items-center gap-3">
-                  <Download className="w-5 h-5" />
-                  Download Employee Card
-                </button>
-                <button className="w-full px-4 py-3 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-lg transition-all text-left flex items-center gap-3">
-                  <FileText className="w-5 h-5" />
-                  Generate Salary Slip
-                </button>
-                <button className="w-full px-4 py-3 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-lg transition-all text-left flex items-center gap-3">
+                <button className="w-full px-4 py-3 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-lg transition-all text-left flex items-center gap-3"
+                onClick={() => {
+    window.location.href = `mailto:${employee.email}`;
+  }}
+                >
                   <Mail className="w-5 h-5" />
                   Send Email
                 </button>
