@@ -27,13 +27,22 @@ interface DailyAttendance {
 export default function AttendanceManagement() {
   const [selectedView, setSelectedView] = useState<'overview' | 'monthly' | 'daily' | 'reports'>('overview');
   
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const getCurrentFinancialYear = () => {
+  const today = new Date();
+  const month = today.getMonth(); // 0 = Jan, 3 = Apr
+
+  // Financial year starts in April
+  return month < 3 ? today.getFullYear() - 1 : today.getFullYear();
+};
+
+const [selectedYear, setSelectedYear] = useState<number>(getCurrentFinancialYear());
+  const [markingAttendance, setMarkingAttendance] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedEmployee, setSelectedEmployee] = useState<number | null>(null);
   const [showMarkAttendance, setShowMarkAttendance] = useState(false);
   const [attendanceData, setAttendanceData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
  const filteredEmployees = attendanceData.filter(item => {
   const emp = item.employee;
   if (!emp) return false;
@@ -113,35 +122,45 @@ const fetchAttendanceData = async () => {
     allMonths.forEach((item: any) => {
       const empId = item.employee._id;
       
-      if (!employeeMap.has(empId)) {
-        employeeMap.set(empId, {
-          employee: {
-            ...item.employee,
-            monthlyLeaves: {}
-          },
-          attendance: item.attendance
-        });
-      }
+     const currentMonth = new Date().getMonth();
+const isCurrentMonth = item.attendance.month === currentMonth;
+
+if (!employeeMap.has(empId)) {
+  employeeMap.set(empId, {
+    employee: {
+      ...item.employee,
+      monthlyLeaves: {}
+    },
+    attendance: item.attendance,
+    currentMonthAttendance: isCurrentMonth ? item.attendance : null  // ✅ Track current month separately
+  });
+} else if (isCurrentMonth) {
+  // Update current month attendance if found
+  employeeMap.get(empId).currentMonthAttendance = item.attendance;
+}
       
       const emp = employeeMap.get(empId);
       const monthName = monthIndexToName(item.attendance.month);
       emp.employee.monthlyLeaves[monthName] = item.attendance.summary?.totalLeaves || 0;
     });
 
-    const normalized = Array.from(employeeMap.values()).map((item: any) => {
-      // Ensure all months exist
-      months.forEach(m => {
-        if (!(m in item.employee.monthlyLeaves)) {
-          item.employee.monthlyLeaves[m] = null;
-        }
-      });
+   const normalized = Array.from(employeeMap.values()).map((item: any) => {
+  // Ensure all months exist
+  months.forEach(m => {
+    if (!(m in item.employee.monthlyLeaves)) {
+      item.employee.monthlyLeaves[m] = null;
+    }
+  });
 
-      item.employee.totalLeavesTaken = Object.values(item.employee.monthlyLeaves)
-        .filter((v: any) => v !== null)
-        .reduce((sum: number, val: any) => sum + (val || 0), 0);
+  item.employee.totalLeavesTaken = Object.values(item.employee.monthlyLeaves)
+    .filter((v: any) => v !== null)
+    .reduce((sum: number, val: any) => sum + (val || 0), 0);
 
-      return item;
-    });
+  // ✅ Use currentMonthAttendance for daily tracker, fallback to attendance
+  item.attendance = item.currentMonthAttendance || item.attendance;
+
+  return item;
+});
 
     setAttendanceData(normalized);
 
@@ -152,18 +171,22 @@ const fetchAttendanceData = async () => {
   }
 };
 // Function to mark attendance directly from the list
-const handleQuickMark = async (employeeId: string, status: string, leaveType?: string, leaveReason?: string) => {  // ✅ ADD leaveReason parameter
+const handleQuickMark = async (employeeId: string, status: string, leaveType?: string, leaveReason?: string) => {
   try {
+    setMarkingAttendance(true);
     const today = new Date();
     
-  const payload = {
-  employeeId,
-  date: today.toISOString(), // backend extracts month
-  year: selectedYear,
-  status,
-  leaveType,
-  leaveReason
-};
+    const payload = {
+      employeeId,
+      date: today.toISOString(),
+      month: today.getMonth(),
+      year: today.getFullYear(),
+      status,
+      leaveType,
+      leaveReason: leaveReason || ''
+    };
+
+    console.log('Quick mark payload:', payload);
 
     const res = await fetch(`/api/attendance/${employeeId}`, {
       method: 'PUT',
@@ -171,22 +194,77 @@ const handleQuickMark = async (employeeId: string, status: string, leaveType?: s
       body: JSON.stringify(payload)
     });
 
-    if (!res.ok) throw new Error('Failed to update');
-    const result = await res.json();
+    console.log('Response status:', res.status); // ✅ Check status
 
-    setAttendanceData(prevData => prevData.map(item => {
-      if (item.employee._id === employeeId) {
-        return { ...item, attendance: result.attendance };
+    if (!res.ok) {
+      const errorText = await res.text(); // ✅ Get raw response first
+      console.error('Raw error response:', errorText);
+      
+      let errorData;
+      try {
+        errorData = JSON.parse(errorText);
+      } catch (e) {
+        errorData = { error: errorText };
       }
-      return item;
-    }));
+      
+      console.error('Parsed error:', errorData);
+      alert(`Failed to update: ${errorData.error || errorText}`); // ✅ Show actual error
+      throw new Error(errorData.error || 'Failed to update');
+    }
 
-  } catch (error) {
+    const result = await res.json();
+    console.log('Success result:', result);
+
+    // ✅ FIX: Fetch ONLY the current month's fresh data
+const currentMonth = today.getMonth();
+const currentYear = today.getFullYear();
+
+const freshRes = await fetch(`/api/attendance?month=${currentMonth}&year=${currentYear}`);
+if (freshRes.ok) {
+  const freshData = await freshRes.json();
+  
+  setAttendanceData(prevData => prevData.map(item => {
+    if (item.employee._id === employeeId) {
+      // Find the updated employee data from fresh fetch
+      const updatedEmployeeData = freshData.data.find((d: any) => d.employee._id === employeeId);
+      
+      if (updatedEmployeeData) {
+        // Update monthly leaves for current month
+        const currentMonthName = monthIndexToName(currentMonth);
+        
+        return {
+          ...item,
+          employee: {
+            ...item.employee,
+            monthlyLeaves: {
+              ...item.employee.monthlyLeaves,
+              [currentMonthName]: updatedEmployeeData.attendance.summary?.totalLeaves || 0
+            },
+            totalLeavesTaken: Object.values({
+              ...item.employee.monthlyLeaves,
+              [currentMonthName]: updatedEmployeeData.attendance.summary?.totalLeaves || 0
+            })
+              .filter((v: any) => v !== null)
+              .reduce((sum: number, val: any) => sum + (val || 0), 0)
+          },
+          attendance: updatedEmployeeData.attendance
+        };
+      }
+    }
+    return item;
+  }));
+}
+
+setShowSuccessToast(true);
+setTimeout(() => setShowSuccessToast(false), 3000);
+  } catch (error: any) {
     console.error("Failed to mark attendance", error);
-    alert("Failed to update attendance");
+    console.error("Error details:", error.message);
+  }finally{
+    setMarkingAttendance(false);
   }
 };
-
+//---------
   // Helper to check today's status for UI styling
   const getTodayStatus = (records: any[]) => {
     const todayStr = new Date().toDateString(); // Or selected date
@@ -204,7 +282,12 @@ if (loading) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6 pt-9">
       <div className="max-w-7xl mx-auto">
-        
+        {showSuccessToast && (
+  <div className="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2 z-50 animate-slide-in">
+    <CheckCircle className="w-5 h-5" />
+    <span>Attendance marked successfully!</span>
+  </div>
+)}
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
@@ -340,7 +423,7 @@ if (loading) {
                                            <img 
                                              src={employee.photograph} 
                                              alt={employee.name}
-                                             className="w-24 h-24 rounded-xl object-cover border-4 border-slate-200"
+                                               className="w-full h-full object-cover"
                                            />
                                          ) : (
                                            <div className="w-24 h-24 rounded-xl bg-gradient-to-br from-cyan-100 to-blue-100 flex items-center justify-center border-4 border-slate-200">
@@ -389,36 +472,40 @@ if (loading) {
                     </div>
 
                     {/* Quick Stats - NOW FIXED with safe access to 'attendance' */}
-                    <div className="grid md:grid-cols-4 gap-4 mb-4">
-                      <div className="p-3 bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg">
-                        <p className="text-xs text-slate-500 mb-1">Total Leaves Taken</p>
-                        <p className="text-2xl font-bold text-slate-900">{employee.totalLeavesTaken}</p>
-                      </div>
-                      <div className="p-3 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg">
-                        <p className="text-xs text-slate-500 mb-1">Leave Balance</p>
-                        <p className="text-2xl font-bold text-green-600">
-                          {/* Calculation using the attendance object */}
-                          {(
-                            (employee.leaveBalance?.casualLeave || 0) + 
-                            (employee.leaveBalance?.earnedLeave || 0) - 
-                            (attendance.summary?.casualLeavesTaken || 0) - 
-                            (attendance.summary?.earnedLeavesTaken || 0)
-                          ).toFixed(1)}
-                        </p>
-                      </div>
-                      <div className="p-3 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-lg">
-                        <p className="text-xs text-slate-500 mb-1">Earned Leave</p>
-                        <p className="text-2xl font-bold text-blue-600">
-                          {((employee.leaveBalance?.earnedLeave || 0) - (attendance.summary?.earnedLeavesTaken || 0)).toFixed(1)}
-                        </p>
-                      </div>
-                      <div className="p-3 bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg">
-                        <p className="text-xs text-slate-500 mb-1">Casual Leave</p>
-                        <p className="text-2xl font-bold text-purple-600">
-                          {((employee.leaveBalance?.casualLeave || 0) - (attendance.summary?.casualLeavesTaken || 0)).toFixed(1)}
-                        </p>
-                      </div>
-                    </div>
+                   <div className="grid md:grid-cols-4 gap-4 mb-4">
+  <div className="p-3 bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg">
+    <p className="text-xs text-slate-500 mb-1">Total Leaves Taken (FY)</p>
+    <p className="text-2xl font-bold text-slate-900">
+      {employee.totalLeavesTaken.toFixed(1)}
+    </p>
+  </div>
+
+  <div className="p-3 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg">
+    <p className="text-xs text-slate-500 mb-1">Leave Balance (FY)</p>
+    <p className="text-2xl font-bold text-green-600">
+      {(
+        (employee.leaveBalance?.earnedLeave || 0) +
+        (employee.leaveBalance?.casualLeave || 0) -
+        employee.totalLeavesTaken
+      ).toFixed(1)}
+    </p>
+  </div>
+
+  <div className="p-3 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-lg">
+    <p className="text-xs text-slate-500 mb-1">Earned Leave (Allocated)</p>
+    <p className="text-2xl font-bold text-blue-600">
+      {(employee.leaveBalance?.earnedLeave || 0).toFixed(1)}
+    </p>
+  </div>
+
+  <div className="p-3 bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg">
+    <p className="text-xs text-slate-500 mb-1">Casual Leave (Allocated)</p>
+    <p className="text-2xl font-bold text-purple-600">
+      {(employee.leaveBalance?.casualLeave || 0).toFixed(1)}
+    </p>
+  </div>
+</div>
+
 
                  {/* Expanded Details - Quick View */}
 {selectedEmployee === employee._id && (
@@ -480,7 +567,11 @@ if (loading) {
         {selectedView === 'monthly' && (
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-slate-900">  Yearly Attendance Report ({selectedYear})</h2>
+              <h2 className="text-2xl font-bold text-slate-900">
+  Financial Year Attendance ({selectedYear}–{selectedYear + 1})
+  <span className="text-sm font-normal text-slate-500 ml-2">(Apr–Mar)</span>
+</h2>
+
               <div className="flex items-center gap-3">
                <button 
     onClick={() => setSelectedYear(prev => prev - 1)}
@@ -581,6 +672,7 @@ if (loading) {
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-slate-900">Daily Attendance Tracker</h2>
               <input
+              disabled
                 type="date"
                 className="px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
                 defaultValue={new Date().toISOString().split('T')[0]}
@@ -600,7 +692,7 @@ if (loading) {
                                            <img 
                                              src={employee.photograph} 
                                              alt={employee.name}
-                                             className="w-24 h-24 rounded-xl object-cover border-4 border-slate-200"
+                                             className="w-full h-full object-cover" 
                                            />
                                          ) : (
                                            <div className="w-24 h-24 rounded-xl bg-gradient-to-br from-cyan-100 to-blue-100 flex items-center justify-center border-4 border-slate-200">
@@ -617,13 +709,14 @@ if (loading) {
                    <div className="flex items-center gap-2">
                       {/* PRESENT BUTTON */}
                       <button 
-                        onClick={() => handleQuickMark(employee._id, 'present')} // ✅ FIXED: ._id
-                        className={`px-4 py-2 rounded-lg transition-all font-medium flex items-center gap-2 ${
-                          currentStatus === 'present' 
-                            ? 'bg-green-600 text-white shadow-md' 
-                            : 'bg-white border border-slate-200 text-slate-600 hover:bg-green-50'
-                        }`}
-                      >
+  onClick={() => handleQuickMark(employee._id, 'present')}
+  disabled={markingAttendance}  // ✅ ADD THIS
+  className={`px-4 py-2 rounded-lg transition-all font-medium flex items-center gap-2 ${
+    currentStatus === 'present' 
+      ? 'bg-green-600 text-white shadow-md' 
+      : 'bg-white border border-slate-200 text-slate-600 hover:bg-green-50'
+  } ${markingAttendance ? 'opacity-50 cursor-not-allowed' : ''}`}  // ✅ ADD THIS
+>
                         <CheckCircle className="w-4 h-4" />
                         Present
                       </button>
@@ -631,6 +724,7 @@ if (loading) {
                       {/* HALF DAY BUTTON */}
                       <button 
                          onClick={() => handleQuickMark(employee._id, 'halfDay', 'casual')} // ✅ FIXED: ._id
+                         disabled={markingAttendance}  // ✅ ADD THIS
                          className={`px-4 py-2 rounded-lg transition-all font-medium flex items-center gap-2 ${
                           currentStatus === 'halfDay' 
                             ? 'bg-amber-500 text-white shadow-md' 
@@ -644,6 +738,7 @@ if (loading) {
                       {/* LEAVE BUTTON */}
                       <button 
                         onClick={() => handleQuickMark(employee._id, 'leave', 'casual')} // ✅ FIXED: ._id
+                        disabled={markingAttendance}  // ✅ ADD THIS
                         className={`px-4 py-2 rounded-lg transition-all font-medium flex items-center gap-2 ${
                           currentStatus === 'leave' 
                             ? 'bg-blue-600 text-white shadow-md' 
@@ -659,14 +754,16 @@ if (loading) {
 <button 
   onClick={() => {
     const reason = prompt('Enter absence reason:');
+
     if (reason && reason.trim()) {
-      handleQuickMark(employee._id, 'absent', undefined, reason);
+      handleQuickMark(employee._id, 'onLeave', undefined, reason);  // ✅ CHANGE 'absent' to 'onLeave'
     } else {
       alert('Absence reason is required!');
     }
   }}
+  disabled={markingAttendance}  // ✅ ADD THIS
   className={`px-4 py-2 rounded-lg transition-all font-medium flex items-center gap-2 ${
-    currentStatus === 'absent' 
+    currentStatus === 'onLeave' 
       ? 'bg-red-600 text-white shadow-md' 
       : 'bg-white border border-slate-200 text-slate-600 hover:bg-red-50'
   }`}
@@ -681,11 +778,15 @@ if (loading) {
             </div>
 
             <div className="mt-6 flex justify-end">
-              <button className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-lg hover:from-cyan-600 hover:to-blue-700 transition-all flex items-center gap-2 shadow-lg">
-                <Save className="w-5 h-5" />
-                Save Attendance
-              </button>
-            </div>
+  <button 
+    onClick={() => fetchAttendanceData()}
+    disabled={loading}
+    className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-lg hover:from-cyan-600 hover:to-blue-700 transition-all flex items-center gap-2 shadow-lg disabled:opacity-50"
+  >
+    <Activity className="w-5 h-5" />
+    {loading ? 'Refreshing...' : 'Refresh Data'}
+  </button>
+</div>
           </div>
         )}
 
