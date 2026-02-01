@@ -3,6 +3,9 @@ import { connectDB } from '@/lib/mongodb';
 import MonthlyAttendance from '@/models/Attendance';
 import Employee from '@/models/Employee';
 
+// Force dynamic to ensure it fetches fresh data every time
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: Request) {
   try {
     await connectDB();
@@ -10,10 +13,12 @@ export async function GET(request: Request) {
     const month = parseInt(searchParams.get('month') || String(new Date().getMonth()));
     const year = parseInt(searchParams.get('year') || String(new Date().getFullYear()));
 
-    // Get all employees
-    const employees = await Employee.find({ status: 'Active' });
+    const employees = await Employee.find({}).sort({ name: 1 });
+    
+    if (!employees || employees.length === 0) {
+      return NextResponse.json({ success: true, data: [] });
+    }
 
-    // Get attendance for all employees
     const attendanceData = await Promise.all(
       employees.map(async (employee) => {
         let attendance = await MonthlyAttendance.findOne({
@@ -22,9 +27,15 @@ export async function GET(request: Request) {
           year
         });
 
+        // ✅ IMPROVED: Credit monthly leaves on first fetch
         if (!attendance) {
-          // Create empty attendance record
-          attendance = await MonthlyAttendance.create({
+          const monthStart = new Date(year, month, 1);
+          const employeeJoinDate = new Date(employee.joiningDate);
+          
+          // Only credit if employee joined before this month
+          const shouldCredit = employeeJoinDate <= monthStart;
+          
+          attendance = {
             employeeId: employee._id,
             month,
             year,
@@ -39,12 +50,20 @@ export async function GET(request: Request) {
               sickLeavesTaken: 0,
               extraordinaryLeavesTaken: 0
             },
+            monthlyCredit: {
+              casualLeave: shouldCredit ? 1 : 0,
+              earnedLeave: shouldCredit ? 1.25 : 0
+            },
             leaveBalance: {
-              casualLeave: employee.leaves.casualLeave,
-              earnedLeave: employee.leaves.earnedLeave,
+              casualLeave: (employee.leaves?.casualLeave || 0) + (shouldCredit ? 1 : 0),
+              earnedLeave: (employee.leaves?.earnedLeave || 0) + (shouldCredit ? 1.25 : 0),
               carriedForward: 0
+            },
+            lop: {
+              days: 0,
+              amount: 0
             }
-          });
+          };
         }
 
         return {
@@ -54,7 +73,9 @@ export async function GET(request: Request) {
             employeeCode: employee.employeeCode,
             designation: employee.designation,
             department: employee.department,
-            photograph: employee.photograph
+            photograph: employee.photograph,
+            leaves: employee.leaves,
+            leaveBalance: attendance.leaveBalance
           },
           attendance
         };
@@ -67,3 +88,4 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+

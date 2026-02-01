@@ -1,20 +1,12 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, use } from 'react'; // 👈 1. Added 'use'
 import { 
-  Calendar, ArrowLeft, Save, User, Mail, Phone, Briefcase,
-  CheckCircle, XCircle, Coffee, Home, Clock, AlertCircle,
+  ArrowLeft, User, Mail, Phone, Briefcase,
+  CheckCircle, XCircle, Coffee, Home, AlertCircle,
   TrendingUp, Award, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import Link from 'next/link';
-
-interface AttendanceRecord {
-  date: Date;
-  status: 'present' | 'absent' | 'leave' | 'halfDay' | 'weekend' | 'holiday';
-  leaveType?: 'casual' | 'earned' | 'sick' | 'halfDay' | 'extraordinary' | null;
-  checkIn?: string;
-  checkOut?: string;
-  remarks?: string;
-}
+import { useRouter } from 'next/navigation';
 
 interface Employee {
   _id: string;
@@ -26,6 +18,16 @@ interface Employee {
   mobileNumber: string;
   photograph?: string;
 }
+interface AttendanceRecord {
+  date: Date;
+  status: 'present' | 'onLeave' | 'leave' | 'halfDay' | 'weekend' | 'holiday';  // ✅ CHANGED
+  leaveType?: 'casual' | 'earned' | 'sick' | 'halfDay' | 'extraordinary' | null;
+  leaveReason?: string;  // ✅ ADDED
+  checkIn?: string;
+  checkOut?: string;
+  remarks?: string;
+}
+
 
 interface Attendance {
   _id: string;
@@ -50,22 +52,31 @@ interface Attendance {
   };
 }
 
-export default function EmployeeAttendance({ params }: { params: { employeeId: string } }) {
+// 👈 2. Updated Props Type to Promise (Next.js 15 Requirement)
+export default function EmployeeAttendance({ params }: { params: Promise<{ employeeId: string }> }) {
+  
+  // 👈 3. Unwrap the params using React.use()
+  const { employeeId } = use(params);
+  const router = useRouter(); // ✅ Add this
+
+
   const [employee, setEmployee] = useState<Employee | null>(null);
   const [attendance, setAttendance] = useState<Attendance | null>(null);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [leaveReason, setLeaveReason] = useState(''); 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-
-  // Calendar state
   const [calendarDays, setCalendarDays] = useState<Date[]>([]);
 
   useEffect(() => {
-    fetchEmployeeAttendance();
-  }, [selectedMonth, selectedYear]);
+    // Only fetch if we have the ID
+    if (employeeId) {
+      fetchEmployeeAttendance();
+    }
+  }, [selectedMonth, selectedYear, employeeId]); // 👈 This array must strictly have these 3 items
 
   useEffect(() => {
     generateCalendar();
@@ -74,8 +85,10 @@ export default function EmployeeAttendance({ params }: { params: { employeeId: s
   const fetchEmployeeAttendance = async () => {
     try {
       setLoading(true);
+      
+      // 👈 4. THE FIX: Use 'employeeId' (from params), NOT 'employee._id' (from state)
       const res = await fetch(
-        `/api/attendance/${params.employeeId}?month=${selectedMonth}&year=${selectedYear}`
+        `/api/attendance/${employeeId}?month=${selectedMonth}&year=${selectedYear}`
       );
       
       if (!res.ok) throw new Error('Failed to fetch');
@@ -90,24 +103,30 @@ export default function EmployeeAttendance({ params }: { params: { employeeId: s
     }
   };
 
-  const generateCalendar = () => {
-    const firstDay = new Date(selectedYear, selectedMonth, 1);
-    const lastDay = new Date(selectedYear, selectedMonth + 1, 0);
-    const days: Date[] = [];
+const generateCalendar = () => {
+  const firstDay = new Date(selectedYear, selectedMonth, 1);
+  const lastDay = new Date(selectedYear, selectedMonth + 1, 0);
+  const days: Date[] = [];
 
-    // Add empty days for alignment
-    const startDay = firstDay.getDay();
-    for (let i = 0; i < startDay; i++) {
-      days.push(new Date(0)); // Placeholder
+  const startDay = firstDay.getDay();
+  for (let i = 0; i < startDay; i++) {
+    days.push(new Date(0)); 
+  }
+
+  for (let i = 1; i <= lastDay.getDate(); i++) {
+    const currentDate = new Date(selectedYear, selectedMonth, i);
+    days.push(currentDate);
+    
+    // ✅ OPTIONAL: Auto-mark weekends
+    const dayOfWeek = currentDate.getDay();
+    if ((dayOfWeek === 0 || dayOfWeek === 2) && !getAttendanceForDate(currentDate)) {
+      // Auto-mark as weekend if not already marked
+      // You can call markAttendance here or just display it differently
     }
+  }
 
-    // Add actual days
-    for (let i = 1; i <= lastDay.getDate(); i++) {
-      days.push(new Date(selectedYear, selectedMonth, i));
-    }
-
-    setCalendarDays(days);
-  };
+  setCalendarDays(days);
+};
 
   const getAttendanceForDate = (date: Date): AttendanceRecord | null => {
     if (!attendance || date.getTime() === 0) return null;
@@ -118,73 +137,76 @@ export default function EmployeeAttendance({ params }: { params: { employeeId: s
   };
 
   const markAttendance = async (date: Date, status: string, leaveType?: string) => {
-    if (!attendance) return;
+  if (!attendance) return;
 
-    try {
-      setSaving(true);
-      const res = await fetch(`/api/attendance/${params.employeeId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          month: selectedMonth,
-          year: selectedYear,
-          date: date.toISOString(),
-          status,
-          leaveType: leaveType || null,
-          checkIn: status === 'present' ? '09:00' : '',
-          checkOut: status === 'present' ? '18:00' : '',
-          remarks: ''
-        })
-      });
+  try {
+    setSaving(true);
+    
+    const payload = {
+      month: selectedMonth,
+      year: selectedYear,
+      date: date.toISOString(),
+      status,
+      leaveType: leaveType || null,
+      leaveReason: (status === 'leave' || status === 'onLeave') ? leaveReason : '',
+      checkIn: status === 'present' ? '09:00' : '',
+      checkOut: status === 'present' ? '18:00' : '',
+      remarks: ''
+    };
 
-      if (!res.ok) throw new Error('Failed to save');
+    console.log('Sending payload:', payload); // ✅ ADD THIS
 
-      const data = await res.json();
-      setAttendance(data.attendance);
-      setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 3000);
-    } catch (error) {
-      console.error('Error saving attendance:', error);
-    } finally {
-      setSaving(false);
+    const res = await fetch(`/api/attendance/${employeeId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    console.log('Response status:', res.status); // ✅ ADD THIS
+
+    if (!res.ok) {
+      const errorData = await res.json(); // ✅ ADD THIS
+      console.error('API Error Response:', errorData); // ✅ ADD THIS
+      throw new Error(errorData.error || 'Failed to save');
     }
-  };
+
+    const data = await res.json();
+    console.log('Success response:', data); // ✅ ADD THIS
+    
+    setAttendance(data.attendance);
+    setShowSuccess(true);
+    setLeaveReason('');
+    setTimeout(() => setShowSuccess(false), 3000);
+     router.refresh(); 
+  } catch (error: any) {
+    console.error('Full error:', error); // ✅ ADD THIS
+    alert(`Failed to save attendance: ${error.message}`); // ✅ ADD THIS
+  } finally {
+    setSaving(false);
+  }
+};
 
   const getStatusColor = (record: AttendanceRecord | null) => {
     if (!record) return 'bg-white border-slate-200';
-    
     switch (record.status) {
-      case 'present':
-        return 'bg-green-50 border-green-300';
-      case 'absent':
-        return 'bg-red-50 border-red-300';
-      case 'leave':
-        return 'bg-blue-50 border-blue-300';
-      case 'halfDay':
-        return 'bg-amber-50 border-amber-300';
-      case 'weekend':
-        return 'bg-purple-50 border-purple-300';
-      case 'holiday':
-        return 'bg-pink-50 border-pink-300';
-      default:
-        return 'bg-white border-slate-200';
+      case 'present': return 'bg-green-50 border-green-300';
+      case 'onLeave': return 'bg-red-50 border-red-300';  
+      case 'leave': return 'bg-blue-50 border-blue-300';
+      case 'halfDay': return 'bg-amber-50 border-amber-300';
+      case 'weekend': return 'bg-purple-50 border-purple-300';
+      case 'holiday': return 'bg-pink-50 border-pink-300';
+      default: return 'bg-white border-slate-200';
     }
   };
 
   const getStatusIcon = (record: AttendanceRecord | null) => {
     if (!record) return null;
-    
     switch (record.status) {
-      case 'present':
-        return <CheckCircle className="w-4 h-4 text-green-600" />;
-      case 'absent':
-        return <XCircle className="w-4 h-4 text-red-600" />;
-      case 'leave':
-        return <Home className="w-4 h-4 text-blue-600" />;
-      case 'halfDay':
-        return <Coffee className="w-4 h-4 text-amber-600" />;
-      default:
-        return null;
+      case 'present': return <CheckCircle className="w-4 h-4 text-green-600" />;
+      case 'onLeave': return <XCircle className="w-4 h-4 text-red-600" />;
+      case 'leave': return <Home className="w-4 h-4 text-blue-600" />;
+      case 'halfDay': return <Coffee className="w-4 h-4 text-amber-600" />;
+      default: return null;
     }
   };
 
@@ -306,14 +328,12 @@ export default function EmployeeAttendance({ params }: { params: { employeeId: s
 
               {/* Calendar Grid */}
               <div className="grid grid-cols-7 gap-2">
-                {/* Day headers */}
                 {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
                   <div key={day} className="text-center text-sm font-semibold text-slate-600 py-2">
                     {day}
                   </div>
                 ))}
 
-                {/* Calendar days */}
                 {calendarDays.map((date, index) => {
                   if (date.getTime() === 0) {
                     return <div key={index} className="aspect-square" />;
@@ -356,7 +376,7 @@ export default function EmployeeAttendance({ params }: { params: { employeeId: s
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 rounded bg-red-100 border-2 border-red-300"></div>
-                    <span className="text-xs text-slate-600">Absent</span>
+                    <span className="text-xs text-slate-600">On Leave</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 rounded bg-blue-100 border-2 border-blue-300"></div>
@@ -379,6 +399,7 @@ export default function EmployeeAttendance({ params }: { params: { employeeId: s
             </div>
 
             {/* Quick Mark Attendance */}
+          {/* Quick Mark Attendance */}
             {selectedDate && (
               <div className="mt-6 bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
                 <h3 className="text-xl font-bold text-slate-900 mb-4">
@@ -400,12 +421,13 @@ export default function EmployeeAttendance({ params }: { params: { employeeId: s
                   </button>
 
                   <button
-                    onClick={() => markAttendance(selectedDate, 'absent')}
-                    disabled={saving}
+                    onClick={() => markAttendance(selectedDate, 'onLeave')}
+                    disabled={saving || !leaveReason.trim()}
                     className="p-4 bg-red-50 border-2 border-red-200 rounded-lg hover:bg-red-100 transition-all text-left disabled:opacity-50"
                   >
                     <XCircle className="w-6 h-6 text-red-600 mb-2" />
-                    <p className="font-semibold text-red-900">Absent</p>
+                    <p className="font-semibold text-red-900">On Leave (LOP)</p>
+                    <p className="text-xs text-red-700 mt-1">Loss of Pay</p>
                   </button>
 
                   <button
@@ -444,6 +466,11 @@ export default function EmployeeAttendance({ params }: { params: { employeeId: s
                     <p className="font-semibold text-rose-900">Sick Leave</p>
                   </button>
                 </div>
+
+                {/* ✅ TEXTAREA ADDED HERE - INSIDE THE CARD */}
+
+                {/* ✅ END OF TEXTAREA SECTION */}
+
               </div>
             )}
           </div>
@@ -465,7 +492,7 @@ export default function EmployeeAttendance({ params }: { params: { employeeId: s
                 </div>
 
                 <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
-                  <span className="text-sm font-medium text-slate-700">Absent</span>
+                  <span className="text-sm font-medium text-slate-700">On Leave (LOP)</span> 
                   <span className="text-xl font-bold text-red-600">{attendance.summary.totalAbsent}</span>
                 </div>
 
@@ -559,7 +586,28 @@ export default function EmployeeAttendance({ params }: { params: { employeeId: s
               </div>
             </div>
           </div>
-        </div>
+      </div>
+       <div className="mt-6 pt-6 border-t border-slate-200">
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    Leave Reason {selectedDate && <span className="text-red-500">*</span>}
+                  </label>
+                  <textarea
+                    value={leaveReason}
+                    onChange={(e) => setLeaveReason(e.target.value)}
+                    placeholder="Enter reason for leave (required for all leave types)..."
+                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent resize-none"
+                    rows={3}
+                    />
+                  <p className="text-xs text-slate-500 mt-2">
+                    💡 This reason will be recorded permanently for future refrences
+                  </p>
+                  {selectedDate && !leaveReason.trim() && (
+                    <p className="text-xs text-red-600 mt-1 font-medium">
+                      ⚠️ Leave reason is required before marking attendance
+                    </p>
+                  )}
+                </div>
+        
       </div>
     </div>
   );
