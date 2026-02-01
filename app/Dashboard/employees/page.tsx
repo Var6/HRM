@@ -103,7 +103,7 @@ React.useEffect(() => {
               <p className="text-slate-600">Manage and monitor your workforce</p>
             </div>
             <Link 
-              href="/employees/create"
+              href="/Dashboard/recruitment"
               className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-lg hover:from-cyan-600 hover:to-blue-700 transition-all flex items-center gap-2 shadow-lg shadow-cyan-500/25"
             >
               <Plus className="w-5 h-5" />

@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   Calendar, Users, TrendingUp, Clock, Plus, Download, Upload,
   Filter, Search, ChevronLeft, ChevronRight, Check, X, Coffee,
@@ -16,23 +16,27 @@ import { downloadPayslip } from '@/lib/payslip-utils';
 
 // Types
 import { SalaryStructure, PayrollRecord } from '@/types/types';
+import { useRouter } from 'next/navigation';
 import type { EmployeeSalaryData } from '@/lib/payslip-utils';
 
-const convertToEmployeeSalaryData = (emp: any): EmployeeSalaryData => {
+const convertToEmployeeSalaryData = (emp: SalaryStructure): EmployeeSalaryData => {
   return {
-    employeeId: emp.employeeCode || emp._id,
-    employeeName: emp.name,
+    employeeId: String(emp.employeeCode || emp.employeeId),
+    employeeName: emp.employeeName,
     department: emp.department,
     designation: emp.designation,
-    fatherName: emp.fatherName || "N/A",
-    dateOfJoining: emp.joinDate || "2020-01-01",
-    panNumber: emp.pan || "N/A",
-    uanNumber: emp.uan || "N/A",
-    esiNumber: emp.esi || "N/A",
-    aadharNumber: emp.aadhar || "N/A",
-    presentDays: emp.presentDays || 30,
+    photograph: emp.photograph,
+    fatherName: "N/A", // You might want to add this to SalaryStructure
+    salaryHold: emp.salaryHold || false,
+    dateOfJoining: "2020-01-01", // You might want to add this to SalaryStructure
+    panNumber: "N/A", // You might want to add this to SalaryStructure
+    uanNumber: emp.uanNumber || "N/A",
+    salaryProcessed: emp.salaryProcessed || false,
+    esiNumber: emp.esiNumber || "N/A",
+    aadharNumber: "N/A", // You might want to add this to SalaryStructure
+    presentDays: 30,
     totalDaysInMonth: 31,
-    modeOfPay: emp.bankAccount ? "Bank Transfer" : "Cash",
+    modeOfPay: emp.bankAccount && emp.bankAccount !== "N/A" ? "Bank Transfer" : "Cash",
     accountNumber: emp.bankAccount || "N/A",
 
     basic: emp.earnings?.basic || 0,
@@ -44,205 +48,82 @@ const convertToEmployeeSalaryData = (emp: any): EmployeeSalaryData => {
 
     pf: emp.deductions?.pf || 0,
     esic: emp.deductions?.esic || 0,
-    advance: emp.deductions?.advance || 0,
+    advance: emp.deductions?.salaryAdvance || 0,
     loan: emp.deductions?.loan || 0,
     lop: emp.deductions?.lop || 0,
     tds: emp.deductions?.tds || 0,
   };
 };
 
-// Mock Data
-const mockSalaryData: SalaryStructure[] = [
-  {
-    employeeId: 1,
-    employeeName: 'ALAKA KUMARI',
-    employeeCode: 'EMP001',
-    designation: 'Dy. Manager-HR',
-    department: 'HR',
-    branch: 'Corporate Office',
-    earnings: {
-      basic: 35000,
-      hra: 14000,
-      conveyance: 2400,
-      monthlyBonus: 3000,
-      quarterlyBonus: 0,
-      specialAllowance: 5600
-    },
-    deductions: {
-      pf: 4200,
-      esic: 525,
-      lop: 0,
-      salaryAdvance: 0,
-      loan: 2000,
-      tds: 1500
-    },
-    grossSalary: 60000,
-    totalDeductions: 8225,
-    netSalary: 51775,
-    bankAccount: '1234567890',
-    pfNumber: 'PF/PAT/123456',
-    uanNumber: '100123456789',
-    esiNumber: 'ESI/123456789'
-  },
-  {
-    employeeId: 2,
-    employeeName: 'SANTOSH KUMAR',
-    employeeCode: 'EMP002',
-    designation: 'Asst. Accountant',
-    department: 'Finance',
-    branch: 'Corporate Office',
-    earnings: {
-      basic: 28000,
-      hra: 11200,
-      conveyance: 2400,
-      monthlyBonus: 2500,
-      quarterlyBonus: 0,
-      specialAllowance: 4400
-    },
-    deductions: {
-      pf: 3360,
-      esic: 420,
-      lop: 0,
-      salaryAdvance: 1000,
-      loan: 0,
-      tds: 800
-    },
-    grossSalary: 48500,
-    totalDeductions: 5580,
-    netSalary: 42920,
-    bankAccount: '9876543210',
-    pfNumber: 'PF/PAT/123457',
-    uanNumber: '100123456790',
-    esiNumber: 'ESI/123456790'
-  },
-  {
-    employeeId: 3,
-    employeeName: 'SANKET PRASAD SINHA',
-    employeeCode: 'EMP003',
-    designation: 'Asst. Branch Incharge',
-    department: 'Operations',
-    branch: 'Patna Branch',
-    earnings: {
-      basic: 32000,
-      hra: 12800,
-      conveyance: 2400,
-      monthlyBonus: 2800,
-      quarterlyBonus: 0,
-      specialAllowance: 5000
-    },
-    deductions: {
-      pf: 3840,
-      esic: 480,
-      lop: 0,
-      salaryAdvance: 0,
-      loan: 1500,
-      tds: 1000
-    },
-    grossSalary: 55000,
-    totalDeductions: 6820,
-    netSalary: 48180,
-    bankAccount: '5555666677',
-    pfNumber: 'PF/PAT/123458',
-    uanNumber: '100123456791',
-    esiNumber: 'ESI/123456791'
-  },
-  {
-    employeeId: 4,
-    employeeName: 'KRITI KAMINI',
-    employeeCode: 'EMP004',
-    designation: 'Office Assistant',
-    department: 'Admin',
-    branch: 'Corporate Office',
-    earnings: {
-      basic: 18000,
-      hra: 7200,
-      conveyance: 2400,
-      monthlyBonus: 1500,
-      quarterlyBonus: 0,
-      specialAllowance: 2900
-    },
-    deductions: {
-      pf: 2160,
-      esic: 270,
-      lop: 0,
-      salaryAdvance: 500,
-      loan: 0,
-      tds: 0
-    },
-    grossSalary: 32000,
-    totalDeductions: 2930,
-    netSalary: 29070,
-    bankAccount: '1111222233',
-    pfNumber: 'PF/PAT/123459',
-    uanNumber: '100123456792',
-    esiNumber: 'ESI/123456792'
-  }
-];
 
-const mockPayrollHistory: PayrollRecord[] = [
-  {
-    id: 1,
-    month: 'January',
-    year: 2026,
-    processedDate: '2026-01-28',
-    totalEmployees: 4,
-    totalGrossSalary: 195500,
-    totalDeductions: 23555,
-    totalNetSalary: 171945,
-    status: 'processing',
-  },
-  {
-    id: 2,
-    month: 'December',
-    year: 2025,
-    processedDate: '2025-12-28',
-    totalEmployees: 4,
-    totalGrossSalary: 195500,
-    totalDeductions: 23555,
-    totalNetSalary: 171945,
-    status: 'paid',
-    approvedBy: 'Sanjay Mishra',
-    paidDate: '2025-12-30'
-  },
-  {
-    id: 3,
-    month: 'November',
-    year: 2025,
-    processedDate: '2025-11-28',
-    totalEmployees: 4,
-    totalGrossSalary: 195500,
-    totalDeductions: 23555,
-    totalNetSalary: 171945,
-    status: 'paid',
-    approvedBy: 'Sanjay Mishra',
-    paidDate: '2025-11-30'
-  }
-];
+// Add useEffect to fetch data
+
 
 const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 export default function PayrollManagement() {
+  const router = useRouter();
+
+  const [salaryData, setSalaryData] = useState<SalaryStructure[]>([]);
+  const [payrollHistory, setPayrollHistory] = useState<PayrollRecord[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedView, setSelectedView] = useState<'overview' | 'salary-structure' | 'process' | 'payslips' | 'reports'>('overview');
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedEmployee, setSelectedEmployee] = useState<number | null>(null);
-  const [showPayslipModal, setShowPayslipModal] = useState(false);
-  const [showProcessModal, setShowProcessModal] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState<string | null>(null);
+  const currentMonth = selectedMonth;
+  const currentYear = selectedYear;
 
-  const filteredEmployees = mockSalaryData.filter(emp =>
-    emp.employeeName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    emp.employeeCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    emp.designation.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
-  // Calculate statistics
-  const stats = {
-    totalEmployees: mockSalaryData.length,
-    totalPayroll: mockSalaryData.reduce((sum, emp) => sum + emp.netSalary, 0),
-    averageSalary: mockSalaryData.reduce((sum, emp) => sum + emp.netSalary, 0) / mockSalaryData.length,
-    totalDeductions: mockSalaryData.reduce((sum, emp) => sum + emp.totalDeductions, 0)
-  };
+
+
+const fetchPayrollData = async () => {
+  try {
+    setLoading(true);
+    const response = await fetch(
+      `/api/payroll?month=${months[selectedMonth]}&year=${selectedYear}`
+    );
+    const data = await response.json();
+    if (data.success) {
+      setSalaryData(data.payrollData);
+    }
+  } catch (error) {
+    console.error('Error fetching payroll:', error);
+  } finally {
+    setLoading(false);
+  }
+};
+
+const fetchPayrollHistory = async () => {
+  try {
+    const response = await fetch('/api/payroll/history');
+    const data = await response.json();
+    if (data.success) {
+      setPayrollHistory(data.history);
+    }
+  } catch (error) {
+    console.error('Error fetching history:', error);
+  }
+};
+
+
+const filteredEmployees = salaryData.filter(emp =>
+  emp.employeeName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  emp.employeeCode?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  emp.designation?.toLowerCase().includes(searchQuery.toLowerCase())
+);
+
+
+ // Calculate statistics
+const stats = {
+  totalEmployees: salaryData.length,
+  totalPayroll: salaryData.reduce((sum, emp) => sum + (emp.netSalary || 0), 0),
+  averageSalary: salaryData.length > 0 
+    ? salaryData.reduce((sum, emp) => sum + (emp.netSalary || 0), 0) / salaryData.length 
+    : 0, // ✅ Prevent division by zero
+  totalDeductions: salaryData.reduce((sum, emp) => sum + (emp.totalDeductions || 0), 0)
+};
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
@@ -253,11 +134,25 @@ export default function PayrollManagement() {
     }).format(amount);
   };
 
+      useEffect(() => {
+  fetchPayrollData();
+  fetchPayrollHistory();
+   // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [selectedMonth, selectedYear]);
+
   return (
+    
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6 pt-9">
       <div className="max-w-7xl mx-auto">
-        
-        {/* Header */}
+        {loading ? (
+          <div className="flex items-center justify-center min-h-screen">
+            <div className="text-center">
+              <div className="w-16 h-16 border-4 border-cyan-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+              <p className="text-slate-600">Loading payroll data...</p>
+            </div>
+          </div>
+        ) : ( <>
+   
         <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
             <div>
@@ -274,7 +169,7 @@ export default function PayrollManagement() {
                 Export
               </button>
               <button 
-                onClick={() => setShowProcessModal(true)}
+                onClick={() => router.push(`/Dashboard/payroll/${months[currentMonth].toLowerCase()}-${currentYear}`)}
                 className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-lg hover:from-cyan-600 hover:to-blue-700 transition-all flex items-center gap-2 shadow-lg shadow-cyan-500/25"
               >
                 <Calculator className="w-5 h-5" />
@@ -359,7 +254,6 @@ export default function PayrollManagement() {
           </div>
         </div>
 
-        {/* Overview Tab */}
         {selectedView === 'overview' && (
           <div className="space-y-6">
             {/* Search */}
@@ -380,14 +274,25 @@ export default function PayrollManagement() {
             <div className="space-y-4">
               {filteredEmployees.map((employee) => (
                 <div
-                  key={employee.employeeId}
+                  key={employee.employeeCode
+}
                   className="bg-white rounded-xl border border-slate-200 hover:border-cyan-300 hover:shadow-lg transition-all"
                 >
                   <div className="p-6">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-start gap-4">
                         <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-cyan-100 to-blue-100 flex items-center justify-center border-2 border-slate-200">
-                          <User className="w-8 h-8 text-cyan-600" />
+                         {employee.photograph ? ( // ✅ Fixed from employeephotograph
+  <img 
+    src={employee.photograph} 
+    alt={employee.employeeName}
+    className="w-16 h-16 rounded-xl object-cover"
+  />
+) : (
+  <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-cyan-100 to-blue-100 flex items-center justify-center">
+    <User className="w-8 h-8 text-cyan-600" />
+  </div>
+)}
                         </div>
                         <div>
                           <h3 className="text-xl font-bold text-slate-900 mb-1">{employee.employeeName}</h3>
@@ -404,17 +309,20 @@ export default function PayrollManagement() {
 
                       <div className="flex items-center gap-2">
                         <button
-                          onClick={() => setShowPayslipModal(true)}
+                          onClick={() => router.push(`/Dashboard/employees/${employee.employeeCode}`)}
                           className="px-4 py-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-all flex items-center gap-2"
                         >
                           <Receipt className="w-4 h-4" />
                           Payslip
                         </button>
                         <button
-                          onClick={() => setSelectedEmployee(selectedEmployee === employee.employeeId ? null : employee.employeeId)}
+                          onClick={() => setSelectedEmployee(selectedEmployee === employee.employeeCode
+ ? null : employee.employeeCode
+)}
                           className="px-4 py-2 bg-cyan-50 text-cyan-600 rounded-lg hover:bg-cyan-100 transition-all flex items-center gap-2"
                         >
-                          {selectedEmployee === employee.employeeId ? (
+                          {selectedEmployee === employee.employeeCode
+ ? (
                             <>
                               <ChevronUp className="w-4 h-4" />
                               Hide
@@ -430,7 +338,11 @@ export default function PayrollManagement() {
                     </div>
 
                     {/* Quick Stats */}
-                    <div className="grid md:grid-cols-4 gap-4">
+                    <div className="grid md:grid-cols-4 gap-4">                
+                      </div>
+
+                    {/* Quick Stats */}
+                    <div className="grid md:grid-cols-5 gap-4">
                       <div className="p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg border border-green-200">
                         <p className="text-xs text-green-700 mb-1 font-semibold">GROSS SALARY</p>
                         <p className="text-2xl font-bold text-green-600">{formatCurrency(employee.grossSalary)}</p>
@@ -447,10 +359,28 @@ export default function PayrollManagement() {
                         <p className="text-xs text-slate-600 mb-1 font-semibold">BANK A/C</p>
                         <p className="text-lg font-bold text-slate-900">{employee.bankAccount}</p>
                       </div>
-                    </div>
+                      
+                      {/* Status Badge */}
+                      <div className="p-4 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-lg border border-purple-200 flex items-center justify-center">
+                        {employee.salaryHold ? (
+                          <span className="px-3 py-1 bg-red-100 text-red-700 text-xs font-semibold rounded-full">
+                            ON HOLD
+                          </span>
+                        ) : employee.salaryProcessed ? (
+                          <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">
+                            PROCESSED
+                          </span>
+                        ) : (
+                          <span className="px-3 py-1 bg-amber-100 text-amber-700 text-xs font-semibold rounded-full">
+                            PENDING
+                          </span>
+                        )}
+                      </div>
+                    </div>                   
 
                     {/* Expanded Details */}
-                    {selectedEmployee === employee.employeeId && (
+                    {selectedEmployee === employee.employeeCode
+ && (
                       <div className="pt-6 mt-6 border-t border-slate-200">
                         <div className="grid md:grid-cols-2 gap-6">
                           {/* Earnings */}
@@ -462,29 +392,29 @@ export default function PayrollManagement() {
                             <div className="space-y-3">
                               <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
                                 <span className="text-slate-700">Basic Salary</span>
-                                <span className="font-bold text-slate-900">{formatCurrency(employee.earnings.basic)}</span>
+                                <span className="font-bold text-slate-900">{formatCurrency(employee.earnings?.basic ?? 0)}</span>
                               </div>
                               <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
                                 <span className="text-slate-700">HRA (40%)</span>
-                                <span className="font-bold text-slate-900">{formatCurrency(employee.earnings.hra)}</span>
+                                <span className="font-bold text-slate-900">{formatCurrency(employee.earnings?.hra ?? 0)}</span>
                               </div>
                               <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
                                 <span className="text-slate-700">Conveyance</span>
-                                <span className="font-bold text-slate-900">{formatCurrency(employee.earnings.conveyance)}</span>
+                                <span className="font-bold text-slate-900">{formatCurrency(employee.earnings?.conveyance ?? 0)}</span>
                               </div>
                               <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
                                 <span className="text-slate-700">Monthly Bonus</span>
-                                <span className="font-bold text-slate-900">{formatCurrency(employee.earnings.monthlyBonus)}</span>
+                                <span className="font-bold text-slate-900">{formatCurrency(employee.earnings?.monthlyBonus ?? 0)}</span>
                               </div>
-                              {employee.earnings.quarterlyBonus > 0 && (
+                              {(employee.earnings?.quarterlyBonus ?? 0) > 0 && (
                                 <div className="flex items-center justify-between p-3 bg-amber-50 rounded-lg border border-amber-200">
                                   <span className="text-slate-700">Quarterly Bonus</span>
-                                  <span className="font-bold text-amber-600">{formatCurrency(employee.earnings.quarterlyBonus)}</span>
+                                  <span className="font-bold text-amber-600">{formatCurrency(employee.earnings?.quarterlyBonus ?? 0)}</span>
                                 </div>
                               )}
                               <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
                                 <span className="text-slate-700">Special Allowance</span>
-                                <span className="font-bold text-slate-900">{formatCurrency(employee.earnings.specialAllowance)}</span>
+                                <span className="font-bold text-slate-900">{formatCurrency(employee.earnings?.specialAllowance ?? 0)}</span>
                               </div>
                               <div className="flex items-center justify-between p-3 bg-green-100 rounded-lg border-2 border-green-300 mt-2">
                                 <span className="font-semibold text-green-800">Total Earnings</span>
@@ -505,37 +435,37 @@ export default function PayrollManagement() {
                                   <span className="text-slate-700 block">PF (12%)</span>
                                   <span className="text-xs text-slate-500">{employee.pfNumber}</span>
                                 </div>
-                                <span className="font-bold text-slate-900">{formatCurrency(employee.deductions.pf)}</span>
+                                <span className="font-bold text-slate-900">{formatCurrency(employee.deductions?.pf ?? 0)}</span>
                               </div>
                               <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
                                 <div>
                                   <span className="text-slate-700 block">ESIC</span>
                                   <span className="text-xs text-slate-500">{employee.esiNumber}</span>
                                 </div>
-                                <span className="font-bold text-slate-900">{formatCurrency(employee.deductions.esic)}</span>
+                                <span className="font-bold text-slate-900">{formatCurrency(employee.deductions?.esic ?? 0)}</span>
                               </div>
-                              {employee.deductions.lop > 0 && (
+                              {(employee.deductions?.lop ?? 0) > 0 && (
                                 <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg border border-red-200">
                                   <span className="text-slate-700">LOP (Loss of Pay)</span>
-                                  <span className="font-bold text-red-600">{formatCurrency(employee.deductions.lop)}</span>
+                                  <span className="font-bold text-red-600">{formatCurrency((employee.deductions?.lop ?? 0))}</span>
                                 </div>
                               )}
-                              {employee.deductions.salaryAdvance > 0 && (
+                              {(employee.deductions?.salaryAdvance ?? 0) > 0 && (
                                 <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
                                   <span className="text-slate-700">Salary Advance</span>
-                                  <span className="font-bold text-slate-900">{formatCurrency(employee.deductions.salaryAdvance)}</span>
+                                  <span className="font-bold text-slate-900">{formatCurrency(employee.deductions?.salaryAdvance ?? 0)}</span>
                                 </div>
                               )}
-                              {employee.deductions.loan > 0 && (
+                              {(employee.deductions?.loan ?? 0) > 0 && (
                                 <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
                                   <span className="text-slate-700">Loan Deduction</span>
-                                  <span className="font-bold text-slate-900">{formatCurrency(employee.deductions.loan)}</span>
+                                  <span className="font-bold text-slate-900">{formatCurrency(employee.deductions?.loan ?? 0)}</span>
                                 </div>
                               )}
-                              {employee.deductions.tds > 0 && (
+                              {(employee.deductions?.tds ?? 0) > 0 && (
                                 <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
                                   <span className="text-slate-700">TDS</span>
-                                  <span className="font-bold text-slate-900">{formatCurrency(employee.deductions.tds)}</span>
+                                  <span className="font-bold text-slate-900">{formatCurrency(employee.deductions?.tds ?? 0)}</span>
                                 </div>
                               )}
                               <div className="flex items-center justify-between p-3 bg-red-100 rounded-lg border-2 border-red-300 mt-2">
@@ -608,19 +538,20 @@ export default function PayrollManagement() {
                   </tr>
                 </thead>
                 <tbody>
-                  {mockSalaryData.map((employee) => (
-                    <tr key={employee.employeeId} className="border-b border-slate-200 hover:bg-slate-50 transition-all">
+                  {salaryData.map((employee) => (
+                    <tr key={employee.employeeCode
+} className="border-b border-slate-200 hover:bg-slate-50 transition-all">
                       <td className="px-6 py-4">
                         <div>
                           <p className="font-semibold text-slate-900">{employee.employeeName}</p>
                           <p className="text-xs text-slate-500">{employee.employeeCode} • {employee.designation}</p>
                         </div>
                       </td>
-                      <td className="px-4 py-4 text-right text-slate-900">{formatCurrency(employee.earnings.basic)}</td>
-                      <td className="px-4 py-4 text-right text-slate-900">{formatCurrency(employee.earnings.hra)}</td>
-                      <td className="px-4 py-4 text-right text-slate-900">{formatCurrency(employee.earnings.conveyance)}</td>
-                      <td className="px-4 py-4 text-right text-slate-900">{formatCurrency(employee.earnings.monthlyBonus)}</td>
-                      <td className="px-4 py-4 text-right text-slate-900">{formatCurrency(employee.earnings.specialAllowance)}</td>
+                      <td className="px-4 py-4 text-right text-slate-900">{formatCurrency(employee.earnings?.basic ?? 0)}</td>
+                      <td className="px-4 py-4 text-right text-slate-900">{formatCurrency(employee.earnings?.hra ?? 0)}</td>
+                      <td className="px-4 py-4 text-right text-slate-900">{formatCurrency(employee.earnings?.conveyance ?? 0)}</td>
+                      <td className="px-4 py-4 text-right text-slate-900">{formatCurrency(employee.earnings?.monthlyBonus ?? 0)}</td>
+                      <td className="px-4 py-4 text-right text-slate-900">{formatCurrency(employee.earnings?.specialAllowance ?? 0)}</td>
                       <td className="px-4 py-4 text-right font-bold text-green-600 bg-green-50">{formatCurrency(employee.grossSalary)}</td>
                       <td className="px-4 py-4 text-right font-bold text-red-600 bg-red-50">{formatCurrency(employee.totalDeductions)}</td>
                       <td className="px-4 py-4 text-right font-bold text-cyan-600 bg-cyan-50">{formatCurrency(employee.netSalary)}</td>
@@ -639,28 +570,28 @@ export default function PayrollManagement() {
                   <tr className="bg-slate-100 font-bold">
                     <td className="px-6 py-4 text-slate-900">TOTALS</td>
                     <td className="px-4 py-4 text-right text-slate-900">
-                      {formatCurrency(mockSalaryData.reduce((sum, emp) => sum + emp.earnings.basic, 0))}
+                      {formatCurrency(salaryData.reduce((sum, emp) => sum + (emp.earnings?.basic ?? 0), 0))}
                     </td>
                     <td className="px-4 py-4 text-right text-slate-900">
-                      {formatCurrency(mockSalaryData.reduce((sum, emp) => sum + emp.earnings.hra, 0))}
+                      {formatCurrency(salaryData.reduce((sum, emp) => sum + emp.earnings.hra, 0))}
                     </td>
                     <td className="px-4 py-4 text-right text-slate-900">
-                      {formatCurrency(mockSalaryData.reduce((sum, emp) => sum + emp.earnings.conveyance, 0))}
+                      {formatCurrency(salaryData.reduce((sum, emp) => sum + emp.earnings.conveyance, 0))}
                     </td>
                     <td className="px-4 py-4 text-right text-slate-900">
-                      {formatCurrency(mockSalaryData.reduce((sum, emp) => sum + emp.earnings.monthlyBonus, 0))}
+                      {formatCurrency(salaryData.reduce((sum, emp) => sum + emp.earnings.monthlyBonus, 0))}
                     </td>
                     <td className="px-4 py-4 text-right text-slate-900">
-                      {formatCurrency(mockSalaryData.reduce((sum, emp) => sum + emp.earnings.specialAllowance, 0))}
+                      {formatCurrency(salaryData.reduce((sum, emp) => sum + emp.earnings.specialAllowance, 0))}
                     </td>
                     <td className="px-4 py-4 text-right text-green-700 bg-green-100">
-                      {formatCurrency(mockSalaryData.reduce((sum, emp) => sum + emp.grossSalary, 0))}
+                      {formatCurrency(salaryData.reduce((sum, emp) => sum + (emp.grossSalary ?? 0), 0))}
                     </td>
                     <td className="px-4 py-4 text-right text-red-700 bg-red-100">
-                      {formatCurrency(mockSalaryData.reduce((sum, emp) => sum + emp.totalDeductions, 0))}
+                      {formatCurrency(salaryData.reduce((sum, emp) => sum + (emp.totalDeductions ?? 0), 0))}
                     </td>
                     <td className="px-4 py-4 text-right text-cyan-700 bg-cyan-100 text-lg">
-                      {formatCurrency(mockSalaryData.reduce((sum, emp) => sum + emp.netSalary, 0))}
+                      {formatCurrency(salaryData.reduce((sum, emp) => sum + (emp.netSalary ?? 0), 0))}
                     </td>
                     <td></td>
                   </tr>
@@ -703,15 +634,15 @@ export default function PayrollManagement() {
               <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border-2 border-green-200 shadow-sm p-6">
                 <h4 className="text-sm font-semibold text-green-800 mb-4">Total Gross Salary</h4>
                 <p className="text-4xl font-bold text-green-600 mb-2">
-                  {formatCurrency(mockSalaryData.reduce((sum, emp) => sum + emp.grossSalary, 0))}
+                  {formatCurrency(salaryData.reduce((sum, emp) => sum + (emp.grossSalary ?? 0), 0))}
                 </p>
-                <p className="text-sm text-green-700">{mockSalaryData.length} employees</p>
+                <p className="text-sm text-green-700">{salaryData.length} employees</p>
               </div>
 
               <div className="bg-gradient-to-br from-red-50 to-rose-50 rounded-xl border-2 border-red-200 shadow-sm p-6">
                 <h4 className="text-sm font-semibold text-red-800 mb-4">Total Deductions</h4>
                 <p className="text-4xl font-bold text-red-600 mb-2">
-                  {formatCurrency(mockSalaryData.reduce((sum, emp) => sum + emp.totalDeductions, 0))}
+                  {formatCurrency(salaryData.reduce((sum, emp) => sum + (emp.totalDeductions ?? 0), 0))}
                 </p>
                 <p className="text-sm text-red-700">PF, ESIC, Loans, Advances</p>
               </div>
@@ -719,7 +650,7 @@ export default function PayrollManagement() {
               <div className="bg-gradient-to-br from-cyan-50 to-blue-50 rounded-xl border-2 border-cyan-200 shadow-sm p-6">
                 <h4 className="text-sm font-semibold text-cyan-800 mb-4">Total Net Payable</h4>
                 <p className="text-4xl font-bold text-cyan-600 mb-2">
-                  {formatCurrency(mockSalaryData.reduce((sum, emp) => sum + emp.netSalary, 0))}
+                  {formatCurrency(salaryData.reduce((sum, emp) => sum + (emp.netSalary ?? 0), 0))}
                 </p>
                 <p className="text-sm text-cyan-700">Ready for disbursement</p>
               </div>
@@ -785,7 +716,7 @@ export default function PayrollManagement() {
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
               <h3 className="text-xl font-bold text-slate-900 mb-6">Payroll History</h3>
               <div className="space-y-3">
-                {mockPayrollHistory.map((record) => (
+                {payrollHistory.map((record) => (
                   <div key={record.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-lg hover:bg-slate-100 transition-all">
                     <div className="flex items-center gap-4">
                       <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
@@ -853,8 +784,9 @@ export default function PayrollManagement() {
               </div>
 
               <div className="grid md:grid-cols-2 gap-4">
-                {mockSalaryData.map((employee) => (
-                  <div key={employee.employeeId} className="p-4 bg-slate-50 border-2 border-slate-200 rounded-lg hover:border-cyan-300 transition-all">
+                {salaryData.map((employee) => (
+                  <div key={employee.employeeCode
+} className="p-4 bg-slate-50 border-2 border-slate-200 rounded-lg hover:border-cyan-300 transition-all">
                     <div className="flex items-center justify-between mb-3">
                       <div>
                         <p className="font-semibold text-slate-900">{employee.employeeName}</p>
@@ -863,10 +795,11 @@ export default function PayrollManagement() {
                       <button
   onClick={() =>
     downloadPayslip(
-      convertToEmployeeSalaryData(employee),
-      "January",
-      "2026"
-    )
+  convertToEmployeeSalaryData(employee),
+  months[selectedMonth],
+  String(selectedYear)
+)
+
   }
   className="px-3 py-1 bg-green-600 text-white rounded-md"
 >
@@ -1040,7 +973,11 @@ export default function PayrollManagement() {
             </div>
           </div>
         )}
-      </div>
+
+
+     </>
+      )}
+        </div>
     </div>
   );
 }

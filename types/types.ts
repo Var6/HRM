@@ -130,12 +130,20 @@ export type SalaryComponent = 'basic' | 'hra' | 'conveyance' | 'monthly_bonus' |
 export type DeductionComponent = 'pf' | 'esic' | 'lop' | 'salary_advance' | 'loan' | 'tds';
 
 export interface SalaryStructure {
-  employeeId: number;
+  employeeId: number | string;
   employeeName: string;
+  photograph?: string | null;
   employeeCode: string;
   designation: string;
   department: string;
   branch: string;
+   fatherName?: string;
+  dateOfJoining?: string;
+  panNumber?: string;
+  aadharNumber?: string;
+  salaryProcessed?: boolean;  // ✅ Added
+  salaryHold?: boolean;        // ✅ Added
+  salaryHoldReason?: string;   // ✅ Added
   earnings: {
     basic: number;
     hra: number;
@@ -155,12 +163,11 @@ export interface SalaryStructure {
   grossSalary: number;
   totalDeductions: number;
   netSalary: number;
-  bankAccount: string;
-  pfNumber: string;
-  uanNumber: string;
-  esiNumber: string;
+  bankAccount?: string;
+  pfNumber?: string;
+  uanNumber?: string;
+  esiNumber?: string;
 }
-
 export interface PayrollRecord {
   id: number;
   month: string;

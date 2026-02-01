@@ -9,6 +9,16 @@ const WorkExperienceSchema = new mongoose.Schema({
 const SalarySchema = new mongoose.Schema({
   earnings: mongoose.Schema.Types.Mixed,
   deductions: mongoose.Schema.Types.Mixed,
+  salaryProcessed: { 
+  type: Boolean, 
+  default: false 
+},
+salaryProcessedDate: String,
+salaryHold: { 
+  type: Boolean, 
+  default: false 
+},
+salaryHoldReason: String,
 });
 
 const LeaveSchema = new mongoose.Schema({

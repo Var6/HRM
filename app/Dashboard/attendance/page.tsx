@@ -26,7 +26,7 @@ interface DailyAttendance {
 
 export default function AttendanceManagement() {
   const [selectedView, setSelectedView] = useState<'overview' | 'monthly' | 'daily' | 'reports'>('overview');
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+  
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedEmployee, setSelectedEmployee] = useState<number | null>(null);
@@ -34,19 +34,43 @@ export default function AttendanceManagement() {
   const [attendanceData, setAttendanceData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
- const filteredEmployees = attendanceData.filter(item =>
-  item.employee.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-  item.employee.employeeCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
-  item.employee.designation.toLowerCase().includes(searchQuery.toLowerCase())
-);
+ const filteredEmployees = attendanceData.filter(item => {
+  const emp = item.employee;
+  if (!emp) return false;
+
+  const q = searchQuery.toLowerCase();
+
+  return (
+    emp.name?.toLowerCase().includes(q) ||
+    emp.employeeCode?.toLowerCase().includes(q) ||
+    emp.designation?.toLowerCase().includes(q)
+  );
+});
+
+const monthIndexToName = (index: number) => [
+  'Jan','Feb','Mar','Apr','May','Jun',
+  'Jul','Aug','Sep','Oct','Nov','Dec'
+][index];
+
+
 
   // Calculate statistics
 const stats = {
   totalEmployees: attendanceData.length,
   averageLeavesTaken: attendanceData.length > 0 
-    ? (attendanceData.reduce((sum, item) => sum + item.attendance.summary.totalLeaves, 0) / attendanceData.length).toFixed(1)
-    : '0',
-  totalLeavesThisMonth: attendanceData.reduce((sum, item) => sum + item.attendance.summary.totalLeaves, 0),
+  ? (
+      attendanceData.reduce(
+        (sum, item) => sum + (item.attendance?.summary?.totalLeaves || 0),
+        0
+      ) / attendanceData.length
+    ).toFixed(1)
+  : '0',
+
+totalLeavesThisMonth: attendanceData.reduce(
+  (sum, item) => sum + (item.attendance?.summary?.totalLeaves || 0),
+  0
+),
+
   employeesOnLeaveToday: attendanceData.filter(item => {
     const today = new Date().toDateString();
     return item.attendance.records?.some((r: any) => 
@@ -56,15 +80,57 @@ const stats = {
 };
     useEffect(() => {
   fetchAttendanceData();
-}, [selectedMonth, selectedYear]);
+}, [selectedYear]);
 
 const fetchAttendanceData = async () => {
   try {
     setLoading(true);
-    const res = await fetch(`/api/attendance?month=${selectedMonth}&year=${selectedYear}`);
+   const res = await fetch(
+  `/api/attendance?fromYear=${selectedYear}&toYear=${selectedYear + 1}`
+);
+
     if (!res.ok) throw new Error('Failed to fetch');
     const data = await res.json();
-    setAttendanceData(data.data);
+  const normalized = data.data.map((item: any) => {
+  const monthlyLeaves: Record<string, number | null> = {};
+
+
+  const attendanceList = Array.isArray(item.attendance)
+  ? item.attendance
+  : item.attendance
+  ? [item.attendance]
+  : [];
+
+attendanceList.forEach((att: any) => {
+  if (typeof att.month === 'number') {
+    const monthName = monthIndexToName(att.month);
+    monthlyLeaves[monthName] = att.summary?.totalLeaves || 0;
+  }
+});
+
+
+  // Ensure Apr–Mar exists
+  months.forEach(m => {
+  if (!(m in monthlyLeaves)) {
+    monthlyLeaves[m] = null; // 🔹 Use null for no data
+  }
+});
+
+  return {
+    ...item,
+    employee: {
+      ...item.employee,
+      monthlyLeaves,
+     totalLeavesTaken: Object.values(monthlyLeaves)
+  .filter((v) => v !== null) // only real months
+  .reduce((sum: number, val) => sum + (val || 0), 0)
+
+    }
+  };
+});
+
+setAttendanceData(normalized);
+
   } catch (error) {
     console.error('Error fetching attendance:', error);
   } finally {
@@ -77,15 +143,14 @@ const handleQuickMark = async (employeeId: string, status: string, leaveType?: s
   try {
     const today = new Date();
     
-    const payload = {
-      employeeId,
-      date: today.toISOString(),
-      month: selectedMonth,
-      year: selectedYear,
-      status,
-      leaveType,
-      leaveReason: leaveReason || ''  // ✅ This line was already there but now the parameter exists
-    };
+  const payload = {
+  employeeId,
+  date: today.toISOString(), // backend extracts month
+  year: selectedYear,
+  status,
+  leaveType,
+  leaveReason
+};
 
     const res = await fetch(`/api/attendance/${employeeId}`, {
       method: 'PUT',
@@ -295,7 +360,7 @@ if (loading) {
                           onClick={() => setSelectedEmployee(selectedEmployee === employee._id ? null : employee._id)}
                           className="px-4 py-2 bg-cyan-50 text-cyan-600 rounded-lg hover:bg-cyan-100 transition-all flex items-center gap-2"
                         >
-                          {selectedEmployee === employee.id ? (
+                          {selectedEmployee === employee._id ? (
                             <>
                               <ChevronUp className="w-4 h-4" />
                               Hide Details
@@ -343,12 +408,28 @@ if (loading) {
                     </div>
 
                     {/* Expanded Details - Quick View */}
-                    {selectedEmployee === employee.id && (
+                    {selectedEmployee === employee._id && (
                       <div className="pt-4 border-t border-slate-200">
                         <h4 className="text-lg font-semibold text-slate-900 mb-4">Monthly Leave Breakdown</h4>
                         <div className="grid grid-cols-6 gap-3">
                           {months.map((month) => {
-                            const leaves = employee.monthlyLeaves?.[month] || 0;
+                           const leaves = employee.monthlyLeaves?.[month];
+
+<span className={`inline-block px-2 py-1 rounded text-sm font-semibold ${
+  leaves === null
+    ? 'bg-slate-100 text-slate-400' // gray for no data
+    : leaves === 0
+      ? 'bg-green-100 text-green-700'
+      : leaves < 2
+        ? 'bg-blue-100 text-blue-700'
+        : leaves < 5
+          ? 'bg-amber-100 text-amber-700'
+          : 'bg-red-100 text-red-700'
+}`}>
+  {leaves === null ? '—' : leaves}
+</span>
+
+
                             return (
                               <div
                                 key={month}
@@ -382,17 +463,24 @@ if (loading) {
         {selectedView === 'monthly' && (
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-slate-900">Monthly Attendance Report</h2>
+              <h2 className="text-2xl font-bold text-slate-900">  Yearly Attendance Report ({selectedYear})</h2>
               <div className="flex items-center gap-3">
-                <button className="p-2 hover:bg-slate-100 rounded-lg transition-all">
-                  <ChevronLeft className="w-5 h-5 text-slate-600" />
-                </button>
-                <span className="px-4 py-2 bg-slate-100 rounded-lg font-semibold text-slate-900">
-                  {months[selectedMonth]} {selectedYear}
-                </span>
-                <button className="p-2 hover:bg-slate-100 rounded-lg transition-all">
-                  <ChevronRight className="w-5 h-5 text-slate-600" />
-                </button>
+               <button 
+    onClick={() => setSelectedYear(prev => prev - 1)}
+  className="p-2 hover:bg-slate-100 rounded-lg transition-all"
+>
+  <ChevronLeft className="w-5 h-5 text-slate-600" />
+</button>
+<span className="px-4 py-2 bg-slate-100 rounded-lg font-semibold text-slate-900">
+  {selectedYear}–{selectedYear + 1}
+</span>
+
+<button 
+    onClick={() => setSelectedYear(prev => prev + 1)}
+  className="p-2 hover:bg-slate-100 rounded-lg transition-all"
+>
+  <ChevronRight className="w-5 h-5 text-slate-600" />
+</button>
               </div>
             </div>
 
@@ -442,7 +530,13 @@ if (loading) {
                           {employee.totalLeavesTaken}
                         </td>
                         <td className="px-4 py-3 text-center font-bold text-green-600">
-                          {employee.leaveBalance?.total || 0}
+                          {(
+  (employee.leaveBalance?.casualLeave || 0) +
+  (employee.leaveBalance?.earnedLeave || 0) -
+  employee.totalLeavesTaken
+).toFixed(1)
+}
+
                         </td>
                       </tr>
                     );
@@ -474,7 +568,17 @@ if (loading) {
                   <div key={employee._id} className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-200 hover:border-cyan-300 transition-all">
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-cyan-100 to-blue-100 flex items-center justify-center">
-                        <User className="w-6 h-6 text-cyan-600" />
+                       {employee.photograph ? (
+                                           <img 
+                                             src={employee.photograph} 
+                                             alt={employee.name}
+                                             className="w-24 h-24 rounded-xl object-cover border-4 border-slate-200"
+                                           />
+                                         ) : (
+                                           <div className="w-24 h-24 rounded-xl bg-gradient-to-br from-cyan-100 to-blue-100 flex items-center justify-center border-4 border-slate-200">
+                                             <User className="w-12 h-12 text-cyan-600" />
+                                           </div>
+                                         )}
                       </div>
                       <div>
                         <p className="font-semibold text-slate-900">{employee.name}</p>
@@ -526,21 +630,21 @@ if (loading) {
                       {/* ON LEAVE (LOP) BUTTON */}
 <button 
   onClick={() => {
-    const reason = prompt('Enter leave reason (required):');
+    const reason = prompt('Enter absence reason:');
     if (reason && reason.trim()) {
-      handleQuickMark(employee._id, 'onLeave', undefined, reason);
+      handleQuickMark(employee._id, 'absent', undefined, reason);
     } else {
-      alert('Leave reason is required!');
+      alert('Absence reason is required!');
     }
   }}
   className={`px-4 py-2 rounded-lg transition-all font-medium flex items-center gap-2 ${
-    currentStatus === 'onLeave' 
+    currentStatus === 'absent' 
       ? 'bg-red-600 text-white shadow-md' 
       : 'bg-white border border-slate-200 text-slate-600 hover:bg-red-50'
   }`}
 >
   <XCircle className="w-4 h-4" />
-  On Leave (LOP)
+  Absent
 </button>
                     </div>
                   </div>

@@ -13,12 +13,15 @@ export interface EmployeeSalaryData {
   panNumber: string;
   uanNumber: string;
   esiNumber: string;
+  photograph?: string | null;
+  salaryProcessed?:boolean;
   aadharNumber: string;
   presentDays: number;
   totalDaysInMonth: number;
   modeOfPay: string;
   accountNumber: string;
   basic: number;
+  salaryHold?:boolean;
   hra: number;
   conveyance: number;
   specialAllowance: number;
@@ -76,6 +79,7 @@ export const calculatePayslipData = (
     fatherName: employee.fatherName,
     dateOfJoining: employee.dateOfJoining,
     panNumber: employee.panNumber,
+
     uanNumber: employee.uanNumber,
     esiNumber: employee.esiNumber,
     aadharNumber: employee.aadharNumber,
@@ -263,33 +267,3 @@ export const emailPayslip = async (
   }
 };
 
-// Example usage data
-export const exampleEmployeeData: EmployeeSalaryData = {
-  employeeId: 'EMP001',
-  employeeName: 'ALAKA KUMARI',
-  department: 'HR',
-  designation: 'Dy. Manager-HR',
-  fatherName: 'Mr. Kumari Father',
-  dateOfJoining: '2014-01-01',
-  panNumber: 'ABCDE1234F',
-  uanNumber: '100123456789',
-  esiNumber: 'ESI123456789',
-  aadharNumber: '1234-5678-9012',
-  presentDays: 28,
-  totalDaysInMonth: 31,
-  modeOfPay: 'BANK OF INDIA',
-  accountNumber: '1234567890',
-  basic: 35000,
-  hra: 14000,
-  conveyance: 2400,
-  specialAllowance: 5600,
-  monthlyBonus: 3000,
-  quarterlyBonus: 0,
-  pf: 4200,
-  esic: 525,
-  advance: 0,
-  loan: 2000,
-  lop: 0,
-  tds: 1500,
-  remarks: 'Regular monthly salary',
-};

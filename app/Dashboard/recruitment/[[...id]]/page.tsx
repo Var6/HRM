@@ -6,6 +6,8 @@ import {
   CheckCircle, FileText, Upload, Eye, EyeOff, ChevronDown, Book, IdCard
 } from 'lucide-react';
 import type { EmployeeFormData, WorkExperience, ActiveTab } from '@/types/types';
+import { useRouter } from 'next/navigation';
+
 
 const emptyEmployee: EmployeeFormData = {
   name: '',
@@ -88,6 +90,8 @@ export default function CreateEmployee() {
   const [sameAsPermAddress, setSameAsPermAddress] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  
+  const router=useRouter();
 
   
 
@@ -274,6 +278,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
             </div>
             <div className="flex items-center gap-3">
               <button
+              onClick={()=>router.back()}
                 type="button"
                 className="px-6 py-3 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-all flex items-center gap-2"
               >
