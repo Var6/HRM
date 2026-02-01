@@ -309,11 +309,11 @@ const stats = {
 
                       <div className="flex items-center gap-2">
                         <button
-                          onClick={() => router.push(`/Dashboard/employees/${employee.employeeCode}`)}
+                          onClick={() => router.push(`/Dashboard/payroll/${employee.employeeId}`)}
                           className="px-4 py-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-all flex items-center gap-2"
                         >
                           <Receipt className="w-4 h-4" />
-                          Payslip
+                          Payments
                         </button>
                         <button
                           onClick={() => setSelectedEmployee(selectedEmployee === employee.employeeCode
@@ -557,10 +557,14 @@ const stats = {
                       <td className="px-4 py-4 text-right font-bold text-cyan-600 bg-cyan-50">{formatCurrency(employee.netSalary)}</td>
                       <td className="px-4 py-4">
                         <div className="flex items-center justify-center gap-2">
-                          <button className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-all">
+                          <button className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-all"
+                          onClick={()=>router.push(`/Dashboard/recruitment/${employee.employeeId}`)}
+                          >
                             <Edit className="w-4 h-4" />
                           </button>
-                          <button className="p-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition-all">
+                          <button className="p-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition-all"
+                          onClick={()=>router.push(`/Dashboard/payroll/${employee.employeeId}`)}
+                          >
                             <Eye className="w-4 h-4" />
                           </button>
                         </div>
@@ -822,7 +826,11 @@ const stats = {
                         <Download className="w-4 h-4" />
                         Download
                       </button>
-                      <button className="flex-1 px-4 py-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-all flex items-center justify-center gap-2">
+                      <button className="flex-1 px-4 py-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-all flex items-center justify-center gap-2"
+                      onClick={() => {
+    window.location.href = `mailto:----//////---------`;
+  }}
+                      >
                         <Send className="w-4 h-4" />
                         Email
                       </button>

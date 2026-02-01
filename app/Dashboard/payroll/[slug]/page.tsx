@@ -6,7 +6,8 @@ import {
   Eye, Edit, CheckCircle, XCircle, Clock, Send,
   ArrowUpCircle, ArrowDownCircle, User, Receipt,
   CreditCard, Building2, AlertTriangle, DollarSign,
-  Search, Filter, Trash2
+  Search, Filter, Trash2, Lock, Unlock, Save,
+  FileText, Mail, X, Ban
 } from 'lucide-react';
 import { SalaryStructure, PayrollStatus } from '@/types/types';
 import type { EmployeeSalaryData } from '@/lib/payslip-utils';
@@ -51,7 +52,7 @@ const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
 export default function PayrollSlugPage() {
   const params = useParams();
   const router = useRouter();
-  const slug = params?.slug as string; // Format: "january-2026"
+  const slug = params?.slug as string;
 
   const [salaryData, setSalaryData] = useState<SalaryStructure[]>([]);
   const [loading, setLoading] = useState(true);
@@ -60,8 +61,12 @@ export default function PayrollSlugPage() {
   const [payrollStatus, setPayrollStatus] = useState<PayrollStatus>('draft');
   const [filterDepartment, setFilterDepartment] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [selectedEmployees, setSelectedEmployees] = useState<Set<string>>(new Set());
+  const [showHoldModal, setShowHoldModal] = useState(false);
+  const [holdReason, setHoldReason] = useState('');
+  const [holdEmployeeCode, setHoldEmployeeCode] = useState<string | null>(null);
+  const [processingBulk, setProcessingBulk] = useState(false);
 
-  // Parse slug to get month and year
   const [monthName, year] = slug ? slug.split('-') : ['january', '2026'];
   const monthIndex = months.findIndex(m => m.toLowerCase() === monthName.toLowerCase());
   const currentMonth = monthIndex !== -1 ? monthIndex : 0;
@@ -103,7 +108,6 @@ export default function PayrollSlugPage() {
       });
 
       if (response.ok) {
-        // Update local state
         setSalaryData(prev =>
           prev.map(emp =>
             emp.employeeCode === employeeCode
@@ -139,9 +143,45 @@ export default function PayrollSlugPage() {
               : emp
           )
         );
+        setShowHoldModal(false);
+        setHoldReason('');
+        setHoldEmployeeCode(null);
       }
     } catch (error) {
       console.error('Error holding salary:', error);
+    }
+  };
+
+  const handleBulkProcess = async () => {
+    if (selectedEmployees.size === 0) return;
+    
+    setProcessingBulk(true);
+    try {
+      const promises = Array.from(selectedEmployees).map(employeeCode =>
+        handleStatusChange(employeeCode, true)
+      );
+      await Promise.all(promises);
+      setSelectedEmployees(new Set());
+    } catch (error) {
+      console.error('Error processing bulk:', error);
+    } finally {
+      setProcessingBulk(false);
+    }
+  };
+
+  const handleBulkDownload = () => {
+    const employees = filteredEmployees
+      .filter(emp => selectedEmployees.has(emp.employeeCode))
+      .map(convertToEmployeeSalaryData);
+    downloadBulkPayslips(employees, months[currentMonth], String(currentYear));
+    setSelectedEmployees(new Set());
+  };
+
+  const handleSelectAll = () => {
+    if (selectedEmployees.size === filteredEmployees.length) {
+      setSelectedEmployees(new Set());
+    } else {
+      setSelectedEmployees(new Set(filteredEmployees.map(emp => emp.employeeCode)));
     }
   };
 
@@ -211,7 +251,7 @@ export default function PayrollSlugPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6 pt-9">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -219,7 +259,7 @@ export default function PayrollSlugPage() {
             <div className="flex items-center gap-4">
               <button
                 onClick={() => router.push('/Dashboard/payroll')}
-                className="p-2 bg-white rounded-lg hover:bg-slate-100 transition-all"
+                className="p-2 bg-white rounded-lg hover:bg-slate-100 transition-all shadow-sm"
               >
                 <ChevronLeft className="w-6 h-6 text-slate-600" />
               </button>
@@ -236,18 +276,18 @@ export default function PayrollSlugPage() {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => navigateMonth('prev')}
-                className="p-2 bg-white rounded-lg hover:bg-slate-100 transition-all"
+                className="p-2 bg-white rounded-lg hover:bg-slate-100 transition-all shadow-sm"
               >
                 <ChevronLeft className="w-5 h-5 text-slate-600" />
               </button>
-              <div className="px-4 py-2 bg-white rounded-lg border border-slate-200">
+              <div className="px-4 py-2 bg-white rounded-lg border border-slate-200 shadow-sm">
                 <p className="text-sm font-semibold text-slate-900">
                   {months[currentMonth]} {currentYear}
                 </p>
               </div>
               <button
                 onClick={() => navigateMonth('next')}
-                className="p-2 bg-white rounded-lg hover:bg-slate-100 transition-all"
+                className="p-2 bg-white rounded-lg hover:bg-slate-100 transition-all shadow-sm"
               >
                 <ChevronRight className="w-5 h-5 text-slate-600" />
               </button>
@@ -349,21 +389,44 @@ export default function PayrollSlugPage() {
           {/* Bulk Actions */}
           <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm mb-6">
             <div className="flex items-center justify-between">
-              <p className="text-sm text-slate-600">
-                Showing {filteredEmployees.length} of {stats.totalEmployees} employees
-              </p>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-4">
                 <button
-                  onClick={() => {
-                    const employees = filteredEmployees.map(convertToEmployeeSalaryData);
-                    downloadBulkPayslips(employees, months[currentMonth], String(currentYear));
-                  }}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all flex items-center gap-2"
+                  onClick={handleSelectAll}
+                  className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-all flex items-center gap-2"
                 >
-                  <Download className="w-4 h-4" />
-                  Download All Payslips
+                  <CheckCircle className="w-4 h-4" />
+                  {selectedEmployees.size === filteredEmployees.length ? 'Deselect All' : 'Select All'}
                 </button>
+                <p className="text-sm text-slate-600">
+                  {selectedEmployees.size > 0 ? (
+                    <>
+                      <span className="font-semibold">{selectedEmployees.size}</span> selected
+                    </>
+                  ) : (
+                    <>Showing {filteredEmployees.length} of {stats.totalEmployees} employees</>
+                  )}
+                </p>
               </div>
+              
+              {selectedEmployees.size > 0 && (
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={handleBulkProcess}
+                    disabled={processingBulk}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all flex items-center gap-2 disabled:opacity-50"
+                  >
+                    <CheckCircle className="w-4 h-4" />
+                    Process Selected ({selectedEmployees.size})
+                  </button>
+                  <button
+                    onClick={handleBulkDownload}
+                    className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-all flex items-center gap-2"
+                  >
+                    <Download className="w-4 h-4" />
+                    Download Selected
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -373,11 +436,34 @@ export default function PayrollSlugPage() {
           {filteredEmployees.map((employee) => (
             <div
               key={employee.employeeCode}
-              className="bg-white rounded-xl border border-slate-200 hover:border-cyan-300 hover:shadow-lg transition-all"
+              className={`bg-white rounded-xl border-2 transition-all ${
+                selectedEmployees.has(employee.employeeCode)
+                  ? 'border-cyan-500 shadow-lg'
+                  : 'border-slate-200 hover:border-cyan-300 hover:shadow-lg'
+              }`}
             >
               <div className="p-6">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-start gap-4">
+                    {/* Checkbox */}
+                    <div className="pt-1">
+                      <input
+                        type="checkbox"
+                        checked={selectedEmployees.has(employee.employeeCode)}
+                        onChange={(e) => {
+                          const newSelected = new Set(selectedEmployees);
+                          if (e.target.checked) {
+                            newSelected.add(employee.employeeCode);
+                          } else {
+                            newSelected.delete(employee.employeeCode);
+                          }
+                          setSelectedEmployees(newSelected);
+                        }}
+                        className="w-5 h-5 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500"
+                      />
+                    </div>
+
+                    {/* Photo */}
                     {employee.photograph ? (
                       <img 
                         src={employee.photograph} 
@@ -389,6 +475,8 @@ export default function PayrollSlugPage() {
                         <User className="w-8 h-8 text-cyan-600" />
                       </div>
                     )}
+                    
+                    {/* Info */}
                     <div>
                       <h3 className="text-xl font-bold text-slate-900 mb-1">
                         {employee.employeeName}
@@ -404,31 +492,41 @@ export default function PayrollSlugPage() {
                     </div>
                   </div>
 
+                  {/* Action Buttons */}
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => router.push(`/Dashboard/recruitment/${employee.employeeId}`)}
-                      className="px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-all flex items-center gap-2"
+                      className="px-3 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-all flex items-center gap-2"
+                      title="Edit Employee"
                     >
                       <Edit className="w-4 h-4" />
-                      Edit
                     </button>
                     <button
-                      onClick={() =>
-                        downloadPayslip(
-                          convertToEmployeeSalaryData(employee),
-                          months[currentMonth],
-                          String(currentYear)
-                        )
-                      }
-                      className="px-4 py-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-all flex items-center gap-2"
+                      onClick={() => router.push(`/Dashboard/payroll/${employee.employeeId}`)}
+                      className="px-3 py-2 bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 transition-all flex items-center gap-2"
+                      title="View Details"
                     >
-                      <Receipt className="w-4 h-4" />
-                      Payslip
+                      <Eye className="w-4 h-4" />
                     </button>
+                    {employee.salaryProcessed && (
+                      <button
+                        onClick={() =>
+                          downloadPayslip(
+                            convertToEmployeeSalaryData(employee),
+                            months[currentMonth],
+                            String(currentYear)
+                          )
+                        }
+                        className="px-3 py-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-all flex items-center gap-2"
+                        title="Download Payslip"
+                      >
+                        <Receipt className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
                 </div>
 
-                {/* Quick Stats */}
+                {/* Stats */}
                 <div className="grid md:grid-cols-5 gap-4">
                   <div className="p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg border border-green-200">
                     <p className="text-xs text-green-700 mb-1 font-semibold">GROSS SALARY</p>
@@ -456,46 +554,53 @@ export default function PayrollSlugPage() {
                   {/* Status Control */}
                   <div className="p-4 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-lg border border-purple-200">
                     {employee.salaryHold ? (
-                      <div>
-                        <span className="px-3 py-1 bg-red-100 text-red-700 text-xs font-semibold rounded-full block text-center mb-2">
+                      <div className="space-y-2">
+                        <span className="px-3 py-1 bg-red-100 text-red-700 text-xs font-semibold rounded-full block text-center">
                           ON HOLD
                         </span>
                         <button
                           onClick={() => handleSalaryHold(employee.employeeCode, false)}
-                          className="w-full px-2 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700"
+                          className="w-full px-2 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 flex items-center justify-center gap-1"
                         >
+                          <Unlock className="w-3 h-3" />
                           Release
                         </button>
                       </div>
                     ) : employee.salaryProcessed ? (
-                      <div>
-                        <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full block text-center mb-2">
+                      <div className="space-y-2">
+                        <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full block text-center">
                           PROCESSED
                         </span>
                         <button
                           onClick={() => handleStatusChange(employee.employeeCode, false)}
-                          className="w-full px-2 py-1 bg-amber-600 text-white text-xs rounded hover:bg-amber-700"
+                          className="w-full px-2 py-1 bg-amber-600 text-white text-xs rounded hover:bg-amber-700 flex items-center justify-center gap-1"
                         >
-                          Mark Pending
+                          <Clock className="w-3 h-3" />
+                          Revert
                         </button>
                       </div>
                     ) : (
-                      <div>
-                        <span className="px-3 py-1 bg-amber-100 text-amber-700 text-xs font-semibold rounded-full block text-center mb-2">
+                      <div className="space-y-2">
+                        <span className="px-3 py-1 bg-amber-100 text-amber-700 text-xs font-semibold rounded-full block text-center">
                           PENDING
                         </span>
                         <div className="flex gap-1">
                           <button
                             onClick={() => handleStatusChange(employee.employeeCode, true)}
-                            className="flex-1 px-2 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700"
+                            className="flex-1 px-2 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 flex items-center justify-center gap-1"
+                            title="Mark as Processed"
                           >
-                            Process
+                            <CheckCircle className="w-3 h-3" />
                           </button>
                           <button
-                            onClick={() => handleSalaryHold(employee.employeeCode, true, 'Manual hold')}
-                            className="flex-1 px-2 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700"
+                            onClick={() => {
+                              setHoldEmployeeCode(employee.employeeCode);
+                              setShowHoldModal(true);
+                            }}
+                            className="flex-1 px-2 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700 flex items-center justify-center gap-1"
+                            title="Put on Hold"
                           >
-                            Hold
+                            <Ban className="w-3 h-3" />
                           </button>
                         </div>
                       </div>
@@ -516,6 +621,68 @@ export default function PayrollSlugPage() {
             </div>
           )}
         </div>
+
+        {/* Hold Modal */}
+        {showHoldModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-6">
+            <div className="bg-white rounded-2xl max-w-md w-full">
+              <div className="p-6 border-b border-slate-200">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-bold text-slate-900">Hold Salary</h2>
+                  <button
+                    onClick={() => {
+                      setShowHoldModal(false);
+                      setHoldReason('');
+                      setHoldEmployeeCode(null);
+                    }}
+                    className="p-2 hover:bg-slate-100 rounded-lg transition-all"
+                  >
+                    <X className="w-6 h-6 text-slate-600" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-6">
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  Reason for holding salary
+                </label>
+                <textarea
+                  value={holdReason}
+                  onChange={(e) => setHoldReason(e.target.value)}
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                  rows={4}
+                  placeholder="Enter reason for holding the salary..."
+                  required
+                ></textarea>
+
+                <div className="flex items-center gap-3 mt-6">
+                  <button
+                    onClick={() => {
+                      setShowHoldModal(false);
+                      setHoldReason('');
+                      setHoldEmployeeCode(null);
+                    }}
+                    className="flex-1 px-6 py-3 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-all font-medium"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (holdEmployeeCode && holdReason.trim()) {
+                        handleSalaryHold(holdEmployeeCode, true, holdReason);
+                      }
+                    }}
+                    disabled={!holdReason.trim()}
+                    className="flex-1 px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all font-medium flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    <Lock className="w-5 h-5" />
+                    Hold Salary
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

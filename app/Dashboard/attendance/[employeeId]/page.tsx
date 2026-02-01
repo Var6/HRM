@@ -59,8 +59,6 @@ export default function EmployeeAttendance({ params }: { params: Promise<{ emplo
   // 👈 3. Unwrap the params using React.use()
   const { employeeId } = use(params);
   const router = useRouter(); // ✅ Add this
-
-
   const [employee, setEmployee] = useState<Employee | null>(null);
   const [attendance, setAttendance] = useState<Attendance | null>(null);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
@@ -72,16 +70,42 @@ export default function EmployeeAttendance({ params }: { params: Promise<{ emplo
   const [showSuccess, setShowSuccess] = useState(false);
   const [calendarDays, setCalendarDays] = useState<Date[]>([]);
 
-  useEffect(() => {
-    // Only fetch if we have the ID
-    if (employeeId) {
-      fetchEmployeeAttendance();
-    }
-  }, [selectedMonth, selectedYear, employeeId]); // 👈 This array must strictly have these 3 items
 
-  useEffect(() => {
-    generateCalendar();
-  }, [selectedMonth, selectedYear, attendance]);
+const isTuesday = (date: Date) => {
+  return date.getDay() === 2; // 0=Sun, 1=Mon, 2=Tue
+};
+
+const calculatePresentDays = () => {
+  const daysInMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate();
+  
+  // ✅ Count Tuesdays in the month
+  let tuesdayCount = 0;
+  for (let i = 1; i <= daysInMonth; i++) {
+    const date = new Date(selectedYear, selectedMonth, i);
+    if (isTuesday(date)) tuesdayCount++;
+  }
+  
+  const exceptionDays = attendance?.records.length || 0;
+  return daysInMonth - exceptionDays - tuesdayCount; // ✅ Subtract Tuesdays
+};
+
+const generateCalendar = () => {
+  const firstDay = new Date(selectedYear, selectedMonth, 1);
+  const lastDay = new Date(selectedYear, selectedMonth + 1, 0);
+  const days: Date[] = [];
+
+  const startDay = firstDay.getDay();
+  for (let i = 0; i < startDay; i++) {
+    days.push(new Date(0)); 
+  }
+
+  for (let i = 1; i <= lastDay.getDate(); i++) {
+    const currentDate = new Date(selectedYear, selectedMonth, i);
+    days.push(currentDate);
+  }
+
+  setCalendarDays(days);
+};
 
   const fetchEmployeeAttendance = async () => {
     try {
@@ -104,25 +128,6 @@ export default function EmployeeAttendance({ params }: { params: Promise<{ emplo
     }
   };
 
-const generateCalendar = () => {
-  const firstDay = new Date(selectedYear, selectedMonth, 1);
-  const lastDay = new Date(selectedYear, selectedMonth + 1, 0);
-  const days: Date[] = [];
-
-  const startDay = firstDay.getDay();
-  for (let i = 0; i < startDay; i++) {
-    days.push(new Date(0)); 
-  }
-
-  for (let i = 1; i <= lastDay.getDate(); i++) {
-    const currentDate = new Date(selectedYear, selectedMonth, i);
-    days.push(currentDate);
-    // ✅ REMOVED: No auto-marking of any days
-    // Users will manually mark holidays/weekends as needed
-  }
-
-  setCalendarDays(days);
-};
   const getAttendanceForDate = (date: Date): AttendanceRecord | null => {
     if (!attendance || date.getTime() === 0) return null;
     
@@ -130,7 +135,7 @@ const generateCalendar = () => {
       r => new Date(r.date).toDateString() === date.toDateString()
     ) || null;
   };
-
+  
   const markAttendance = async (date: Date, status: string, leaveType?: string) => {
   if (!attendance) return;
 
@@ -195,15 +200,27 @@ const generateCalendar = () => {
   };
 
   const getStatusIcon = (record: AttendanceRecord | null) => {
-    if (!record) return null;
-    switch (record.status) {
-      case 'present': return <CheckCircle className="w-4 h-4 text-green-600" />;
-      case 'onLeave': return <XCircle className="w-4 h-4 text-red-600" />;
-      case 'leave': return <Home className="w-4 h-4 text-blue-600" />;
-      case 'halfDay': return <Coffee className="w-4 h-4 text-amber-600" />;
-      default: return null;
+  if (!record) return null;
+  
+  // ✅ FIX: Different icons based on leave type
+  if (record.status === 'leave') {
+    switch (record.leaveType) {
+      case 'casual': return <Home className="w-4 h-4 text-blue-600" />;
+      case 'earned': return <Award className="w-4 h-4 text-indigo-600" />;
+      case 'sick': return <AlertCircle className="w-4 h-4 text-rose-600" />;
+      default: return <Home className="w-4 h-4 text-blue-600" />;
     }
-  };
+  }
+  
+  switch (record.status) {
+    case 'present': return <CheckCircle className="w-4 h-4 text-green-600" />;
+    case 'onLeave': return <XCircle className="w-4 h-4 text-red-600" />;
+    case 'halfDay': return <Coffee className="w-4 h-4 text-amber-600" />;
+    case 'holiday': return <Calendar className="w-4 h-4 text-pink-600" />;
+    case 'weekend': return <Home className="w-4 h-4 text-purple-600" />;
+    default: return null;
+  }
+};
 
   const changeMonth = (direction: number) => {
     const newDate = new Date(selectedYear, selectedMonth + direction, 1);
@@ -215,28 +232,33 @@ const generateCalendar = () => {
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'
   ];
-
+  
+  useEffect(() => {
+    // Only fetch if we have the ID
+    if (employeeId) {
+      fetchEmployeeAttendance();
+    }
+  }, [selectedMonth, selectedYear, employeeId]);
+  
+  useEffect(() => {
+    generateCalendar();
+  }, [selectedMonth, selectedYear, attendance]);
+  
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6 pt-9 flex items-center justify-center">
         <p className="text-slate-500 text-lg">Loading attendance...</p>
       </div>
     );
-  }
-
+  } 
+  
   if (!employee || !attendance) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6 pt-9 flex items-center justify-center">
         <p className="text-slate-500 text-lg">Employee not found</p>
       </div>
     );
-  }
-// ✅ Calculate present days (total days - exceptions)
-const calculatePresentDays = () => {
-  const daysInMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate();
-  const exceptionDays = attendance?.records.length || 0;
-  return daysInMonth - exceptionDays;
-};
+  }  
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6 pt-9">
       <div className="max-w-7xl mx-auto">
@@ -334,7 +356,7 @@ const calculatePresentDays = () => {
                   </div>
                 ))}
 
-               {calendarDays.map((date, index) => {
+              {calendarDays.map((date, index) => {
   if (date.getTime() === 0) {
     return <div key={index} className="aspect-square" />;
   }
@@ -342,30 +364,34 @@ const calculatePresentDays = () => {
   const record = getAttendanceForDate(date);
   const isToday = date.toDateString() === new Date().toDateString();
   const isFuture = date > new Date();
+  const isTues = isTuesday(date); // ✅ Check if Tuesday
   
-  // ✅ NEW: If no record and not future, assume present
   const isPast = date < new Date() && !isToday;
-  const displayAsPresent = !record && isPast && !isFuture;
+  const displayAsPresent = !record && isPast && !isFuture && !isTues; // ✅ Not present if Tuesday
 
   return (
     <div
       key={index}
       className={`aspect-square border-2 rounded-lg p-2 transition-all ${
-        displayAsPresent 
-          ? 'bg-green-50 border-green-300'  // Show as present
-          : getStatusColor(record)
+        isTues
+          ? 'bg-purple-50 border-purple-300 opacity-75' // ✅ Tuesday styling
+          : displayAsPresent 
+            ? 'bg-green-50 border-green-300'
+            : getStatusColor(record)
       } ${isToday ? 'ring-2 ring-cyan-500' : ''} ${
-        isFuture ? 'opacity-50' : 'hover:shadow-md cursor-pointer'
+        isFuture || isTues ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-md cursor-pointer' // ✅ Disable Tuesday
       }`}
-      onClick={() => !isFuture && setSelectedDate(date)}
+      onClick={() => !isFuture && !isTues && setSelectedDate(date)} // ✅ Prevent clicking Tuesday
     >
       <div className="flex flex-col items-center justify-center h-full">
         <span className={`text-sm font-semibold ${
-          isToday ? 'text-cyan-600' : 'text-slate-900'
+          isToday ? 'text-cyan-600' : isTues ? 'text-purple-600' : 'text-slate-900'
         }`}>
           {date.getDate()}
         </span>
-        {displayAsPresent ? (
+        {isTues ? (
+          <span className="text-xs text-purple-600 font-medium">OFF</span> // ✅ Show OFF for Tuesday
+        ) : displayAsPresent ? (
           <CheckCircle className="w-4 h-4 text-green-600" />
         ) : (
           getStatusIcon(record)
@@ -535,38 +561,52 @@ const calculatePresentDays = () => {
 
               <div className="space-y-4">
                 <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-slate-700">Casual Leave</span>
-                    <span className="text-sm text-slate-500">
-                      {attendance.leaveBalance.casualLeave - attendance.summary.casualLeavesTaken} / {attendance.leaveBalance.casualLeave}
-                    </span>
-                  </div>
-                  <div className="w-full bg-slate-200 rounded-full h-2">
-                    <div 
-                      className="bg-gradient-to-r from-blue-500 to-cyan-500 h-2 rounded-full transition-all"
-                      style={{ 
-                        width: `${((attendance.leaveBalance.casualLeave - attendance.summary.casualLeavesTaken) / attendance.leaveBalance.casualLeave) * 100}%` 
-                      }}
-                    ></div>
-                  </div>
-                </div>
+  <div className="flex items-center justify-between mb-2">
+    <span className="text-sm font-medium text-slate-700">Casual Leave</span>
+    <span className="text-sm text-slate-500">
+      {Math.max(0, attendance.leaveBalance.casualLeave - attendance.summary.casualLeavesTaken).toFixed(1)} / {attendance.leaveBalance.casualLeave}
+    </span>
+  </div>
+  <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden"> {/* ✅ Added overflow-hidden */}
+    <div 
+      className={`h-2 rounded-full transition-all ${
+        attendance.summary.casualLeavesTaken > attendance.leaveBalance.casualLeave 
+          ? 'bg-gradient-to-r from-red-500 to-red-600' 
+          : 'bg-gradient-to-r from-blue-500 to-cyan-500'
+      }`}
+      style={{ 
+        width: `${Math.min(100, Math.max(0, ((attendance.leaveBalance.casualLeave - attendance.summary.casualLeavesTaken) / attendance.leaveBalance.casualLeave) * 100))}%` 
+      }}
+    ></div>
+  </div>
+  {attendance.summary.casualLeavesTaken > attendance.leaveBalance.casualLeave && (
+    <p className="text-xs text-red-600 mt-1 font-medium">⚠️ Exceeded by {(attendance.summary.casualLeavesTaken - attendance.leaveBalance.casualLeave).toFixed(1)} days</p>
+  )}
+</div>
 
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-slate-700">Earned Leave</span>
-                    <span className="text-sm text-slate-500">
-                      {attendance.leaveBalance.earnedLeave - attendance.summary.earnedLeavesTaken} / {attendance.leaveBalance.earnedLeave}
-                    </span>
-                  </div>
-                  <div className="w-full bg-slate-200 rounded-full h-2">
-                    <div 
-                      className="bg-gradient-to-r from-green-500 to-emerald-500 h-2 rounded-full transition-all"
-                      style={{ 
-                        width: `${((attendance.leaveBalance.earnedLeave - attendance.summary.earnedLeavesTaken) / attendance.leaveBalance.earnedLeave) * 100}%` 
-                      }}
-                    ></div>
-                  </div>
-                </div>
+               <div>
+  <div className="flex items-center justify-between mb-2">
+    <span className="text-sm font-medium text-slate-700">Earned Leave</span>
+    <span className="text-sm text-slate-500">
+      {Math.max(0, attendance.leaveBalance.earnedLeave - attendance.summary.earnedLeavesTaken).toFixed(1)} / {attendance.leaveBalance.earnedLeave}
+    </span>
+  </div>
+  <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+    <div 
+      className={`h-2 rounded-full transition-all ${
+        attendance.summary.earnedLeavesTaken > attendance.leaveBalance.earnedLeave 
+          ? 'bg-gradient-to-r from-red-500 to-red-600' 
+          : 'bg-gradient-to-r from-green-500 to-emerald-500'
+      }`}
+      style={{ 
+        width: `${Math.min(100, Math.max(0, ((attendance.leaveBalance.earnedLeave - attendance.summary.earnedLeavesTaken) / attendance.leaveBalance.earnedLeave) * 100))}%` 
+      }}
+    ></div>
+  </div>
+  {attendance.summary.earnedLeavesTaken > attendance.leaveBalance.earnedLeave && (
+    <p className="text-xs text-red-600 mt-1 font-medium">⚠️ Exceeded by {(attendance.summary.earnedLeavesTaken - attendance.leaveBalance.earnedLeave).toFixed(1)} days</p>
+  )}
+</div>
 
                 <div className="pt-4 border-t border-slate-200">
                   <div className="flex items-center justify-between">
