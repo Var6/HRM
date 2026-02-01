@@ -3,7 +3,8 @@ import React, { useState, useEffect, use } from 'react'; // 👈 1. Added 'use'
 import { 
   ArrowLeft, User, Mail, Phone, Briefcase,
   CheckCircle, XCircle, Coffee, Home, AlertCircle,
-  TrendingUp, Award, ChevronLeft, ChevronRight
+  TrendingUp, Award, ChevronLeft, ChevronRight,
+  Calendar
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -116,18 +117,12 @@ const generateCalendar = () => {
   for (let i = 1; i <= lastDay.getDate(); i++) {
     const currentDate = new Date(selectedYear, selectedMonth, i);
     days.push(currentDate);
-    
-    // ✅ OPTIONAL: Auto-mark weekends
-    const dayOfWeek = currentDate.getDay();
-    if ((dayOfWeek === 0 || dayOfWeek === 2) && !getAttendanceForDate(currentDate)) {
-      // Auto-mark as weekend if not already marked
-      // You can call markAttendance here or just display it differently
-    }
+    // ✅ REMOVED: No auto-marking of any days
+    // Users will manually mark holidays/weekends as needed
   }
 
   setCalendarDays(days);
 };
-
   const getAttendanceForDate = (date: Date): AttendanceRecord | null => {
     if (!attendance || date.getTime() === 0) return null;
     
@@ -236,7 +231,12 @@ const generateCalendar = () => {
       </div>
     );
   }
-
+// ✅ Calculate present days (total days - exceptions)
+const calculatePresentDays = () => {
+  const daysInMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate();
+  const exceptionDays = attendance?.records.length || 0;
+  return daysInMonth - exceptionDays;
+};
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6 pt-9">
       <div className="max-w-7xl mx-auto">
@@ -334,46 +334,56 @@ const generateCalendar = () => {
                   </div>
                 ))}
 
-                {calendarDays.map((date, index) => {
-                  if (date.getTime() === 0) {
-                    return <div key={index} className="aspect-square" />;
-                  }
+               {calendarDays.map((date, index) => {
+  if (date.getTime() === 0) {
+    return <div key={index} className="aspect-square" />;
+  }
 
-                  const record = getAttendanceForDate(date);
-                  const isToday = date.toDateString() === new Date().toDateString();
-                  const isFuture = date > new Date();
+  const record = getAttendanceForDate(date);
+  const isToday = date.toDateString() === new Date().toDateString();
+  const isFuture = date > new Date();
+  
+  // ✅ NEW: If no record and not future, assume present
+  const isPast = date < new Date() && !isToday;
+  const displayAsPresent = !record && isPast && !isFuture;
 
-                  return (
-                    <div
-                      key={index}
-                      className={`aspect-square border-2 rounded-lg p-2 transition-all ${
-                        getStatusColor(record)
-                      } ${isToday ? 'ring-2 ring-cyan-500' : ''} ${
-                        isFuture ? 'opacity-50' : 'hover:shadow-md cursor-pointer'
-                      }`}
-                      onClick={() => !isFuture && setSelectedDate(date)}
-                    >
-                      <div className="flex flex-col items-center justify-center h-full">
-                        <span className={`text-sm font-semibold ${
-                          isToday ? 'text-cyan-600' : 'text-slate-900'
-                        }`}>
-                          {date.getDate()}
-                        </span>
-                        {getStatusIcon(record)}
-                      </div>
-                    </div>
-                  );
-                })}
+  return (
+    <div
+      key={index}
+      className={`aspect-square border-2 rounded-lg p-2 transition-all ${
+        displayAsPresent 
+          ? 'bg-green-50 border-green-300'  // Show as present
+          : getStatusColor(record)
+      } ${isToday ? 'ring-2 ring-cyan-500' : ''} ${
+        isFuture ? 'opacity-50' : 'hover:shadow-md cursor-pointer'
+      }`}
+      onClick={() => !isFuture && setSelectedDate(date)}
+    >
+      <div className="flex flex-col items-center justify-center h-full">
+        <span className={`text-sm font-semibold ${
+          isToday ? 'text-cyan-600' : 'text-slate-900'
+        }`}>
+          {date.getDate()}
+        </span>
+        {displayAsPresent ? (
+          <CheckCircle className="w-4 h-4 text-green-600" />
+        ) : (
+          getStatusIcon(record)
+        )}
+      </div>
+    </div>
+  );
+})}
               </div>
 
               {/* Legend */}
               <div className="mt-6 pt-6 border-t border-slate-200">
                 <h4 className="text-sm font-semibold text-slate-700 mb-3">Legend</h4>
                 <div className="grid grid-cols-3 gap-3">
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 rounded bg-green-100 border-2 border-green-300"></div>
-                    <span className="text-xs text-slate-600">Present</span>
-                  </div>
+                  <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+  <span className="text-sm font-medium text-slate-700">Present</span>
+  <span className="text-xl font-bold text-green-600">{calculatePresentDays()}</span>
+</div>
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 rounded bg-red-100 border-2 border-red-300"></div>
                     <span className="text-xs text-slate-600">On Leave</span>
@@ -465,6 +475,14 @@ const generateCalendar = () => {
                     <AlertCircle className="w-6 h-6 text-rose-600 mb-2" />
                     <p className="font-semibold text-rose-900">Sick Leave</p>
                   </button>
+                  <button
+  onClick={() => markAttendance(selectedDate, 'holiday')}
+  disabled={saving}
+  className="p-4 bg-pink-50 border-2 border-pink-200 rounded-lg hover:bg-pink-100 transition-all text-left disabled:opacity-50"
+>
+  <Calendar className="w-6 h-6 text-pink-600 mb-2" />
+  <p className="font-semibold text-pink-900">Holiday</p>
+</button>
                 </div>
 
                 {/* ✅ TEXTAREA ADDED HERE - INSIDE THE CARD */}

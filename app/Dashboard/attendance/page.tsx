@@ -85,51 +85,65 @@ totalLeavesThisMonth: attendanceData.reduce(
 const fetchAttendanceData = async () => {
   try {
     setLoading(true);
-   const res = await fetch(
-  `/api/attendance?fromYear=${selectedYear}&toYear=${selectedYear + 1}`
-);
-
-    if (!res.ok) throw new Error('Failed to fetch');
-    const data = await res.json();
-  const normalized = data.data.map((item: any) => {
-  const monthlyLeaves: Record<string, number | null> = {};
-
-
-  const attendanceList = Array.isArray(item.attendance)
-  ? item.attendance
-  : item.attendance
-  ? [item.attendance]
-  : [];
-
-attendanceList.forEach((att: any) => {
-  if (typeof att.month === 'number') {
-    const monthName = monthIndexToName(att.month);
-    monthlyLeaves[monthName] = att.summary?.totalLeaves || 0;
-  }
-});
-
-
-  // Ensure Apr–Mar exists
-  months.forEach(m => {
-  if (!(m in monthlyLeaves)) {
-    monthlyLeaves[m] = null; // 🔹 Use null for no data
-  }
-});
-
-  return {
-    ...item,
-    employee: {
-      ...item.employee,
-      monthlyLeaves,
-     totalLeavesTaken: Object.values(monthlyLeaves)
-  .filter((v) => v !== null) // only real months
-  .reduce((sum: number, val) => sum + (val || 0), 0)
-
+    
+    // ✅ FIXED: Fetch ALL months from Apr (selectedYear) to Mar (selectedYear+1)
+    const allMonths = [];
+    
+    // Apr-Dec of selectedYear (months 3-11)
+    for (let m = 3; m <= 11; m++) {
+      const res = await fetch(`/api/attendance?month=${m}&year=${selectedYear}`);
+      if (res.ok) {
+        const data = await res.json();
+        allMonths.push(...data.data);
+      }
     }
-  };
-});
+    
+    // Jan-Mar of selectedYear+1 (months 0-2)
+    for (let m = 0; m <= 2; m++) {
+      const res = await fetch(`/api/attendance?month=${m}&year=${selectedYear + 1}`);
+      if (res.ok) {
+        const data = await res.json();
+        allMonths.push(...data.data);
+      }
+    }
 
-setAttendanceData(normalized);
+    // Group by employee and merge monthly data
+    const employeeMap = new Map();
+    
+    allMonths.forEach((item: any) => {
+      const empId = item.employee._id;
+      
+      if (!employeeMap.has(empId)) {
+        employeeMap.set(empId, {
+          employee: {
+            ...item.employee,
+            monthlyLeaves: {}
+          },
+          attendance: item.attendance
+        });
+      }
+      
+      const emp = employeeMap.get(empId);
+      const monthName = monthIndexToName(item.attendance.month);
+      emp.employee.monthlyLeaves[monthName] = item.attendance.summary?.totalLeaves || 0;
+    });
+
+    const normalized = Array.from(employeeMap.values()).map((item: any) => {
+      // Ensure all months exist
+      months.forEach(m => {
+        if (!(m in item.employee.monthlyLeaves)) {
+          item.employee.monthlyLeaves[m] = null;
+        }
+      });
+
+      item.employee.totalLeavesTaken = Object.values(item.employee.monthlyLeaves)
+        .filter((v: any) => v !== null)
+        .reduce((sum: number, val: any) => sum + (val || 0), 0);
+
+      return item;
+    });
+
+    setAttendanceData(normalized);
 
   } catch (error) {
     console.error('Error fetching attendance:', error);
@@ -137,7 +151,6 @@ setAttendanceData(normalized);
     setLoading(false);
   }
 };
-
 // Function to mark attendance directly from the list
 const handleQuickMark = async (employeeId: string, status: string, leaveType?: string, leaveReason?: string) => {  // ✅ ADD leaveReason parameter
   try {
@@ -407,50 +420,54 @@ if (loading) {
                       </div>
                     </div>
 
-                    {/* Expanded Details - Quick View */}
-                    {selectedEmployee === employee._id && (
-                      <div className="pt-4 border-t border-slate-200">
-                        <h4 className="text-lg font-semibold text-slate-900 mb-4">Monthly Leave Breakdown</h4>
-                        <div className="grid grid-cols-6 gap-3">
-                          {months.map((month) => {
-                           const leaves = employee.monthlyLeaves?.[month];
+                 {/* Expanded Details - Quick View */}
+{selectedEmployee === employee._id && (
+  <div className="pt-4 border-t border-slate-200">
+    <h4 className="text-lg font-semibold text-slate-900 mb-4">
+      Monthly Leave Breakdown ({selectedYear}-{selectedYear + 1})
+    </h4>
+    <div className="grid grid-cols-6 gap-3">
+      {months.map((month) => {
+        const leaves = employee.monthlyLeaves?.[month];
+        
+        // ✅ Debug: Log to see what data we have
+        console.log(`${month}: ${leaves}`);
 
-<span className={`inline-block px-2 py-1 rounded text-sm font-semibold ${
-  leaves === null
-    ? 'bg-slate-100 text-slate-400' // gray for no data
-    : leaves === 0
-      ? 'bg-green-100 text-green-700'
-      : leaves < 2
-        ? 'bg-blue-100 text-blue-700'
-        : leaves < 5
-          ? 'bg-amber-100 text-amber-700'
-          : 'bg-red-100 text-red-700'
-}`}>
-  {leaves === null ? '—' : leaves}
-</span>
-
-
-                            return (
-                              <div
-                                key={month}
-                                className={`p-3 rounded-lg border-2 text-center ${
-                                  leaves > 0
-                                    ? 'bg-amber-50 border-amber-200'
-                                    : 'bg-green-50 border-green-200'
-                                }`}
-                              >
-                                <p className="text-xs font-semibold text-slate-600 mb-1">{month}</p>
-                                <p className={`text-xl font-bold ${
-                                  leaves > 0 ? 'text-amber-600' : 'text-green-600'
-                                }`}>
-                                  {leaves}
-                                </p>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
+        return (
+          <div
+            key={month}
+            className={`p-3 rounded-lg border-2 text-center ${
+              leaves === null
+                ? 'bg-slate-50 border-slate-200'
+                : leaves === 0
+                  ? 'bg-green-50 border-green-200'
+                  : leaves < 2
+                    ? 'bg-blue-50 border-blue-200'
+                    : leaves < 5
+                      ? 'bg-amber-50 border-amber-200'
+                      : 'bg-red-50 border-red-200'
+            }`}
+          >
+            <p className="text-xs font-semibold text-slate-600 mb-1">{month}</p>
+            <p className={`text-xl font-bold ${
+              leaves === null 
+                ? 'text-slate-400' 
+                : leaves === 0 
+                  ? 'text-green-600' 
+                  : leaves < 2
+                    ? 'text-blue-600'
+                    : leaves < 5
+                      ? 'text-amber-600'
+                      : 'text-red-600'
+            }`}>
+              {leaves === null ? '—' : leaves.toFixed(1)}
+            </p>
+          </div>
+        );
+      })}
+    </div>
+  </div>
+)}
                   </div>
                 </div>
               )})}
@@ -514,18 +531,29 @@ if (loading) {
                           </div>
                         </td>
                         <td className="px-4 py-3 text-sm text-slate-600">{employee.designation}</td>
-                        {months.map((month) => (
-                          <td key={month} className="px-4 py-3 text-center">
-                            <span className={`inline-block px-2 py-1 rounded text-sm font-semibold ${
-                              (leaves[month] || 0) === 0 ? 'bg-green-100 text-green-700'
-                              : (leaves[month] || 0) < 2 ? 'bg-blue-100 text-blue-700'
-                              : (leaves[month] || 0) < 5 ? 'bg-amber-100 text-amber-700'
-                              : 'bg-red-100 text-red-700'
-                            }`}>
-                              {leaves[month] || 0}
-                            </span>
-                          </td>
-                        ))}
+                       {months.map((month) => (
+  <td key={month} className="px-4 py-3 text-center">
+    {(() => {
+      const leaves = employee.monthlyLeaves?.[month];
+      
+      return (
+        <span className={`inline-block px-2 py-1 rounded text-sm font-semibold ${
+          leaves === null
+            ? 'bg-slate-100 text-slate-400'
+            : leaves === 0
+              ? 'bg-green-100 text-green-700'
+              : leaves < 2
+                ? 'bg-blue-100 text-blue-700'
+                : leaves < 5
+                  ? 'bg-amber-100 text-amber-700'
+                  : 'bg-red-100 text-red-700'
+        }`}>
+          {leaves === null ? '—' : leaves.toFixed(1)}
+        </span>
+      );
+    })()}
+  </td>
+))}
                         <td className="px-4 py-3 text-center font-bold text-slate-900">
                           {employee.totalLeavesTaken}
                         </td>

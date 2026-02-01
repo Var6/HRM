@@ -71,66 +71,88 @@ export async function PUT(
     const body = await request.json();
     const { month, year, date, status, leaveType, remarks, checkIn, checkOut, leaveReason } = body;
 
-    let attendance = await MonthlyAttendance.findOne({ employeeId, month, year });
-
-    if (!attendance) {
-      const employee = await Employee.findById(employeeId);
-      if (!employee) return NextResponse.json({ error: "Employee not found" }, { status: 404 });
-
-      attendance = new MonthlyAttendance({
-        employeeId,
-        month,
-        year,
-        records: [],
-        monthlyCredit: {
-          casualLeave: 1,
-          earnedLeave: 1.25
-        },
-        leaveBalance: {
-          casualLeave: (employee.leaves?.casualLeave || 0) + 1,
-          earnedLeave: (employee.leaves?.earnedLeave || 0) + 1.25,
-          carriedForward: 0
-        },
-        lop: {
-          days: 0,
-          amount: 0
-        }
-      });
-    }
-
+    // ✅ FIXED: Use findOneAndUpdate with upsert to avoid version conflicts
     const targetDate = new Date(date);
     const dateString = targetDate.toDateString();
 
     const isStandardPresent = status === 'present' && 
       (!remarks || remarks.trim() === "") && 
-      (!leaveReason || leaveReason.trim() === "");  // ✅ FIXED
+      (!leaveReason || leaveReason.trim() === "");
+
+    let updateOperation;
 
     if (isStandardPresent) {
-      attendance.records = attendance.records.filter(
-        (r: any) => new Date(r.date).toDateString() !== dateString
-      );
-    } else {
-      const existingIndex = attendance.records.findIndex(
-        (r: any) => new Date(r.date).toDateString() === dateString
-      );
-
-      const newRecord = {
-        date: targetDate,
-        status,
-        leaveType: leaveType || null,
-        leaveReason: leaveReason || '',  // ✅ FIXED
-        remarks: remarks || '',
-        checkIn: checkIn || '',
-        checkOut: checkOut || ''
+      // Remove the record for this date
+      updateOperation = {
+        $pull: {
+          records: {
+            date: {
+              $gte: new Date(targetDate.setHours(0, 0, 0, 0)),
+              $lt: new Date(targetDate.setHours(23, 59, 59, 999))
+            }
+          }
+        }
       };
+    } else {
+      // First remove any existing record for this date, then add new one
+      await MonthlyAttendance.findOneAndUpdate(
+        { employeeId, month, year },
+        {
+          $pull: {
+            records: {
+              date: {
+                $gte: new Date(new Date(date).setHours(0, 0, 0, 0)),
+                $lt: new Date(new Date(date).setHours(23, 59, 59, 999))
+              }
+            }
+          }
+        }
+      );
 
-      if (existingIndex >= 0) {
-        attendance.records[existingIndex] = newRecord;
-      } else {
-        attendance.records.push(newRecord);
-      }
+      updateOperation = {
+        $push: {
+          records: {
+            date: targetDate,
+            status,
+            leaveType: leaveType || null,
+            leaveReason: leaveReason || '',
+            remarks: remarks || '',
+            checkIn: checkIn || '',
+            checkOut: checkOut || ''
+          }
+        }
+      };
     }
 
+    // Get employee for initial setup
+    const employee = await Employee.findById(employeeId);
+    if (!employee) return NextResponse.json({ error: "Employee not found" }, { status: 404 });
+
+    // ✅ Use findOneAndUpdate with upsert
+    let attendance = await MonthlyAttendance.findOneAndUpdate(
+      { employeeId, month, year },
+      updateOperation,
+      { 
+        new: true, 
+        upsert: true,
+        setDefaultsOnInsert: true
+      }
+    );
+
+    // If just created, set initial values
+    if (!attendance.monthlyCredit) {
+      attendance.monthlyCredit = {
+        casualLeave: 1,
+        earnedLeave: 1.25
+      };
+      attendance.leaveBalance = {
+        casualLeave: (employee.leaves?.casualLeave || 0) + 1,
+        earnedLeave: (employee.leaves?.earnedLeave || 0) + 1.25,
+        carriedForward: 0
+      };
+    }
+
+    // Recalculate summary
     const summary = {
       totalPresent: 0, 
       totalAbsent: 0,
@@ -142,7 +164,7 @@ export async function PUT(
       extraordinaryLeavesTaken: 0
     };
 
-   attendance.records.forEach((record: any) => {
+    attendance.records.forEach((record: any) => {
       if (record.status === 'onLeave') summary.totalAbsent++;
       
       if (record.status === 'leave') {
@@ -161,10 +183,9 @@ export async function PUT(
       }
     });
 
-    // ✅ NEW: Calculate LOP (Loss of Pay)
     const totalLeavesAllowed = 
       (attendance.monthlyCredit?.casualLeave || 1) + 
-      (attendance.monthlyCredit?.earnedLeave || 1.25);  // Total: 2.25 per month
+      (attendance.monthlyCredit?.earnedLeave || 1.25);
 
     const totalLeavesTaken = 
       summary.casualLeavesTaken + 
@@ -172,15 +193,13 @@ export async function PUT(
 
     const lopDays = Math.max(0, totalLeavesTaken - totalLeavesAllowed);
 
-    // Update LOP in attendance
     attendance.lop = {
       days: lopDays,
-      amount: 0  // Will be calculated in salary module: lopDays * (dailySalary)
+      amount: 0
     };
 
     attendance.summary = summary;
     
-    // ✅ Update leave balance (subtract used leaves)
     attendance.leaveBalance = {
       casualLeave: (attendance.monthlyCredit?.casualLeave || 1) - summary.casualLeavesTaken,
       earnedLeave: (attendance.monthlyCredit?.earnedLeave || 1.25) - summary.earnedLeavesTaken,
