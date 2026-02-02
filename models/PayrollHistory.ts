@@ -27,6 +27,11 @@ const PayrollHistorySchema = new mongoose.Schema({
   salaryHold: { type: Boolean, default: false },
   salaryHoldReason: String,
   processedDate: Date,
+  status: { 
+      type: String, 
+      enum: ['draft', 'processing', 'approved', 'paid'],
+      default: 'draft' 
+    },
   processedBy: String
 }, { timestamps: true });
 

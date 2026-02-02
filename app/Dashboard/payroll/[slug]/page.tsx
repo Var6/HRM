@@ -12,23 +12,24 @@ import {
 import { SalaryStructure, PayrollStatus } from '@/types/types';
 import type { EmployeeSalaryData } from '@/lib/payslip-utils';
 import { downloadPayslip, downloadBulkPayslips } from '@/lib/payslip-utils';
+import Link from 'next/link';
 
 const convertToEmployeeSalaryData = (emp: SalaryStructure): EmployeeSalaryData => {
   return {
     employeeId: String(emp.employeeCode || emp.employeeId),
-    employeeName: emp.employeeName,
-    department: emp.department,
-    designation: emp.designation,
-    photograph: emp.photograph,
-    fatherName: "N/A",
+    employeeName: emp.employeeName || 'N/A',
+    department: emp.department || 'N/A',
+    designation: emp.designation || 'N/A',
+    photograph: emp.photograph || '',
+    fatherName: emp.fatherName || "N/A",
     salaryHold: emp.salaryHold || false,
-    dateOfJoining: "2020-01-01",
-    panNumber: "N/A",
+    dateOfJoining: emp.dateOfJoining || "2020-01-01",
+    panNumber: emp.panNumber || "N/A",
     uanNumber: emp.uanNumber || "N/A",
     salaryProcessed: emp.salaryProcessed || false,
     esiNumber: emp.esiNumber || "N/A",
-    aadharNumber: "N/A",
-    presentDays: 30,
+    aadharNumber: emp.aadharNumber || "N/A",
+    presentDays: emp.presentDays || 30,
     totalDaysInMonth: 31,
     modeOfPay: emp.bankAccount && emp.bankAccount !== "N/A" ? "Bank Transfer" : "Cash",
     accountNumber: emp.bankAccount || "N/A",
@@ -198,6 +199,12 @@ export default function PayrollSlugPage() {
     }
 
     router.push(`/Dashboard/payroll/${months[newMonth].toLowerCase()}-${newYear}`);
+  };
+
+  const handleViewDetails = (employeeId: string) => {
+    // Navigate to employee detail page with month and year context
+    router.push(`/Dashboard/payrolldetails/${employeeId}`);
+    console.log('Viewing details for employee ID:', employeeId);
   };
 
   const filteredEmployees = salaryData.filter(emp => {
@@ -502,7 +509,8 @@ export default function PayrollSlugPage() {
                       <Edit className="w-4 h-4" />
                     </button>
                     <button
-                      onClick={() => router.push(`/Dashboard/payroll/${employee.employeeId}`)}
+                   
+                      onClick={() => handleViewDetails(String(employee.employeeId))}
                       className="px-3 py-2 bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 transition-all flex items-center gap-2"
                       title="View Details"
                     >

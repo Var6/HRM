@@ -133,6 +133,7 @@ export interface SalaryStructure {
   employeeId: number | string;
   employeeName: string;
   photograph?: string | null;
+   presentDays: number | 30;
   employeeCode: string;
   designation: string;
   department: string;

@@ -6,7 +6,7 @@ import {
   DollarSign, Percent, ArrowUpCircle, ArrowDownCircle,
   User, Receipt, Clock, CheckCircle, XCircle, Edit,
   Plus, Save, X, AlertTriangle, FileText, BarChart3,
-  Target, Star, Briefcase, CreditCard, Send
+  Target, Star, Briefcase, CreditCard, Send, CalendarDays
 } from 'lucide-react';
 import { downloadPayslip } from '@/lib/payslip-utils';
 import type { EmployeeSalaryData } from '@/lib/payslip-utils';
@@ -16,10 +16,15 @@ interface PaymentHistory {
   month: string;
   year: number;
   grossSalary: number;
+  originalGrossSalary?: number;
   totalDeductions: number;
   netSalary: number;
   earnings: any;
   deductions: any;
+  lopDays?: number;
+  lopAmount?: number;
+  workingDays?: number;
+  presentDays?: number;
   salaryProcessed: boolean;
   salaryHold: boolean;
   processedDate: string;
@@ -164,8 +169,8 @@ export default function EmployeePayrollPage() {
     e.preventDefault();
     if (!employee) return;
 
-    const currentGross = Object.values(employee.salary.earnings).reduce(
-      (sum, val) => sum + Number(val || 0), 0
+    const currentGross: number = Object.values(employee.salary.earnings).reduce(
+      (sum: number, val) => sum + Number(val || 0), 0
     );
     const percentageIncrease = parseFloat(incrementForm.percentage) / 100;
     const newGross = currentGross * (1 + percentageIncrease);
@@ -264,13 +269,13 @@ export default function EmployeePayrollPage() {
     );
   }
 
-  const currentGross = Object.values(employee.salary.earnings).reduce(
-    (sum, val) => sum + Number(val || 0), 0
+  const currentGross: number = Object.values(employee.salary.earnings).reduce(
+    (sum: number, val) => sum + Number(val || 0), 0
   );
-  const currentDeductions = Object.values(employee.salary.deductions).reduce(
-    (sum, val) => sum + Number(val || 0), 0
+  const currentDeductions: number = Object.values(employee.salary.deductions).reduce(
+    (sum: number, val) => sum + Number(val || 0), 0
   );
-  const currentNet = currentGross - currentDeductions;
+  const currentNet: number = currentGross - currentDeductions;
 
   const averageRating = performanceRecords.length > 0
     ? performanceRecords.reduce((sum, r) => sum + r.rating, 0) / performanceRecords.length
@@ -436,6 +441,31 @@ export default function EmployeePayrollPage() {
                             : 'Processing pending'
                           }
                         </p>
+                        
+                        {/* ✅ Attendance Summary */}
+                        {(payment.workingDays || payment.presentDays) && (
+                          <div className="flex items-center gap-3 text-sm mb-2">
+                            <div className="flex items-center gap-1 text-slate-600">
+                              <CalendarDays className="w-4 h-4" />
+                              <span>Working Days: {payment.workingDays || 0}</span>
+                            </div>
+                            <span className="text-slate-400">•</span>
+                            <div className="flex items-center gap-1 text-green-600">
+                              <CheckCircle className="w-4 h-4" />
+                              <span>Present: {payment.presentDays || 0}</span>
+                            </div>
+                            {payment.lopDays && payment.lopDays > 0 && (
+                              <>
+                                <span className="text-slate-400">•</span>
+                                <div className="flex items-center gap-1 text-red-600">
+                                  <XCircle className="w-4 h-4" />
+                                  <span>LOP: {payment.lopDays} days</span>
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        )}
+                        
                         <div className="flex items-center gap-2">
                           {payment.salaryHold && (
                             <span className="px-3 py-1 bg-red-100 text-red-700 text-xs font-semibold rounded-full">
@@ -450,6 +480,11 @@ export default function EmployeePayrollPage() {
                           {!payment.salaryProcessed && !payment.salaryHold && (
                             <span className="px-3 py-1 bg-amber-100 text-amber-700 text-xs font-semibold rounded-full">
                               PENDING
+                            </span>
+                          )}
+                          {payment.lopDays && payment.lopDays > 0 && (
+                            <span className="px-3 py-1 bg-orange-100 text-orange-700 text-xs font-semibold rounded-full">
+                              LOP APPLIED
                             </span>
                           )}
                         </div>
@@ -473,8 +508,8 @@ export default function EmployeePayrollPage() {
                             salaryProcessed: payment.salaryProcessed,
                             esiNumber: employee.esiNo || 'N/A',
                             aadharNumber: 'N/A',
-                            presentDays: 30,
-                            totalDaysInMonth: 31,
+                            presentDays: payment.presentDays || 30,
+                            totalDaysInMonth: payment.workingDays || 31,
                             modeOfPay: employee.bankAccountNo ? 'Bank Transfer' : 'Cash',
                             accountNumber: employee.bankAccountNo || 'N/A',
                             basic: payment.earnings?.basic || 0,
@@ -487,7 +522,7 @@ export default function EmployeePayrollPage() {
                             esic: payment.deductions?.esic || 0,
                             advance: payment.deductions?.salaryAdvance || 0,
                             loan: payment.deductions?.loan || 0,
-                            lop: payment.deductions?.lop || 0,
+                            lop: payment.deductions?.lop || payment.lopAmount || 0,
                             tds: payment.deductions?.tds || 0,
                           };
                           downloadPayslip(salaryData, payment.month, String(payment.year));
@@ -500,19 +535,53 @@ export default function EmployeePayrollPage() {
                     )}
                   </div>
 
+                  {/* ✅ LOP Warning if applicable */}
+                  {payment.lopDays && payment.lopDays > 0 && (
+                    <div className="mb-4 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                      <div className="flex items-start gap-3">
+                        <AlertTriangle className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
+                        <div>
+                          <h4 className="font-semibold text-orange-900 mb-1">Loss of Pay Applied</h4>
+                          <p className="text-sm text-orange-700">
+                            {payment.lopDays} days of LOP deducted from gross salary. 
+                            Amount deducted: <span className="font-semibold">{formatCurrency(payment.lopAmount || 0)}</span>
+                          </p>
+                          {payment.originalGrossSalary && (
+                            <p className="text-xs text-orange-600 mt-1">
+                              Original Gross: {formatCurrency(payment.originalGrossSalary)} → 
+                              Adjusted Gross: {formatCurrency(payment.grossSalary)}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Salary Breakdown */}
                   <div className="grid md:grid-cols-3 gap-4">
                     <div className="p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg border border-green-200">
-                      <p className="text-xs text-green-700 mb-1 font-semibold">GROSS SALARY</p>
+                      <p className="text-xs text-green-700 mb-1 font-semibold">
+                        {payment.lopDays && payment.lopDays > 0 ? 'ADJUSTED GROSS' : 'GROSS SALARY'}
+                      </p>
                       <p className="text-2xl font-bold text-green-600">
                         {formatCurrency(payment.grossSalary)}
                       </p>
+                      {payment.originalGrossSalary && payment.lopDays && payment.lopDays > 0 && (
+                        <p className="text-xs text-green-600 mt-1">
+                          Before LOP: {formatCurrency(payment.originalGrossSalary)}
+                        </p>
+                      )}
                     </div>
                     <div className="p-4 bg-gradient-to-br from-red-50 to-rose-50 rounded-lg border border-red-200">
                       <p className="text-xs text-red-700 mb-1 font-semibold">DEDUCTIONS</p>
                       <p className="text-2xl font-bold text-red-600">
                         {formatCurrency(payment.totalDeductions)}
                       </p>
+                      {payment.lopAmount && payment.lopAmount > 0 && (
+                        <p className="text-xs text-red-600 mt-1">
+                          Includes LOP: {formatCurrency(payment.lopAmount)}
+                        </p>
+                      )}
                     </div>
                     <div className="p-4 bg-gradient-to-br from-cyan-50 to-blue-50 rounded-lg border border-cyan-200">
                       <p className="text-xs text-cyan-700 mb-1 font-semibold">NET SALARY</p>

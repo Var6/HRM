@@ -96,7 +96,7 @@ export default function EmployeeDetail() {
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6 pt-7 mt-7 flex items-center justify-center">
         <div className="text-center">
           <p className="text-slate-500 text-lg mb-4">Employee not found</p>
-          <Link href="/Dashboard/employees" className="text-cyan-600 hover:underline">Back to Employees</Link>
+          <button onClick={()=>window.history.back()} className="text-cyan-600 hover:underline">Back</button>
         </div>
       </div>
     );
@@ -108,13 +108,13 @@ export default function EmployeeDetail() {
         
         {/* Header */}
         <div className="mb-6">
-          <Link 
-            href="/Dashboard/employees"
+          <button 
+           onClick={()=>window.history.back()}
             className="inline-flex items-center gap-2 text-slate-600 hover:text-blue-700 mb-4 transition-colors hover:underline"
           >
             <ArrowLeft className="w-5 h-5" />
-            Back to Employees
-          </Link>
+            Back
+          </button>
 
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
             <div className="flex items-start gap-6">

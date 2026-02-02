@@ -9,7 +9,8 @@ import {
   DollarSign, CreditCard, Wallet, ArrowUpCircle, ArrowDownCircle,
   Calculator, Send, Ban, Lock, Unlock, Building2, Receipt,
   IndianRupee, Percent, TrendingDown, Award, Bell, Settings,
-  AlertTriangle
+  AlertTriangle,
+  Edit2Icon
 } from 'lucide-react';
 import { PayslipButton } from '@/lib/PayslipGenerator';
 import { downloadPayslip } from '@/lib/payslip-utils';
@@ -309,11 +310,11 @@ const stats = {
 
                       <div className="flex items-center gap-2">
                         <button
-                          onClick={() => router.push(`/Dashboard/payroll/${employee.employeeId}`)}
+                          onClick={() => router.push(`/Dashboard/payrolldetails/${employee.employeeId}`)}
                           className="px-4 py-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-all flex items-center gap-2"
                         >
-                          <Receipt className="w-4 h-4" />
-                          Payments
+                          <Edit2Icon className="w-4 h-4" />
+                         Manage
                         </button>
                         <button
                           onClick={() => setSelectedEmployee(selectedEmployee === employee.employeeCode
@@ -563,7 +564,7 @@ const stats = {
                             <Edit className="w-4 h-4" />
                           </button>
                           <button className="p-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition-all"
-                          onClick={()=>router.push(`/Dashboard/payroll/${employee.employeeId}`)}
+                          onClick={()=>router.push(`/Dashboard/payroll/editing/${employee.employeeId}`)}
                           >
                             <Eye className="w-4 h-4" />
                           </button>
@@ -754,7 +755,7 @@ const stats = {
                             ? 'bg-amber-100 text-amber-700'
                             : 'bg-slate-100 text-slate-700'
                         }`}>
-                          {record.status.toUpperCase()}
+                         {(record.status || 'DRAFT').toUpperCase()}
                         </span>
                       </div>
                       <button className="p-2 bg-cyan-100 text-cyan-600 rounded-lg hover:bg-cyan-200 transition-all">
@@ -818,7 +819,9 @@ const stats = {
                       <span className="font-bold text-cyan-600">{formatCurrency(employee.netSalary)}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <button className="flex-1 px-4 py-2 bg-cyan-100 text-cyan-600 rounded-lg hover:bg-cyan-200 transition-all flex items-center justify-center gap-2">
+                      <button className="flex-1 px-4 py-2 bg-cyan-100 text-cyan-600 rounded-lg hover:bg-cyan-200 transition-all flex items-center justify-center gap-2"
+                      onClick={()=>router.push(`/Dashboard/employees/${employee.employeeId}`)}
+                      >
                         <Eye className="w-4 h-4" />
                         View
                       </button>
@@ -828,7 +831,7 @@ const stats = {
                       </button>
                       <button className="flex-1 px-4 py-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-all flex items-center justify-center gap-2"
                       onClick={() => {
-    window.location.href = `mailto:----//////---------`;
+    window.location.href = `mailto:${employee.employeeName}?subject=Your Payslip for ${months[selectedMonth]} ${selectedYear}&body=Dear ${employee.employeeName},%0D%0A%0D%0APlease find attached your payslip for the month of ${months[selectedMonth]} ${selectedYear}.%0D%0A%0D%0ARegards,%0D%0AHR Team`;
   }}
                       >
                         <Send className="w-4 h-4" />
