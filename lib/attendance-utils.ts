@@ -1,22 +1,30 @@
 // lib/attendance-utils.ts
 
 /**
- * Calculate total working days in a month (excluding Tuesdays)
+ * Calculate total working days in a month (excluding Tuesdays and holidays)
  * @param month - Month (0-11)
  * @param year - Year
+ * @param holidays - Array of holiday dates
  * @returns Number of working days
  */
-export function getWorkingDaysInMonth(month: number, year: number): number {
+export function getWorkingDaysInMonth(month: number, year: number, holidays: Date[] = []): number {
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   let workingDays = 0;
+  
+  const holidaySet = new Set(
+    holidays.map(h => {
+      const d = new Date(h);
+      return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+    })
+  );
 
   for (let day = 1; day <= daysInMonth; day++) {
     const date = new Date(year, month, day);
     const dayOfWeek = date.getDay();
+    const dateStr = `${year}-${month}-${day}`;
     
-    // Tuesday is 2 (0=Sunday, 1=Monday, 2=Tuesday, etc.)
-    // Saturday=6, Sunday=0 are working days
-    if (dayOfWeek !== 2) {
+    // Tuesday is 2, exclude holidays
+    if (dayOfWeek !== 2 && !holidaySet.has(dateStr)) {
       workingDays++;
     }
   }
@@ -54,13 +62,12 @@ export function getTuesdaysInMonth(month: number, year: number): Date[] {
 }
 
 /**
- * Calculate LOP (Loss of Pay) details for an employee
+ * Calculate LOP (Loss of Pay) details - CORRECTED LOGIC
+ * If absent/on leave for more than 2.25 days, deduct salary for excess days
  * @param attendanceRecords - Employee's attendance records for the month
  * @param month - Month (0-11)
  * @param year - Year
- * @param casualLeavesTaken - Number of casual leaves taken
- * @param earnedLeavesTaken - Number of earned leaves taken
- * @param monthlyCredit - Monthly leave credits
+ * @param holidays - Array of holiday dates
  * @returns LOP days
  */
 export function calculateLOP(
@@ -69,43 +76,46 @@ export function calculateLOP(
   year: number,
   casualLeavesTaken: number,
   earnedLeavesTaken: number,
-  monthlyCredit: { casualLeave: number; earnedLeave: number }
+  monthlyCredit: { casualLeave: number; earnedLeave: number },
+  holidays: Date[] = []
 ): number {
-  // Total leaves allowed per month (CL + EL)
-  const totalLeavesAllowed = monthlyCredit.casualLeave + monthlyCredit.earnedLeave;
+  // Count total absent/onLeave days
+  const absentDays = attendanceRecords.filter(r => 
+    r.status === 'onLeave' || r.status === 'absent'
+  ).length;
   
-  // Total leaves taken (excluding sick and extraordinary which don't count towards LOP)
-  const totalLeavesTaken = casualLeavesTaken + earnedLeavesTaken;
+  // If absent more than 2.25 days, calculate LOP for excess days
+  const excessAbsentDays = Math.max(0, absentDays - 2.25);
   
-  // LOP days = leaves taken beyond allowed limit
-  const lopDays = Math.max(0, totalLeavesTaken - totalLeavesAllowed);
-  
-  return lopDays;
+  return excessAbsentDays;
 }
 
 /**
- * Calculate LOP amount to deduct from salary
+ * Calculate LOP amount to deduct from salary - CORRECTED LOGIC
+ * LOP = (Days absent - 2.25) × (Monthly Salary / Days in Month)
  * @param grossSalary - Employee's gross salary
  * @param lopDays - Number of LOP days
  * @param month - Month (0-11)
  * @param year - Year
+ * @param holidays - Array of holiday dates
  * @returns LOP amount to deduct
  */
 export function calculateLOPAmount(
   grossSalary: number,
   lopDays: number,
   month: number,
-  year: number
+  year: number,
+  holidays: Date[] = []
 ): number {
   if (lopDays <= 0) return 0;
   
-  // Get total working days in the month (excluding Tuesdays)
-  const workingDays = getWorkingDaysInMonth(month, year);
+  // Get total days in month (all days including weekends)
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
   
-  // Per day salary = Gross Salary / Working Days
-  const perDaySalary = grossSalary / workingDays;
+  // Per day salary = Gross Salary / Total Days in Month
+  const perDaySalary = grossSalary / daysInMonth;
   
-  // LOP Amount = Per Day Salary × LOP Days
+  // LOP Amount = Per Day Salary × Excess Absent Days
   const lopAmount = perDaySalary * lopDays;
   
   return Math.round(lopAmount * 100) / 100; // Round to 2 decimal places

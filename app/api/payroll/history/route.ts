@@ -1,53 +1,35 @@
-import mongoose from 'mongoose';
+import { NextResponse } from "next/server";
+import { connectDB } from "@/lib/mongodb";
+import PayrollHistory from "@/models/PayrollHistory";
 
-const PayrollHistorySchema = new mongoose.Schema({
-  employeeId: { type: mongoose.Schema.Types.ObjectId, ref: 'Employee', required: true },
-  month: { type: String, required: true },
-  year: { type: Number, required: true },
-  
-  // Salary fields
-  grossSalary: { type: Number, required: true }, // After LOP deduction
-  originalGrossSalary: { type: Number }, // Before LOP deduction
-  totalDeductions: { type: Number, required: true },
-  netSalary: { type: Number, required: true },
-  
-  // Earnings breakdown
-  earnings: {
-    basic: Number,
-    hra: Number,
-    conveyance: Number,
-    monthlyBonus: Number,
-    quarterlyBonus: Number,
-    specialAllowance: Number
-  },
-  
-  // Deductions breakdown
-  deductions: {
-    pf: Number,
-    esic: Number,
-    lop: Number, // ✅ LOP amount
-    salaryAdvance: Number,
-    loan: Number,
-    tds: Number
-  },
-  
-  // ✅ LOP Details
-  lopDays: { type: Number, default: 0 },
-  lopAmount: { type: Number, default: 0 },
-  
-  // ✅ Attendance summary
-  workingDays: Number,
-  presentDays: Number,
-  
-  // Status fields
-  salaryProcessed: { type: Boolean, default: false },
-  salaryHold: { type: Boolean, default: false },
-  salaryHoldReason: String,
-  processedDate: Date,
-  processedBy: String
-}, { timestamps: true });
+export async function GET(req: Request) {
+  try {
+    await connectDB();
 
-// Compound index for efficient queries
-PayrollHistorySchema.index({ employeeId: 1, year: -1, month: -1 });
+    const history = await PayrollHistory.find()
+      .sort({ year: -1, month: -1 })
+      .limit(12);
 
-export default mongoose.models.PayrollHistory || mongoose.model('PayrollHistory', PayrollHistorySchema);
+    // Transform the data to match expected format
+    const formattedHistory = history.map((record: any) => ({
+      id: record._id.toString(),
+      month: record.month,
+      year: record.year,
+      totalEmployees: record.totalEmployees || 1,
+      totalNetSalary: record.netSalary || 0,
+      totalGrossSalary: record.grossSalary || 0,
+      status: record.salaryProcessed ? 'paid' : record.salaryHold ? 'on-hold' : 'draft'
+    }));
+
+    return NextResponse.json({
+      success: true,
+      history: formattedHistory
+    });
+  } catch (error) {
+    console.error("GET /api/payroll/history error:", error);
+    return NextResponse.json(
+      { success: false, error: "Internal Server Error" },
+      { status: 500 }
+    );
+  }
+}

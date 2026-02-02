@@ -85,12 +85,30 @@ const fetchPayrollData = async () => {
     const response = await fetch(
       `/api/payroll?month=${months[selectedMonth]}&year=${selectedYear}`
     );
-    const data = await response.json();
-    if (data.success) {
+    
+    if (!response.ok) {
+      console.error('API error:', response.status, response.statusText);
+      setSalaryData([]);
+      return;
+    }
+
+    const text = await response.text();
+    if (!text) {
+      console.error('Empty response from API');
+      setSalaryData([]);
+      return;
+    }
+
+    const data = JSON.parse(text);
+    if (data.success && data.payrollData) {
       setSalaryData(data.payrollData);
+    } else {
+      console.error('Invalid response format:', data);
+      setSalaryData([]);
     }
   } catch (error) {
     console.error('Error fetching payroll:', error);
+    setSalaryData([]);
   } finally {
     setLoading(false);
   }
@@ -99,12 +117,30 @@ const fetchPayrollData = async () => {
 const fetchPayrollHistory = async () => {
   try {
     const response = await fetch('/api/payroll/history');
-    const data = await response.json();
-    if (data.success) {
+    
+    if (!response.ok) {
+      console.error('API error:', response.status, response.statusText);
+      setPayrollHistory([]);
+      return;
+    }
+
+    const text = await response.text();
+    if (!text) {
+      console.error('Empty response from API');
+      setPayrollHistory([]);
+      return;
+    }
+
+    const data = JSON.parse(text);
+    if (data.success && data.history) {
       setPayrollHistory(data.history);
+    } else {
+      console.error('Invalid response format:', data);
+      setPayrollHistory([]);
     }
   } catch (error) {
     console.error('Error fetching history:', error);
+    setPayrollHistory([]);
   }
 };
 
@@ -564,7 +600,7 @@ const stats = {
                             <Edit className="w-4 h-4" />
                           </button>
                           <button className="p-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition-all"
-                          onClick={()=>router.push(`/Dashboard/payroll/editing/${employee.employeeId}`)}
+                          onClick={()=>router.push(`/Dashboard/payrolldetails/${employee.employeeId}`)}
                           >
                             <Eye className="w-4 h-4" />
                           </button>

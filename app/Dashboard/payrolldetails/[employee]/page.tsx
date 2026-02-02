@@ -20,11 +20,21 @@ interface PaymentHistory {
   totalDeductions: number;
   netSalary: number;
   earnings: any;
+  salarySnapshot?: any;
   deductions: any;
   lopDays?: number;
   lopAmount?: number;
+  absent?: number;
   workingDays?: number;
   presentDays?: number;
+  manualDeductions?: Array<{
+    reason: string;
+    amount: number;
+    remarks: string;
+    addedBy: string;
+    addedAt: string;
+  }>;
+  totalManualDeductions?: number;
   salaryProcessed: boolean;
   salaryHold: boolean;
   processedDate: string;
@@ -90,6 +100,8 @@ export default function EmployeePayrollPage() {
   // Modal states
   const [showIncrementModal, setShowIncrementModal] = useState(false);
   const [showPerformanceModal, setShowPerformanceModal] = useState(false);
+  const [showManualDeductionModal, setShowManualDeductionModal] = useState(false);
+  const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(null);
   
   // Form states
   const [incrementForm, setIncrementForm] = useState({
@@ -98,6 +110,12 @@ export default function EmployeePayrollPage() {
     reason: '',
     approvedBy: '',
     effectiveFrom: new Date().toISOString().split('T')[0]
+  });
+
+  const [manualDeductionForm, setManualDeductionForm] = useState({
+    reason: '',
+    amount: '',
+    remarks: ''
   });
 
   const [performanceForm, setPerformanceForm] = useState({
@@ -118,8 +136,20 @@ export default function EmployeePayrollPage() {
   const fetchEmployeeData = async () => {
     try {
       const response = await fetch(`/api/employees/${employeeId}`);
-      const data = await response.json();
-      if (data.success) {
+      
+      if (!response.ok) {
+        console.error('API error:', response.status, response.statusText);
+        return;
+      }
+
+      const text = await response.text();
+      if (!text) {
+        console.error('Empty response from API');
+        return;
+      }
+
+      const data = JSON.parse(text);
+      if (data.success && data.employee) {
         setEmployee(data.employee);
       }
     } catch (error) {
@@ -130,12 +160,29 @@ export default function EmployeePayrollPage() {
   const fetchPaymentHistory = async () => {
     try {
       const response = await fetch(`/api/payroll/employee/${employeeId}`);
-      const data = await response.json();
-      if (data.success) {
+      
+      if (!response.ok) {
+        console.error('API error:', response.status, response.statusText);
+        setPaymentHistory([]);
+        return;
+      }
+
+      const text = await response.text();
+      if (!text) {
+        console.error('Empty response from API');
+        setPaymentHistory([]);
+        return;
+      }
+
+      const data = JSON.parse(text);
+      if (data.success && data.history) {
         setPaymentHistory(data.history);
+      } else {
+        setPaymentHistory([]);
       }
     } catch (error) {
       console.error('Error fetching payment history:', error);
+      setPaymentHistory([]);
     } finally {
       setLoading(false);
     }
@@ -144,24 +191,58 @@ export default function EmployeePayrollPage() {
   const fetchPerformanceRecords = async () => {
     try {
       const response = await fetch(`/api/performance/${employeeId}`);
-      const data = await response.json();
-      if (data.success) {
+      
+      if (!response.ok) {
+        console.error('API error:', response.status, response.statusText);
+        setPerformanceRecords([]);
+        return;
+      }
+
+      const text = await response.text();
+      if (!text) {
+        console.error('Empty response from API');
+        setPerformanceRecords([]);
+        return;
+      }
+
+      const data = JSON.parse(text);
+      if (data.success && data.records) {
         setPerformanceRecords(data.records);
+      } else {
+        setPerformanceRecords([]);
       }
     } catch (error) {
       console.error('Error fetching performance:', error);
+      setPerformanceRecords([]);
     }
   };
 
   const fetchIncrementHistory = async () => {
     try {
       const response = await fetch(`/api/increments/${employeeId}`);
-      const data = await response.json();
-      if (data.success) {
+      
+      if (!response.ok) {
+        console.error('API error:', response.status, response.statusText);
+        setIncrementHistory([]);
+        return;
+      }
+
+      const text = await response.text();
+      if (!text) {
+        console.error('Empty response from API');
+        setIncrementHistory([]);
+        return;
+      }
+
+      const data = JSON.parse(text);
+      if (data.success && data.increments) {
         setIncrementHistory(data.increments);
+      } else {
+        setIncrementHistory([]);
       }
     } catch (error) {
       console.error('Error fetching increments:', error);
+      setIncrementHistory([]);
     }
   };
 
@@ -238,6 +319,45 @@ export default function EmployeePayrollPage() {
       }
     } catch (error) {
       console.error('Error adding performance:', error);
+    }
+  };
+
+  const handleAddManualDeduction = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedPaymentId) return;
+
+    const selectedPayment = paymentHistory.find(p => p._id === selectedPaymentId);
+    if (!selectedPayment) return;
+
+    const newDeduction = {
+      reason: manualDeductionForm.reason,
+      amount: parseFloat(manualDeductionForm.amount),
+      remarks: manualDeductionForm.remarks,
+      addedBy: 'HR',
+      addedAt: new Date()
+    };
+
+    const manualDeductions = [...(selectedPayment.manualDeductions || []), newDeduction];
+
+    try {
+      const response = await fetch('/api/payroll/manual-deductions', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          employeeId,
+          month: selectedPayment.month,
+          year: selectedPayment.year,
+          manualDeductions
+        })
+      });
+
+      if (response.ok) {
+        setShowManualDeductionModal(false);
+        setManualDeductionForm({ reason: '', amount: '', remarks: '' });
+        fetchPaymentHistory();
+      }
+    } catch (error) {
+      console.error('Error adding manual deduction:', error);
     }
   };
 
@@ -589,6 +709,62 @@ export default function EmployeePayrollPage() {
                         {formatCurrency(payment.netSalary)}
                       </p>
                     </div>
+                  </div>
+
+                  {/* Salary Snapshot Section */}
+                  {payment.salarySnapshot && (
+                    <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                      <p className="text-xs font-semibold text-blue-700 mb-2">Salary Structure at Time of Processing</p>
+                      <div className="grid grid-cols-3 gap-2 text-xs">
+                        {Object.entries(payment.salarySnapshot).map(([key, val]: [string, any]) => (
+                          <div key={key} className="flex justify-between">
+                            <span className="text-blue-600 capitalize">{key.replace(/([A-Z])/g, ' $1')}:</span>
+                            <span className="font-semibold text-blue-700">{formatCurrency(val || 0)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Manual Deductions Section */}
+                  <div className="mt-4 pt-4 border-t border-slate-200">
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="font-semibold text-slate-900">Additional Deductions</h4>
+                      <button
+                        onClick={() => {
+                          setSelectedPaymentId(payment._id);
+                          setShowManualDeductionModal(true);
+                        }}
+                        className="px-3 py-1 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-all text-sm flex items-center gap-1"
+                      >
+                        <Plus className="w-3 h-3" />
+                        Add Deduction
+                      </button>
+                    </div>
+
+                    {payment.manualDeductions && payment.manualDeductions.length > 0 ? (
+                      <div className="space-y-2">
+                        {payment.manualDeductions.map((deduction, idx) => (
+                          <div key={idx} className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                            <div className="flex items-start justify-between">
+                              <div>
+                                <p className="font-semibold text-red-900">{deduction.reason}</p>
+                                {deduction.remarks && (
+                                  <p className="text-xs text-red-600 mt-1">{deduction.remarks}</p>
+                                )}
+                                <p className="text-xs text-red-500 mt-1">Added by: {deduction.addedBy}</p>
+                              </div>
+                              <p className="font-bold text-red-700">{formatCurrency(deduction.amount)}</p>
+                            </div>
+                          </div>
+                        ))}
+                        <p className="text-sm font-semibold text-slate-700 pt-2">
+                          Total Additional Deductions: {formatCurrency(payment.totalManualDeductions || 0)}
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-slate-500">No additional deductions</p>
+                    )}
                   </div>
                 </div>
               ))
@@ -1031,6 +1207,92 @@ export default function EmployeePayrollPage() {
                   >
                     <Save className="w-5 h-5" />
                     Save Review
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Manual Deduction Modal */}
+        {showManualDeductionModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-xl">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-slate-900">Add Manual Deduction</h2>
+                <button
+                  onClick={() => {
+                    setShowManualDeductionModal(false);
+                    setSelectedPaymentId(null);
+                  }}
+                  className="p-2 hover:bg-slate-100 rounded-lg transition-all"
+                >
+                  <X className="w-6 h-6 text-slate-600" />
+                </button>
+              </div>
+
+              <form onSubmit={handleAddManualDeduction} className="p-6 space-y-6">
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    Reason for Deduction
+                  </label>
+                  <input
+                    type="text"
+                    value={manualDeductionForm.reason}
+                    onChange={(e) => setManualDeductionForm({ ...manualDeductionForm, reason: e.target.value })}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                    placeholder="e.g., Damage to company property, Late fees"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    Amount to Deduct (₹)
+                  </label>
+                  <input
+                    type="number"
+                    value={manualDeductionForm.amount}
+                    onChange={(e) => setManualDeductionForm({ ...manualDeductionForm, amount: e.target.value })}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                    placeholder="Amount"
+                    required
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    Remarks (Optional)
+                  </label>
+                  <textarea
+                    value={manualDeductionForm.remarks}
+                    onChange={(e) => setManualDeductionForm({ ...manualDeductionForm, remarks: e.target.value })}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                    rows={3}
+                    placeholder="Additional details..."
+                  ></textarea>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowManualDeductionModal(false);
+                      setSelectedPaymentId(null);
+                      setManualDeductionForm({ reason: '', amount: '', remarks: '' });
+                    }}
+                    className="flex-1 px-6 py-3 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-all font-medium"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 px-6 py-3 bg-gradient-to-r from-red-500 to-orange-600 text-white rounded-lg hover:from-red-600 hover:to-orange-700 transition-all font-medium flex items-center justify-center gap-2"
+                  >
+                    <Plus className="w-5 h-5" />
+                    Add Deduction
                   </button>
                 </div>
               </form>

@@ -3,6 +3,7 @@ import { connectDB } from "@/lib/mongodb";
 import Employee from "@/models/Employee";
 import PayrollHistory from "@/models/PayrollHistory";
 import MonthlyAttendance from "@/models/Attendance";
+import Holiday from "@/models/Holiday";
 import { calculateLOP, calculateLOPAmount, getWorkingDaysInMonth } from "@/lib/attendance-utils";
 
 export async function GET(req: Request) {
@@ -12,6 +13,13 @@ export async function GET(req: Request) {
     const month = searchParams.get('month');
     const year = Number(searchParams.get('year'));
     const monthIndex = new Date(`${month} 1, ${year}`).getMonth();
+
+    // Get all holidays for this month
+    const holidays = await Holiday.find({
+      year,
+      month: monthIndex
+    });
+    const holidayDates = holidays.map(h => new Date(h.date));
 
     const employees = await Employee.find({ status: { $ne: 'inactive' } }).sort({ createdAt: -1 });
 
@@ -32,22 +40,29 @@ export async function GET(req: Request) {
 
         let lopDays = 0;
         let lopAmount = 0;
+        let absentDays = 0;
 
         if (attendance) {
-          // Calculate LOP
+          // Count actual absent days
+          absentDays = attendance.records.filter((r: any) => 
+            r.status === 'onLeave' || r.status === 'absent'
+          ).length;
+          
+          // Calculate LOP: if absent > 2.25 days, deduct for excess
           lopDays = calculateLOP(
             attendance.records,
             monthIndex,
             year,
             attendance.summary?.casualLeavesTaken || 0,
             attendance.summary?.earnedLeavesTaken || 0,
-            attendance.monthlyCredit || { casualLeave: 1, earnedLeave: 1.25 }
+            attendance.monthlyCredit || { casualLeave: 1, earnedLeave: 1.25 },
+            holidayDates
           );
 
-          lopAmount = calculateLOPAmount(grossSalary, lopDays, monthIndex, year);
+          lopAmount = calculateLOPAmount(grossSalary, lopDays, monthIndex, year, holidayDates);
         }
 
-        // Calculate standard deductions (all except LOP)
+        // Calculate standard deductions (all except LOP and manual)
         let standardDeductions = 0;
         const standardDeductionsObj: any = {};
         
@@ -83,14 +98,15 @@ export async function GET(req: Request) {
           earnings,
           deductions: {
             ...standardDeductionsObj,
-            lop: lopAmount // Include LOP in deductions
+            lop: lopAmount
           },
-          grossSalary, // Actual gross salary (unchanged)
+          grossSalary,
           lopDays,
           lopAmount,
+          absentDays,
           standardDeductions,
-          totalDeductions, // All deductions
-          netSalary, // Final net pay
+          totalDeductions,
+          netSalary,
           bankAccount: emp.bankAccountNo || 'N/A',
           pfNumber: emp.pfNo || 'N/A',
           uanNumber: emp.uanNo || 'N/A',
@@ -98,10 +114,10 @@ export async function GET(req: Request) {
           salaryProcessed: history?.salaryProcessed || false,
           salaryHold: history?.salaryHold || false,
           salaryHoldReason: history?.salaryHoldReason || null,
-          workingDays: getWorkingDaysInMonth(monthIndex, year),
+          workingDays: getWorkingDaysInMonth(monthIndex, year, holidayDates),
           presentDays: attendance ? 
-            getWorkingDaysInMonth(monthIndex, year) - (attendance.summary?.totalAbsent || 0) : 
-            getWorkingDaysInMonth(monthIndex, year),
+            getWorkingDaysInMonth(monthIndex, year, holidayDates) - (attendance.summary?.totalAbsent || 0) : 
+            getWorkingDaysInMonth(monthIndex, year, holidayDates),
           fatherName: emp.fatherName || 'N/A',
           panNumber: emp.panCardNo || 'N/A',
           dateOfJoining: emp.dateOfJoining || 'N/A',
@@ -125,7 +141,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     await connectDB();
-    const { employeeCode, month, year, salaryProcessed } = await req.json();
+    const { employeeCode, month, year, salaryProcessed, manualDeductions } = await req.json();
     const monthIndex = new Date(`${month} 1, ${year}`).getMonth();
 
     const employee = await Employee.findOne({ employeeCode });
@@ -133,6 +149,13 @@ export async function POST(req: Request) {
     if (!employee) {
       return NextResponse.json({ error: "Employee not found" }, { status: 404 });
     }
+
+    // Get holidays
+    const holidays = await Holiday.find({
+      year,
+      month: monthIndex
+    });
+    const holidayDates = holidays.map(h => new Date(h.date));
 
     // Get attendance to calculate LOP
     const attendance = await MonthlyAttendance.findOne({
@@ -149,18 +172,24 @@ export async function POST(req: Request) {
     
     let lopDays = 0;
     let lopAmount = 0;
+    let absentDays = 0;
 
     if (attendance) {
+      absentDays = attendance.records.filter((r: any) => 
+        r.status === 'onLeave' || r.status === 'absent'
+      ).length;
+
       lopDays = calculateLOP(
         attendance.records,
         monthIndex,
         year,
         attendance.summary?.casualLeavesTaken || 0,
         attendance.summary?.earnedLeavesTaken || 0,
-        attendance.monthlyCredit || { casualLeave: 1, earnedLeave: 1.25 }
+        attendance.monthlyCredit || { casualLeave: 1, earnedLeave: 1.25 },
+        holidayDates
       );
 
-      lopAmount = calculateLOPAmount(grossSalary, lopDays, monthIndex, year);
+      lopAmount = calculateLOPAmount(grossSalary, lopDays, monthIndex, year, holidayDates);
     }
 
     // Calculate standard deductions
@@ -175,8 +204,14 @@ export async function POST(req: Request) {
       }
     });
     
-    // Total deductions = standard deductions + LOP
-    const totalDeductions = standardDeductions + lopAmount;
+    // Calculate total manual deductions
+    let totalManualDeductions = 0;
+    if (manualDeductions && Array.isArray(manualDeductions)) {
+      totalManualDeductions = manualDeductions.reduce((sum: number, d: any) => sum + Number(d.amount || 0), 0);
+    }
+    
+    // Total deductions = standard + LOP + manual
+    const totalDeductions = standardDeductions + lopAmount + totalManualDeductions;
     
     // Net salary = Gross Salary - All Deductions
     const netSalary = grossSalary - totalDeductions;
@@ -185,22 +220,23 @@ export async function POST(req: Request) {
     await PayrollHistory.findOneAndUpdate(
       { employeeId: employee._id, month, year },
       {
-        grossSalary, // Use actual gross salary
+        salarySnapshot: earnings,
+        grossSalary,
         totalDeductions,
         netSalary,
         earnings,
         deductions: {
           ...standardDeductionsObj,
-          lop: lopAmount
+          lop: lopAmount,
+          manualDeduction: totalManualDeductions
         },
         lopDays,
         lopAmount,
+        absent: absentDays,
+        manualDeductions: manualDeductions || [],
+        totalManualDeductions,
         salaryProcessed,
-        processedDate: salaryProcessed ? new Date() : null,
-        workingDays: getWorkingDaysInMonth(monthIndex, year),
-        presentDays: attendance ? 
-          getWorkingDaysInMonth(monthIndex, year) - (attendance.summary?.totalAbsent || 0) : 
-          getWorkingDaysInMonth(monthIndex, year)
+        processedDate: salaryProcessed ? new Date() : null
       },
       { upsert: true, new: true }
     );
