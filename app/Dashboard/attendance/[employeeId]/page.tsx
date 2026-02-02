@@ -69,10 +69,81 @@ export default function EmployeeAttendance({ params }: { params: Promise<{ emplo
   const [saving, setSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [calendarDays, setCalendarDays] = useState<Date[]>([]);
+  const [holidays, setHolidays] = useState<any[]>([]);
+  const [showHolidayModal, setShowHolidayModal] = useState(false);
+  const [selectedHolidayDate, setSelectedHolidayDate] = useState<Date | null>(null);
+  const [holidayName, setHolidayName] = useState('');
+  const [markingHoliday, setMarkingHoliday] = useState(false);
 
 
 const isTuesday = (date: Date) => {
   return date.getDay() === 2; // 0=Sun, 1=Mon, 2=Tue
+};
+
+const isHoliday = (date: Date) => {
+  return holidays.some(holiday => {
+    const holidayDate = new Date(holiday.date);
+    return holidayDate.toDateString() === date.toDateString();
+  });
+};
+
+const getHolidayName = (date: Date) => {
+  const holiday = holidays.find(h => {
+    const holidayDate = new Date(h.date);
+    return holidayDate.toDateString() === date.toDateString();
+  });
+  return holiday?.name || '';
+};
+
+const fetchHolidays = async () => {
+  try {
+    const response = await fetch(`/api/holidays?month=${selectedMonth}&year=${selectedYear}`);
+    const data = await response.json();
+    if (data.success) {
+      setHolidays(data.holidays || []);
+    }
+  } catch (error) {
+    console.error('Error fetching holidays:', error);
+  }
+};
+
+const markHolidayOnCalendar = async () => {
+  if (!selectedHolidayDate || !holidayName.trim()) {
+    alert('Please enter a holiday name');
+    return;
+  }
+
+  try {
+    setMarkingHoliday(true);
+    const response = await fetch('/api/holidays', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: holidayName,
+        date: selectedHolidayDate.toISOString().split('T')[0], // Format: YYYY-MM-DD
+        description: `Marked by ${employee?.name || 'HR'} on employee attendance page`,
+        createdBy: 'Employee Attendance'
+      })
+    });
+
+    if (response.ok) {
+      // Refresh holidays to show the new one
+      await fetchHolidays();
+      setShowHolidayModal(false);
+      setSelectedHolidayDate(null);
+      setHolidayName('');
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3000);
+    } else {
+      const error = await response.json();
+      alert(`Failed to mark holiday: ${error.error || 'Unknown error'}`);
+    }
+  } catch (error) {
+    console.error('Error marking holiday:', error);
+    alert('Failed to mark holiday. Please try again.');
+  } finally {
+    setMarkingHoliday(false);
+  }
 };
 
 const calculatePresentDays = () => {
@@ -238,6 +309,7 @@ const generateCalendar = () => {
     if (employeeId) {
       fetchEmployeeAttendance();
     }
+    fetchHolidays();
   }, [selectedMonth, selectedYear, employeeId]);
   
   useEffect(() => {
@@ -365,31 +437,45 @@ const generateCalendar = () => {
   const isToday = date.toDateString() === new Date().toDateString();
   const isFuture = date > new Date();
   const isTues = isTuesday(date); // ✅ Check if Tuesday
+  const holiday = isHoliday(date); // ✅ Check if holiday
   
   const isPast = date < new Date() && !isToday;
-  const displayAsPresent = !record && isPast && !isFuture && !isTues; // ✅ Not present if Tuesday
+  const displayAsPresent = !record && isPast && !isFuture && !isTues && !holiday; // ✅ Not present if Tuesday or holiday
 
   return (
     <div
       key={index}
-      className={`aspect-square border-2 rounded-lg p-2 transition-all ${
-        isTues
+      className={`aspect-square border-2 rounded-lg p-2 transition-all flex flex-col items-center justify-center ${
+        holiday
+          ? 'bg-pink-100 border-pink-300'
+          : isTues
           ? 'bg-purple-50 border-purple-300 opacity-75' // ✅ Tuesday styling
           : displayAsPresent 
             ? 'bg-green-50 border-green-300'
             : getStatusColor(record)
       } ${isToday ? 'ring-2 ring-cyan-500' : ''} ${
-        isFuture || isTues ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-md cursor-pointer' // ✅ Disable Tuesday
+        (isFuture || isTues) && !holiday ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-md cursor-pointer' // ✅ Disable Tuesday
       }`}
-      onClick={() => !isFuture && !isTues && setSelectedDate(date)} // ✅ Prevent clicking Tuesday
+      onClick={() => {
+        if (holiday) {
+          // If clicking on holiday, show info - allow marking past/future holidays too
+          setSelectedHolidayDate(date);
+          setHolidayName('');
+          setShowHolidayModal(true);
+        } else if (!isFuture && !isTues) {
+          setSelectedDate(date);
+        }
+      }}
     >
-      <div className="flex flex-col items-center justify-center h-full">
+      <div className="flex flex-col items-center justify-center h-full w-full text-center">
         <span className={`text-sm font-semibold ${
-          isToday ? 'text-cyan-600' : isTues ? 'text-purple-600' : 'text-slate-900'
+          isToday ? 'text-cyan-600' : isTues ? 'text-purple-600' : holiday ? 'text-pink-600' : 'text-slate-900'
         }`}>
           {date.getDate()}
         </span>
-        {isTues ? (
+        {holiday ? (
+          <span className="text-xs text-pink-600 font-bold text-center leading-tight break-words max-w-[60px]">{getHolidayName(date)}</span>
+        ) : isTues ? (
           <span className="text-xs text-purple-600 font-medium">OFF</span> // ✅ Show OFF for Tuesday
         ) : displayAsPresent ? (
           <CheckCircle className="w-4 h-4 text-green-600" />
@@ -556,96 +642,100 @@ const generateCalendar = () => {
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
               <h3 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
                 <Award className="w-6 h-6 text-cyan-600" />
-                Leave Balance
+                Leave Summary
               </h3>
 
-              <div className="space-y-4">
+              <div className="space-y-6">
+                {/* Casual Leave */}
                 <div>
-  <div className="flex items-center justify-between mb-2">
-    <span className="text-sm font-medium text-slate-700">Casual Leave</span>
-    <span className="text-sm text-slate-500">
-      {Math.max(0, attendance.leaveBalance.casualLeave - attendance.summary.casualLeavesTaken).toFixed(1)} / {attendance.leaveBalance.casualLeave}
-    </span>
-  </div>
-  <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden"> {/* ✅ Added overflow-hidden */}
-    <div 
-      className={`h-2 rounded-full transition-all ${
-        attendance.summary.casualLeavesTaken > attendance.leaveBalance.casualLeave 
-          ? 'bg-gradient-to-r from-red-500 to-red-600' 
-          : 'bg-gradient-to-r from-blue-500 to-cyan-500'
-      }`}
-      style={{ 
-        width: `${Math.min(100, Math.max(0, ((attendance.leaveBalance.casualLeave - attendance.summary.casualLeavesTaken) / attendance.leaveBalance.casualLeave) * 100))}%` 
-      }}
-    ></div>
-  </div>
-  {attendance.summary.casualLeavesTaken > attendance.leaveBalance.casualLeave && (
-    <p className="text-xs text-red-600 mt-1 font-medium">⚠️ Exceeded by {(attendance.summary.casualLeavesTaken - attendance.leaveBalance.casualLeave).toFixed(1)} days</p>
-  )}
-</div>
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <p className="font-semibold text-slate-900">Casual Leave</p>
+                      <p className="text-sm text-slate-500">Total Taken / Allocated</p>
+                    </div>
+                    <div className="text-right">
+                      <p className={`text-2xl font-bold ${attendance.summary.casualLeavesTaken > attendance.leaveBalance.casualLeave ? 'text-red-600' : 'text-blue-600'}`}>
+                        {attendance.summary.casualLeavesTaken.toFixed(1)} / {attendance.leaveBalance.casualLeave.toFixed(1)}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
+                    <div 
+                      className={`h-3 rounded-full transition-all ${
+                        attendance.summary.casualLeavesTaken > attendance.leaveBalance.casualLeave 
+                          ? 'bg-gradient-to-r from-red-500 to-red-600' 
+                          : 'bg-gradient-to-r from-blue-500 to-cyan-500'
+                      }`}
+                      style={{ 
+                        width: `${Math.min(100, (attendance.summary.casualLeavesTaken / Math.max(attendance.leaveBalance.casualLeave, attendance.summary.casualLeavesTaken)) * 100)}%` 
+                      }}
+                    ></div>
+                  </div>
+                  {attendance.summary.casualLeavesTaken > attendance.leaveBalance.casualLeave && (
+                    <p className="text-xs text-red-600 mt-2 font-semibold">⚠️ Exceeded by {(attendance.summary.casualLeavesTaken - attendance.leaveBalance.casualLeave).toFixed(1)} days</p>
+                  )}
+                  {attendance.summary.casualLeavesTaken <= attendance.leaveBalance.casualLeave && (
+                    <p className="text-xs text-green-600 mt-2 font-semibold">✓ {(attendance.leaveBalance.casualLeave - attendance.summary.casualLeavesTaken).toFixed(1)} days remaining</p>
+                  )}
+                </div>
 
-               <div>
-  <div className="flex items-center justify-between mb-2">
-    <span className="text-sm font-medium text-slate-700">Earned Leave</span>
-    <span className="text-sm text-slate-500">
-      {Math.max(0, attendance.leaveBalance.earnedLeave - attendance.summary.earnedLeavesTaken).toFixed(1)} / {attendance.leaveBalance.earnedLeave}
-    </span>
-  </div>
-  <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
-    <div 
-      className={`h-2 rounded-full transition-all ${
-        attendance.summary.earnedLeavesTaken > attendance.leaveBalance.earnedLeave 
-          ? 'bg-gradient-to-r from-red-500 to-red-600' 
-          : 'bg-gradient-to-r from-green-500 to-emerald-500'
-      }`}
-      style={{ 
-        width: `${Math.min(100, Math.max(0, ((attendance.leaveBalance.earnedLeave - attendance.summary.earnedLeavesTaken) / attendance.leaveBalance.earnedLeave) * 100))}%` 
-      }}
-    ></div>
-  </div>
-  {attendance.summary.earnedLeavesTaken > attendance.leaveBalance.earnedLeave && (
-    <p className="text-xs text-red-600 mt-1 font-medium">⚠️ Exceeded by {(attendance.summary.earnedLeavesTaken - attendance.leaveBalance.earnedLeave).toFixed(1)} days</p>
-  )}
-</div>
+                {/* Earned Leave */}
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <p className="font-semibold text-slate-900">Earned Leave</p>
+                      <p className="text-sm text-slate-500">Total Taken / Allocated</p>
+                    </div>
+                    <div className="text-right">
+                      <p className={`text-2xl font-bold ${attendance.summary.earnedLeavesTaken > attendance.leaveBalance.earnedLeave ? 'text-red-600' : 'text-green-600'}`}>
+                        {attendance.summary.earnedLeavesTaken.toFixed(1)} / {attendance.leaveBalance.earnedLeave.toFixed(1)}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
+                    <div 
+                      className={`h-3 rounded-full transition-all ${
+                        attendance.summary.earnedLeavesTaken > attendance.leaveBalance.earnedLeave 
+                          ? 'bg-gradient-to-r from-red-500 to-red-600' 
+                          : 'bg-gradient-to-r from-green-500 to-emerald-500'
+                      }`}
+                      style={{ 
+                        width: `${Math.min(100, (attendance.summary.earnedLeavesTaken / Math.max(attendance.leaveBalance.earnedLeave, attendance.summary.earnedLeavesTaken)) * 100)}%` 
+                      }}
+                    ></div>
+                  </div>
+                  {attendance.summary.earnedLeavesTaken > attendance.leaveBalance.earnedLeave && (
+                    <p className="text-xs text-red-600 mt-2 font-semibold">⚠️ Exceeded by {(attendance.summary.earnedLeavesTaken - attendance.leaveBalance.earnedLeave).toFixed(1)} days</p>
+                  )}
+                  {attendance.summary.earnedLeavesTaken <= attendance.leaveBalance.earnedLeave && (
+                    <p className="text-xs text-green-600 mt-2 font-semibold">✓ {(attendance.leaveBalance.earnedLeave - attendance.summary.earnedLeavesTaken).toFixed(1)} days remaining</p>
+                  )}
+                </div>
 
-                <div className="pt-4 border-t border-slate-200">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold text-slate-900">Total Available</span>
-                    <span className="text-2xl font-bold text-cyan-600">
-                      {(attendance.leaveBalance.casualLeave + attendance.leaveBalance.earnedLeave - 
-                        attendance.summary.casualLeavesTaken - attendance.summary.earnedLeavesTaken).toFixed(1)}
-                    </span>
+                {/* Total Summary */}
+                <div className="border-t border-slate-200 pt-4">
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="bg-blue-50 rounded-lg p-4 text-center">
+                      <p className="text-sm text-slate-600">Casual Taken</p>
+                      <p className="text-2xl font-bold text-blue-600">{attendance.summary.casualLeavesTaken.toFixed(1)}</p>
+                    </div>
+                    <div className="bg-green-50 rounded-lg p-4 text-center">
+                      <p className="text-sm text-slate-600">Earned Taken</p>
+                      <p className="text-2xl font-bold text-green-600">{attendance.summary.earnedLeavesTaken.toFixed(1)}</p>
+                    </div>
+                    <div className="bg-slate-50 rounded-lg p-4 text-center">
+                      <p className="text-sm text-slate-600">Total Taken</p>
+                      <p className="text-2xl font-bold text-slate-900">{(attendance.summary.casualLeavesTaken + attendance.summary.earnedLeavesTaken).toFixed(1)}</p>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Leave Breakdown */}
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-              <h3 className="text-xl font-bold text-slate-900 mb-4">Leave Breakdown</h3>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-slate-600">Casual Leave Taken</span>
-                  <span className="font-semibold text-slate-900">{attendance.summary.casualLeavesTaken}</span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-slate-600">Earned Leave Taken</span>
-                  <span className="font-semibold text-slate-900">{attendance.summary.earnedLeavesTaken}</span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-slate-600">Sick Leave Taken</span>
-                  <span className="font-semibold text-slate-900">{attendance.summary.sickLeavesTaken}</span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-slate-600">Extraordinary Leave</span>
-                  <span className="font-semibold text-slate-900">{attendance.summary.extraordinaryLeavesTaken}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-      </div>
-       <div className="mt-6 pt-6 border-t border-slate-200">
+            {/* Leave Reason (for Quick Mark) */}
+            {selectedDate && (
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+                <div className="mt-6 pt-6 border-t border-slate-200">
                   <label className="block text-sm font-semibold text-slate-700 mb-2">
                     Leave Reason {selectedDate && <span className="text-red-500">*</span>}
                   </label>
@@ -657,7 +747,7 @@ const generateCalendar = () => {
                     rows={3}
                     />
                   <p className="text-xs text-slate-500 mt-2">
-                    💡 This reason will be recorded permanently for future refrences
+                    💡 This reason will be recorded permanently for future references
                   </p>
                   {selectedDate && !leaveReason.trim() && (
                     <p className="text-xs text-red-600 mt-1 font-medium">
@@ -665,7 +755,103 @@ const generateCalendar = () => {
                     </p>
                   )}
                 </div>
-        
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Holiday Marking Modal */}
+        {showHolidayModal && selectedHolidayDate && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-2xl max-w-md w-full p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                  <Calendar className="w-6 h-6 text-pink-600" />
+                  Mark Holiday
+                </h3>
+                <button
+                  onClick={() => {
+                    setShowHolidayModal(false);
+                    setSelectedHolidayDate(null);
+                    setHolidayName('');
+                  }}
+                  className="text-slate-500 hover:text-slate-700 text-2xl"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {/* Information Banner */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <p className="text-sm text-blue-900 font-medium">
+                    ℹ️ <strong>Important:</strong> This holiday will be marked on all employee calendars company-wide and will synchronize across the system.
+                  </p>
+                </div>
+
+                {/* Date Display */}
+                <div className="bg-slate-50 rounded-lg p-4 text-center">
+                  <p className="text-sm text-slate-600 mb-1">Selected Date</p>
+                  <p className="text-2xl font-bold text-slate-900">
+                    {selectedHolidayDate.toLocaleDateString('en-IN', {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </p>
+                </div>
+
+                {/* Holiday Name Input */}
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    Holiday Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={holidayName}
+                    onChange={(e) => setHolidayName(e.target.value)}
+                    placeholder="e.g., Diwali, Holi, Christmas"
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter' && holidayName.trim()) {
+                        markHolidayOnCalendar();
+                      }
+                    }}
+                  />
+                </div>
+
+                {/* System Sync Notice */}
+                <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                  <p className="text-xs text-green-900">
+                    ✓ This will be saved to the system and visible to all users
+                  </p>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-3 pt-4">
+                  <button
+                    onClick={() => {
+                      setShowHolidayModal(false);
+                      setSelectedHolidayDate(null);
+                      setHolidayName('');
+                    }}
+                    className="flex-1 px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-all font-medium"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={markHolidayOnCalendar}
+                    disabled={!holidayName.trim() || markingHoliday}
+                    className="flex-1 px-4 py-2 bg-gradient-to-r from-pink-500 to-rose-600 text-white rounded-lg hover:from-pink-600 hover:to-rose-700 transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {markingHoliday ? 'Marking...' : 'Mark Holiday'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -316,16 +316,16 @@ export default function EmployeePayrollDetailPage() {
               <span className="text-slate-700 font-medium">Tax Deducted at Source (TDS)</span>
               <span className="text-red-600 font-bold">{formatCurrency(salaryData.deductions?.tds || 0)}</span>
             </div>
-            {salaryData.deductions?.salaryAdvance > 0 && (
+            {(salaryData.deductions?.salaryAdvance || 0) > 0 && (
               <div className="flex items-center justify-between p-4 bg-red-50 rounded-lg">
                 <span className="text-slate-700 font-medium">Salary Advance</span>
-                <span className="text-red-600 font-bold">{formatCurrency(salaryData.deductions.salaryAdvance)}</span>
+                <span className="text-red-600 font-bold">{formatCurrency(salaryData.deductions?.salaryAdvance || 0)}</span>
               </div>
             )}
-            {salaryData.deductions?.loan > 0 && (
+            {(salaryData.deductions?.loan || 0) > 0 && (
               <div className="flex items-center justify-between p-4 bg-red-50 rounded-lg">
                 <span className="text-slate-700 font-medium">Loan Deduction</span>
-                <span className="text-red-600 font-bold">{formatCurrency(salaryData.deductions.loan)}</span>
+                <span className="text-red-600 font-bold">{formatCurrency(salaryData.deductions?.loan || 0)}</span>
               </div>
             )}
             {salaryData.deductions?.lop > 0 && (
