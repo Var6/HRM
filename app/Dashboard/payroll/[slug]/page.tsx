@@ -41,9 +41,9 @@ const convertToEmployeeSalaryData = (emp: SalaryStructure): EmployeeSalaryData =
     quarterlyBonus: emp.earnings?.quarterlyBonus || 0,
     pf: emp.deductions?.pf || 0,
     esic: emp.deductions?.esic || 0,
-    advance: emp.deductions?.salaryAdvance || 0,
+    advance: emp.deductions?.advance || emp.deductions?.salaryAdvance || 0,
     loan: emp.deductions?.loan || 0,
-    lop: emp.deductions?.lop || 0,
+    lop: emp.deductions?.lop || emp.lopAmount || 0,
     tds: emp.deductions?.tds || 0,
   };
 };

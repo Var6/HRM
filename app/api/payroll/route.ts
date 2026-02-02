@@ -13,16 +13,17 @@ export async function GET(req: Request) {
     const year = Number(searchParams.get('year'));
     const monthIndex = new Date(`${month} 1, ${year}`).getMonth();
 
-    const employees = await Employee.find().sort({ createdAt: -1 });
+    const employees = await Employee.find({ status: { $ne: 'inactive' } }).sort({ createdAt: -1 });
 
     const payrollData = await Promise.all(
       employees.map(async (emp) => {
         const earnings = emp.salary?.earnings || {};
         const deductions = emp.salary?.deductions || {};
         
+        // Calculate total earnings (gross salary before any deductions)
         let grossSalary = Object.values(earnings).reduce((sum: number, val: any) => sum + Number(val || 0), 0);
         
-        // ✅ Get attendance to calculate LOP
+        // Get attendance to calculate LOP
         const attendance = await MonthlyAttendance.findOne({
           employeeId: emp._id,
           month: monthIndex,
@@ -46,14 +47,23 @@ export async function GET(req: Request) {
           lopAmount = calculateLOPAmount(grossSalary, lopDays, monthIndex, year);
         }
 
-        // ✅ Deduct LOP from gross salary BEFORE other deductions
-        const adjustedGrossSalary = grossSalary - lopAmount;
+        // Calculate standard deductions (all except LOP)
+        let standardDeductions = 0;
+        const standardDeductionsObj: any = {};
         
-        // Now calculate other deductions
-        let totalDeductions = Object.values(deductions).reduce((sum: number, val: any) => sum + Number(val || 0), 0);
+        Object.entries(deductions).forEach(([key, val]) => {
+          if (key !== 'lop') {
+            const amount = Number(val || 0);
+            standardDeductions += amount;
+            standardDeductionsObj[key] = amount;
+          }
+        });
         
-        // Add LOP to total deductions for display purposes
-        totalDeductions += lopAmount;
+        // Total deductions = standard deductions + LOP
+        const totalDeductions = standardDeductions + lopAmount;
+        
+        // Net salary = Gross Salary - All Deductions
+        const netSalary = grossSalary - totalDeductions;
 
         // Get history for this month
         const history = await PayrollHistory.findOne({
@@ -72,15 +82,15 @@ export async function GET(req: Request) {
           photograph: emp.photograph || null,
           earnings,
           deductions: {
-            ...deductions,
-            lop: lopAmount // Add LOP to deductions
+            ...standardDeductionsObj,
+            lop: lopAmount // Include LOP in deductions
           },
-          grossSalary: adjustedGrossSalary, // Adjusted gross after LOP
-          originalGrossSalary: grossSalary, // Original gross before LOP
+          grossSalary, // Actual gross salary (unchanged)
           lopDays,
           lopAmount,
-          totalDeductions,
-          netSalary: adjustedGrossSalary - (totalDeductions - lopAmount), // Net = Adjusted Gross - Standard Deductions
+          standardDeductions,
+          totalDeductions, // All deductions
+          netSalary, // Final net pay
           bankAccount: emp.bankAccountNo || 'N/A',
           pfNumber: emp.pfNo || 'N/A',
           uanNumber: emp.uanNo || 'N/A',
@@ -91,7 +101,11 @@ export async function GET(req: Request) {
           workingDays: getWorkingDaysInMonth(monthIndex, year),
           presentDays: attendance ? 
             getWorkingDaysInMonth(monthIndex, year) - (attendance.summary?.totalAbsent || 0) : 
-            getWorkingDaysInMonth(monthIndex, year)
+            getWorkingDaysInMonth(monthIndex, year),
+          fatherName: emp.fatherName || 'N/A',
+          panNumber: emp.panCardNo || 'N/A',
+          dateOfJoining: emp.dateOfJoining || 'N/A',
+          aadharNumber: emp.aadharCardNo || 'N/A'
         };
       })
     );
@@ -130,6 +144,7 @@ export async function POST(req: Request) {
     const earnings = employee.salary?.earnings || {};
     const deductions = employee.salary?.deductions || {};
     
+    // Calculate gross salary
     let grossSalary = Object.values(earnings).reduce((sum: number, val: any) => sum + Number(val || 0), 0);
     
     let lopDays = 0;
@@ -148,29 +163,34 @@ export async function POST(req: Request) {
       lopAmount = calculateLOPAmount(grossSalary, lopDays, monthIndex, year);
     }
 
-    // Adjust gross salary by deducting LOP
-    const adjustedGrossSalary = grossSalary - lopAmount;
-    
     // Calculate standard deductions
-    let standardDeductions = Object.values(deductions).reduce((sum: number, val: any) => sum + Number(val || 0), 0);
+    let standardDeductions = 0;
+    const standardDeductionsObj: any = {};
     
-    // Total deductions include standard + LOP
+    Object.entries(deductions).forEach(([key, val]) => {
+      if (key !== 'lop') {
+        const amount = Number(val || 0);
+        standardDeductions += amount;
+        standardDeductionsObj[key] = amount;
+      }
+    });
+    
+    // Total deductions = standard deductions + LOP
     const totalDeductions = standardDeductions + lopAmount;
     
-    // Net salary = Adjusted Gross - Standard Deductions
-    const netSalary = adjustedGrossSalary - standardDeductions;
+    // Net salary = Gross Salary - All Deductions
+    const netSalary = grossSalary - totalDeductions;
 
     // Update or create payroll history
     await PayrollHistory.findOneAndUpdate(
       { employeeId: employee._id, month, year },
       {
-        grossSalary: adjustedGrossSalary,
-        originalGrossSalary: grossSalary,
+        grossSalary, // Use actual gross salary
         totalDeductions,
         netSalary,
         earnings,
         deductions: {
-          ...deductions,
+          ...standardDeductionsObj,
           lop: lopAmount
         },
         lopDays,

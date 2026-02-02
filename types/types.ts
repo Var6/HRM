@@ -133,12 +133,12 @@ export interface SalaryStructure {
   employeeId: number | string;
   employeeName: string;
   photograph?: string | null;
-   presentDays: number | 30;
+  presentDays: number;
   employeeCode: string;
   designation: string;
   department: string;
   branch: string;
-   fatherName?: string;
+  fatherName?: string;
   dateOfJoining?: string;
   panNumber?: string;
   aadharNumber?: string;
@@ -157,7 +157,8 @@ export interface SalaryStructure {
     pf: number;
     esic: number;
     lop: number;
-    salaryAdvance: number;
+    advance?: number;
+    salaryAdvance?: number;
     loan: number;
     tds: number;
   };
@@ -168,6 +169,10 @@ export interface SalaryStructure {
   pfNumber?: string;
   uanNumber?: string;
   esiNumber?: string;
+  lopDays?: number;
+  lopAmount?: number;
+  standardDeductions?: number;
+  workingDays?: number;
 }
 export interface PayrollRecord {
   id: number;

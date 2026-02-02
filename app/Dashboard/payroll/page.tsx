@@ -27,15 +27,15 @@ const convertToEmployeeSalaryData = (emp: SalaryStructure): EmployeeSalaryData =
     department: emp.department,
     designation: emp.designation,
     photograph: emp.photograph,
-    fatherName: "N/A", // You might want to add this to SalaryStructure
+    fatherName: emp.fatherName || "N/A",
     salaryHold: emp.salaryHold || false,
-    dateOfJoining: "2020-01-01", // You might want to add this to SalaryStructure
-    panNumber: "N/A", // You might want to add this to SalaryStructure
+    dateOfJoining: emp.dateOfJoining || "2020-01-01",
+    panNumber: emp.panNumber || "N/A",
     uanNumber: emp.uanNumber || "N/A",
     salaryProcessed: emp.salaryProcessed || false,
     esiNumber: emp.esiNumber || "N/A",
-    aadharNumber: "N/A", // You might want to add this to SalaryStructure
-    presentDays: 30,
+    aadharNumber: emp.aadharNumber || "N/A",
+    presentDays: emp.presentDays || 30,
     totalDaysInMonth: 31,
     modeOfPay: emp.bankAccount && emp.bankAccount !== "N/A" ? "Bank Transfer" : "Cash",
     accountNumber: emp.bankAccount || "N/A",
@@ -49,9 +49,9 @@ const convertToEmployeeSalaryData = (emp: SalaryStructure): EmployeeSalaryData =
 
     pf: emp.deductions?.pf || 0,
     esic: emp.deductions?.esic || 0,
-    advance: emp.deductions?.salaryAdvance || 0,
+    advance: emp.deductions?.advance || emp.deductions?.salaryAdvance || 0,
     loan: emp.deductions?.loan || 0,
-    lop: emp.deductions?.lop || 0,
+    lop: emp.deductions?.lop || emp.lopAmount || 0,
     tds: emp.deductions?.tds || 0,
   };
 };
