@@ -35,7 +35,7 @@ export default function AttendanceManagement() {
   return month < 3 ? today.getFullYear() - 1 : today.getFullYear();
 };
 
-const [selectedYear, setSelectedYear] = useState<number>(getCurrentFinancialYear());
+  const [selectedYear, setSelectedYear] = useState<number>(getCurrentFinancialYear());
   const [markingAttendance, setMarkingAttendance] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedEmployee, setSelectedEmployee] = useState<number | null>(null);
@@ -52,11 +52,12 @@ const [selectedYear, setSelectedYear] = useState<number>(getCurrentFinancialYear
     date: '',
     description: ''
   });
- const filteredEmployees = attendanceData.filter(item => {
+// ========== CLEAN EXCEL EXPORT FUNCTION (NO EMPTY ROWS) ==========
+const filteredEmployees = attendanceData.filter(item => {
   const emp = item.employee;
   if (!emp) return false;
 
-  const q = searchQuery.toLowerCase();
+  const q = searchQuery.toLowerCase(); // ← Is this empty?
 
   return (
     emp.name?.toLowerCase().includes(q) ||
@@ -64,7 +65,6 @@ const [selectedYear, setSelectedYear] = useState<number>(getCurrentFinancialYear
     emp.designation?.toLowerCase().includes(q)
   );
 });
-
 const monthIndexToName = (index: number) => [
   'Jan','Feb','Mar','Apr','May','Jun',
   'Jul','Aug','Sep','Oct','Nov','Dec'
@@ -340,68 +340,253 @@ setTimeout(() => setShowSuccessToast(false), 3000);
   };
 
   // ========== EXCEL EXPORT FUNCTION ==========
-  const handleExcelExport = async () => {
-    try {
-      // Dynamically import xlsx to avoid build-time issues
-      const XLSX = (await import('xlsx')).default || await import('xlsx');
+
+const handleExcelExport = async () => {
+  try {
+    const XLSX = (await import('xlsx')).default || await import('xlsx');
+    
+    // Filter valid employees
+    const validEmployees = filteredEmployees.filter(item => 
+      item && item.employee && item.employee.name && item.employee.name.trim() !== ''
+    );
+    
+    console.log('✅ Valid employees to export:', validEmployees.length);
+    
+    const wb = XLSX.utils.book_new();
+    const months = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'];
+    
+    // ============ HELPER: Calculate Leave Breakdown ============
+    const calculateLeaveBreakdown = (attendance: any) => {
+      const breakdown = {
+        casualLeave: 0,
+        earnedLeave: 0,
+        sickLeave: 0,
+        halfDay: 0,
+        absent: 0
+      };
       
-      // Create workbook
-      const wb = XLSX.utils.book_new();
-      
-      // Prepare data - employees in rows, months in columns
-      const exportData = filteredEmployees.map((item, index) => {
-        const row: any = {
-          'Sl.': index + 1,
-          'Employee Name': item.employee.name || '',
-          'Employee Code': item.employee.employeeCode || '',
-        };
-        
-        // Add monthly leave data (Apr-Mar) - show 0 if no data
-        months.forEach(month => {
-          row[month] = item.employee.monthlyLeaves?.[month] || 0;
-        });
-        
-        // Calculate and add leave balance
-        const earnedLeaveAllocated = item.employee.leaveBalance?.earnedLeave || 0;
-        const casualLeaveAllocated = item.employee.leaveBalance?.casualLeave || 0;
-        const totalLeavesTaken = item.employee.totalLeavesTaken || 0;
-        const leaveBalance = Math.max(0, earnedLeaveAllocated + casualLeaveAllocated - totalLeavesTaken);
-        
-        row['Carry Forwarded EL'] = 0;
-        row['Earned Leave'] = earnedLeaveAllocated.toFixed(2);
-        row['Casual Leave'] = casualLeaveAllocated.toFixed(2);
-        row['Leave Balance'] = leaveBalance.toFixed(2);
-        
-        return row;
+      attendance?.records?.forEach((record: any) => {
+        if (record.status === 'leave') {
+          if (record.leaveType === 'casual') breakdown.casualLeave++;
+          else if (record.leaveType === 'earned') breakdown.earnedLeave++;
+          else if (record.leaveType === 'sick') breakdown.sickLeave++;
+        } else if (record.status === 'halfDay') {
+          breakdown.halfDay += 0.5;
+        } else if (record.status === 'absent' || record.status === 'onLeave') {
+          breakdown.absent++;
+        }
       });
       
-      // Create worksheet
-      const ws = XLSX.utils.json_to_sheet(exportData);
+      return breakdown;
+    };
+    
+    // ============ ROW 1: Title ============
+    const titleRow = ['REPORT'];
+    
+    // ============ ROW 2: Main Headers ============
+    const headerRow1 = [
+      'Sl.',
+      'Employee Name', 
+      'Designation',
+      'MONTHLY LEAVE TAKEN',
+      null, null, null, null, null, null, null, null, null, null, null,
+      'Absent',
+      'Sick Leave',
+      'Special Leave',
+      'CARRY FORWARDED EL (2018,19, 20,21 &22)',
+      'Earned Leave',
+      'Casual Leave',
+      'Compensatory Off',
+      'Leave Balance'
+    ];
+    
+    // ============ ROW 3: Month Headers ============
+    const headerRow2 = [
+      null, null, null,
+      ...months,
+      null, null, null, null, null, null, null,
+      'Balance'
+    ];
+    
+    // ============ DATA ROWS ============
+    const dataRows = validEmployees.map((item, index) => {
+      const { employee, attendance } = item;
       
-      // Set column widths for better readability
-      const columnWidths = [
-        { wch: 5 },   // Sl.
-        { wch: 20 },  // Employee Name
-        { wch: 15 },  // Employee Code
-        ...Array(12).fill({ wch: 8 }),  // Months (Apr-Mar)
-        { wch: 15 }, // Carry Forwarded EL
-        { wch: 13 }, // Earned Leave
-        { wch: 13 }, // Casual Leave
-        { wch: 13 }  // Leave Balance
+      // Get monthly leave data
+      const monthlyData = months.map(month => {
+        const value = employee.monthlyLeaves?.[month];
+        return (value === null || value === undefined) ? 0 : value;
+      });
+      
+      // Calculate leave breakdown
+      const leaveBreakdown = calculateLeaveBreakdown(attendance);
+      
+      const carryForwardedEL = employee.leaveBalance?.carryForwardedEL || 0;
+      
+      return [
+        index + 1,                          // Sl.
+        employee.name || '',                // Employee Name
+        employee.designation || '',         // Designation
+        ...monthlyData,                     // Apr-Mar monthly leaves
+        leaveBreakdown.absent,              // Absent (LOP)
+        leaveBreakdown.sickLeave,           // Sick Leave
+        leaveBreakdown.casualLeave + leaveBreakdown.earnedLeave, // Special Leave (CL+EL combined)
+        carryForwardedEL,                   // Carry Forward EL
+        10,                                 // Earned Leave placeholder (will be formula)
+        8,                                  // Casual Leave placeholder (will be formula)
+        null,                               // Compensatory Off
+        null                                // Leave Balance (will be formula)
       ];
-      ws['!cols'] = columnWidths;
+    });
+    
+    // Combine all data
+    const allData = [titleRow, headerRow1, headerRow2, ...dataRows];
+    
+    console.log('✅ Total rows:', allData.length);
+    
+    // Create worksheet
+    const ws = XLSX.utils.aoa_to_sheet(allData);
+    
+    // Set proper range
+    const lastRow = allData.length;
+    ws['!ref'] = `A1:W${lastRow}`;
+    
+    // ============ SET FORMULAS (CRITICAL FIX) ============
+    validEmployees.forEach((item, index) => {
+      const rowNum = index + 4; // Data starts at row 4
       
-      // Add worksheet to workbook
-      XLSX.utils.book_append_sheet(wb, ws, 'Attendance');
+      // Column T (Earned Leave) - Formula: 1.25*8 = 10 days
+      ws[`T${rowNum}`] = { t: 'n', f: '1.25*8', v: 10 };
       
-      // Download file
-      XLSX.writeFile(wb, `Attendance_Report_${selectedYear}-${selectedYear + 1}.xlsx`);
-    } catch (error) {
-      console.error('Error exporting to Excel:', error);
-      alert('Failed to export. Please ensure xlsx library is installed.');
+      // Column U (Casual Leave) - Formula: 1*8 = 8 days
+      ws[`U${rowNum}`] = { t: 'n', f: '1*8', v: 8 };
+      
+      // Column W (Leave Balance) - Formula: Carry Forward + EL + CL - Total Leaves
+      ws[`W${rowNum}`] = { 
+        t: 'n', 
+        f: `S${rowNum}+T${rowNum}+U${rowNum}-SUM(D${rowNum}:O${rowNum})`
+      };
+    });
+    
+    // ============ ADD BORDERS TO ALL CELLS ============
+    const borderStyle = {
+      top: { style: 'thin', color: { rgb: '000000' } },
+      bottom: { style: 'thin', color: { rgb: '000000' } },
+      left: { style: 'thin', color: { rgb: '000000' } },
+      right: { style: 'thin', color: { rgb: '000000' } }
+    };
+    
+    // Apply borders to all data cells
+    for (let r = 1; r <= lastRow; r++) {
+      for (let c = 0; c < 23; c++) {
+        const cellAddress = String.fromCharCode(65 + c) + r;
+        if (!ws[cellAddress]) ws[cellAddress] = { v: '', t: 's' };
+        if (!ws[cellAddress].s) ws[cellAddress].s = {};
+        ws[cellAddress].s.border = borderStyle;
+      }
     }
-  };
-
+    
+    // ============ STYLE TITLE ============
+    ws['A1'].s = {
+      font: { bold: true, sz: 14 },
+      alignment: { horizontal: 'center', vertical: 'center' },
+      fill: { fgColor: { rgb: 'E0E0E0' } },
+      border: borderStyle
+    };
+    
+    // ============ STYLE HEADERS ============
+    const headerStyle = {
+      font: { bold: true },
+      alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
+      fill: { fgColor: { rgb: 'D3D3D3' } },
+      border: borderStyle
+    };
+    
+    // Apply header styling to rows 2 and 3
+    for (let c = 0; c < 23; c++) {
+      const col = String.fromCharCode(65 + c);
+      
+      if (ws[`${col}2`]) {
+        ws[`${col}2`].s = headerStyle;
+      }
+      
+      if (ws[`${col}3`]) {
+        ws[`${col}3`].s = headerStyle;
+      }
+    }
+    
+    // ============ STYLE DATA CELLS ============
+    for (let r = 4; r <= lastRow; r++) {
+      for (let c = 0; c < 23; c++) {
+        const cellAddress = String.fromCharCode(65 + c) + r;
+        if (ws[cellAddress]) {
+          if (!ws[cellAddress].s) ws[cellAddress].s = {};
+          ws[cellAddress].s.alignment = { horizontal: 'center', vertical: 'center' };
+          ws[cellAddress].s.border = borderStyle;
+        }
+      }
+    }
+    
+    // ============ MERGE CELLS ============
+    ws['!merges'] = [
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 22 } }, // Title A1:W1
+      { s: { r: 1, c: 0 }, e: { r: 2, c: 0 } }, // Sl. A2:A3
+      { s: { r: 1, c: 1 }, e: { r: 2, c: 1 } }, // Employee Name B2:B3
+      { s: { r: 1, c: 2 }, e: { r: 2, c: 2 } }, // Designation C2:C3
+      { s: { r: 1, c: 3 }, e: { r: 1, c: 14 } }, // MONTHLY LEAVE TAKEN D2:O2
+      { s: { r: 1, c: 15 }, e: { r: 2, c: 15 } }, // Absent P2:P3
+      { s: { r: 1, c: 16 }, e: { r: 2, c: 16 } }, // Sick Leave Q2:Q3
+      { s: { r: 1, c: 17 }, e: { r: 2, c: 17 } }, // Special Leave R2:R3
+      { s: { r: 1, c: 18 }, e: { r: 2, c: 18 } }, // Carry Forward S2:S3
+      { s: { r: 1, c: 19 }, e: { r: 2, c: 19 } }, // Earned Leave T2:T3
+      { s: { r: 1, c: 20 }, e: { r: 2, c: 20 } }, // Casual Leave U2:U3
+      { s: { r: 1, c: 21 }, e: { r: 2, c: 21 } }, // Compensatory Off V2:V3
+    ];
+    
+    // ============ COLUMN WIDTHS ============
+    ws['!cols'] = [
+      { wch: 5 },   // A: Sl.
+      { wch: 25 },  // B: Employee Name
+      { wch: 25 },  // C: Designation
+      { wch: 8 },   // D: Apr
+      { wch: 8 },   // E: May
+      { wch: 8 },   // F: Jun
+      { wch: 8 },   // G: Jul
+      { wch: 8 },   // H: Aug
+      { wch: 8 },   // I: Sep
+      { wch: 8 },   // J: Oct
+      { wch: 8 },   // K: Nov
+      { wch: 8 },   // L: Dec
+      { wch: 8 },   // M: Jan
+      { wch: 8 },   // N: Feb
+      { wch: 8 },   // O: Mar
+      { wch: 10 },  // P: Absent
+      { wch: 12 },  // Q: Sick Leave
+      { wch: 13 },  // R: Special Leave
+      { wch: 35 },  // S: CARRY FORWARDED EL
+      { wch: 13 },  // T: Earned Leave
+      { wch: 13 },  // U: Casual Leave
+      { wch: 16 },  // V: Compensatory Off
+      { wch: 13 }   // W: Leave Balance
+    ];
+    
+    // ============ ROW HEIGHTS ============
+    ws['!rows'] = [
+      { hpt: 30 },  // Title row
+      { hpt: 35 },  // Header row 1
+      { hpt: 25 }   // Header row 2
+    ];
+    
+    XLSX.utils.book_append_sheet(wb, ws, 'Attendance');
+    XLSX.writeFile(wb, `Attendance_Report_${selectedYear}-${selectedYear + 1}.xlsx`);
+    
+    console.log('✅ Excel exported successfully with formulas and leave breakdown!');
+    
+  } catch (error) {
+    console.error('❌ Error exporting Excel:', error);
+    alert('Failed to export Excel file. Check console for details.');
+  }
+};
   // ========== CALCULATE DYNAMIC REPORT STATISTICS ==========
   const calculateReportStats = () => {
     let earnedLeaves = 0;
