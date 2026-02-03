@@ -3,6 +3,10 @@ import { connectDB } from '@/lib/mongodb';
 import MonthlyAttendance from '@/models/Attendance';
 import Employee from '@/models/Employee';
 import { calculateLOP, calculateLOPAmount, getWorkingDaysInMonth } from '@/lib/attendance-utils';
+import { CACHE_CONFIG } from '@/lib/optimization-config';
+
+// Cache attendance data for 15 minutes (900 seconds)
+export const revalidate = 900;
 
 // ✅ GET: Fetch ALL employees attendance for a specific month/year
 export async function GET(request: Request) {
@@ -12,8 +16,8 @@ export async function GET(request: Request) {
     const month = parseInt(searchParams.get('month') || String(new Date().getMonth()));
     const year = parseInt(searchParams.get('year') || String(new Date().getFullYear()));
 
-    // Fetch all active employees
-    const employees = await Employee.find({ status: { $ne: 'inactive' } }).sort({ createdAt: -1 });
+    // Fetch all active employees with lean query
+    const employees = await Employee.find({ status: { $ne: 'inactive' } }).sort({ createdAt: -1 }).lean();
 
     // Fetch or create attendance records for all employees
     const data = await Promise.all(
@@ -22,7 +26,7 @@ export async function GET(request: Request) {
           employeeId: employee._id, 
           month, 
           year 
-        });
+        }).lean();
 
         // Virtual attendance object if none exists in DB
         if (!attendance) {
@@ -52,7 +56,7 @@ export async function GET(request: Request) {
         }
 
         return {
-          employee: employee.toObject(),
+          employee: employee,
           attendance
         };
       })
@@ -63,6 +67,10 @@ export async function GET(request: Request) {
       data,
       month,
       year
+    }, {
+      headers: {
+        'Cache-Control': `public, max-age=${CACHE_CONFIG.ATTENDANCE_CACHE_TIME}`,
+      }
     });
 
   } catch (error: any) {

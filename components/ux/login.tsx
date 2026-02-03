@@ -49,7 +49,7 @@ export default function LoginPage() {
  
   // Login/Landing Page
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+    <div className="min-h-screen bg-linear-to-br from-slate-950 via-slate-900 to-slate-950">
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl animate-pulse"></div>
@@ -65,7 +65,7 @@ export default function LoginPage() {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Left Side - Hero Content */}
             <div className="space-y-8">
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/20 rounded-full">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-linear-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/20 rounded-full">
                 <Zap className="w-4 h-4 text-cyan-400" />
                 <span className="text-sm text-cyan-300 font-medium">Trusted by 10,000+ Organizations</span>
               </div>
@@ -73,7 +73,7 @@ export default function LoginPage() {
               <div>
                 <h2 className="text-5xl lg:text-6xl font-bold text-white leading-tight mb-6">
                   Streamline Your
-                  <span className="block bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-300 bg-clip-text text-transparent">
+                  <span className="block bg-linear-to-r from-cyan-400 via-blue-400 to-cyan-300 bg-clip-text text-transparent">
                     HR Operations
                   </span>
                 </h2>
@@ -95,7 +95,7 @@ export default function LoginPage() {
                     key={idx}
                     className="flex items-center gap-3 p-4 bg-slate-800/40 border border-slate-700/50 rounded-xl hover:border-cyan-500/30 transition-all group"
                   >
-                    <div className={`p-2 bg-gradient-to-br from-${feature.color}-500/20 to-${feature.color}-600/20 rounded-lg group-hover:scale-110 transition-transform`}>
+                    <div className={`p-2 bg-linear-to-br from-${feature.color}-500/20 to-${feature.color}-600/20 rounded-lg group-hover:scale-110 transition-transform`}>
                       <feature.icon className={`w-5 h-5 text-${feature.color}-400`} />
                     </div>
                     <span className="text-sm text-slate-300 font-medium">{feature.label}</span>
@@ -125,7 +125,7 @@ export default function LoginPage() {
 
             {/* Right Side - Login Form */}
             <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/20 to-blue-600/20 rounded-2xl blur-xl"></div>
+              <div className="absolute inset-0 bg-linear-to-br from-cyan-500/20 to-blue-600/20 rounded-2xl blur-xl"></div>
               <div className="relative bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-8 shadow-2xl">
                 <div className="mb-8">
                   <h3 className="text-2xl font-bold text-white mb-2">Welcome Back</h3>
@@ -212,7 +212,7 @@ export default function LoginPage() {
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full py-4 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold rounded-xl transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-cyan-500/25 flex items-center justify-center gap-2 group"
+                    className="w-full py-4 bg-linear-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold rounded-xl transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-cyan-500/25 flex items-center justify-center gap-2 group"
                   >
                     {isLoading ? (
                       <>
@@ -275,7 +275,7 @@ export default function LoginPage() {
                 key={idx}
                 className="p-6 bg-slate-800/40 border border-slate-700/50 rounded-xl hover:border-cyan-500/30 transition-all group"
               >
-                <div className={`w-12 h-12 bg-gradient-to-br from-${feature.color}-500/20 to-${feature.color}-600/20 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
+                <div className={`w-12 h-12 bg-linear-to-br from-${feature.color}-500/20 to-${feature.color}-600/20 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
                   <feature.icon className={`w-6 h-6 text-${feature.color}-400`} />
                 </div>
                 <h4 className="text-xl font-semibold text-white mb-2">{feature.title}</h4>

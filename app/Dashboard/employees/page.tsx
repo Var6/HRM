@@ -85,7 +85,7 @@ React.useEffect(() => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
+    <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-100 p-6">
       <div className="max-w-7xl mx-auto">
         {loading && (
           <div className="text-center py-20">
@@ -104,7 +104,7 @@ React.useEffect(() => {
             </div>
             <Link 
               href="/Dashboard/recruitment"
-              className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-lg hover:from-cyan-600 hover:to-blue-700 transition-all flex items-center gap-2 shadow-lg shadow-cyan-500/25"
+              className="px-6 py-3 bg-linear-to-r from-cyan-500 to-blue-600 text-white rounded-lg hover:from-cyan-600 hover:to-blue-700 transition-all flex items-center gap-2 shadow-lg shadow-cyan-500/25"
             >
               <Plus className="w-5 h-5" />
               Add Employee
@@ -115,7 +115,7 @@ React.useEffect(() => {
           <div className="grid md:grid-cols-4 gap-6 mb-6">
             <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm hover:shadow-md transition-all">
               <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-gradient-to-br from-cyan-50 to-blue-50 rounded-lg">
+                <div className="p-3 bg-linear-to-br from-cyan-50 to-blue-50 rounded-lg">
                   <Users className="w-6 h-6 text-cyan-600" />
                 </div>
                 <TrendingUp className="w-5 h-5 text-green-500" />
@@ -126,7 +126,7 @@ React.useEffect(() => {
 
             <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm hover:shadow-md transition-all">
               <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg">
+                <div className="p-3 bg-linear-to-br from-green-50 to-emerald-50 rounded-lg">
                   <CheckCircle className="w-6 h-6 text-green-600" />
                 </div>
               </div>
@@ -136,7 +136,7 @@ React.useEffect(() => {
 
             <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm hover:shadow-md transition-all">
               <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-gradient-to-br from-amber-50 to-orange-50 rounded-lg">
+                <div className="p-3 bg-linear-to-br from-amber-50 to-orange-50 rounded-lg">
                   <AlertCircle className="w-6 h-6 text-amber-600" />
                 </div>
               </div>
@@ -146,7 +146,7 @@ React.useEffect(() => {
 
             <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm hover:shadow-md transition-all">
               <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg">
+                <div className="p-3 bg-linear-to-br from-purple-50 to-pink-50 rounded-lg">
                   <Award className="w-6 h-6 text-purple-600" />
                 </div>
               </div>
@@ -237,7 +237,7 @@ React.useEffect(() => {
                 <div className="p-6">
                   <div className="flex items-start gap-6">
                     {/* Employee Photo */}
-                    <div className="flex-shrink-0">
+                    <div className="shrink-0">
                       {employee.photograph ? (
                         <img 
                           src={employee.photograph} 
@@ -245,7 +245,7 @@ React.useEffect(() => {
                           className="w-20 h-20 rounded-xl object-cover border-2 border-slate-200"
                         />
                       ) : (
-                        <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-cyan-100 to-blue-100 flex items-center justify-center border-2 border-slate-200">
+                        <div className="w-20 h-20 rounded-xl bg-linear-to-br from-cyan-100 to-blue-100 flex items-center justify-center border-2 border-slate-200">
                           <User className="w-10 h-10 text-cyan-600" />
                         </div>
                       )}
@@ -272,7 +272,7 @@ React.useEffect(() => {
 
                         <Link
                           href={`/Dashboard/employees/${employee._id}`}
-                          className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-lg hover:from-cyan-600 hover:to-blue-700 transition-all flex items-center gap-2 opacity-0 group-hover:opacity-100"
+                          className="px-4 py-2 bg-linear-to-r from-cyan-500 to-blue-600 text-white rounded-lg hover:from-cyan-600 hover:to-blue-700 transition-all flex items-center gap-2 opacity-0 group-hover:opacity-100"
                         >
                           <Eye className="w-4 h-4" />
                           View Details
@@ -346,7 +346,7 @@ React.useEffect(() => {
                                 key={idx}
                                 className={`flex items-center gap-3 px-4 py-2 ${style.bg} border ${style.border} rounded-lg`}
                               >
-                                <Icon className={`w-4 h-4 flex-shrink-0 ${style.color}`} />
+                                <Icon className={`w-4 h-4 shrink-0 ${style.color}`} />
                                 <p className={`text-sm font-medium ${style.color}`}>
                                   {notification.message}
                                 </p>

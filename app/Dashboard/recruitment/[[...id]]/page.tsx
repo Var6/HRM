@@ -266,7 +266,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 
 
   return (
-    <div className="h-screen flex flex-col bg-gradient-to-br from-slate-50 to-slate-100 pt-7">
+    <div className="h-screen flex flex-col bg-linear-to-br from-slate-50 to-slate-100 pt-7">
   <div className="w-full px-6 flex flex-col h-full">
 
         {/* Header */}
@@ -288,7 +288,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
               <button
                 type="submit"
                 form="employee-form"
-                className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-lg hover:from-cyan-600 hover:to-blue-700 transition-all flex items-center gap-2 shadow-lg shadow-cyan-500/25"
+                className="px-6 py-3 bg-linear-to-r from-cyan-500 to-blue-600 text-white rounded-lg hover:from-cyan-600 hover:to-blue-700 transition-all flex items-center gap-2 shadow-lg shadow-cyan-500/25"
               >
                 <Save className="w-5 h-5" />
                 {isEditMode ? 'Update Employee' : 'Create Employee'}
@@ -322,7 +322,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 
                 className={`flex items-center gap-2 px-6 py-3 rounded-lg transition-all whitespace-nowrap ${
                   activeTab === tab.id
-                    ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg'
+                    ? 'bg-linear-to-r from-cyan-500 to-blue-600 text-white shadow-lg'
                     : 'text-slate-600 hover:bg-slate-100'
                 }`}
               >
@@ -355,7 +355,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                     {photoPreview ? (
                       <img src={photoPreview} alt="Preview" className="w-32 h-32 rounded-xl object-cover border-4 border-slate-200" />
                     ) : (
-                      <div className="w-32 h-32 rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center border-4 border-slate-200">
+                      <div className="w-32 h-32 rounded-xl bg-linear-to-br from-slate-100 to-slate-200 flex items-center justify-center border-4 border-slate-200">
                         <Camera className="w-12 h-12 text-slate-400" />
                       </div>
                     )}
@@ -1089,7 +1089,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
               </div>
 
               {/* Salary Summary */}
-              <div className="bg-gradient-to-br from-cyan-50 to-blue-50 border-2 border-cyan-200 rounded-xl p-6">
+              <div className="bg-linear-to-br from-cyan-50 to-blue-50 border-2 border-cyan-200 rounded-xl p-6">
                 <h4 className="text-lg font-semibold text-slate-900 mb-4">Salary Summary</h4>
                 <div className="grid md:grid-cols-3 gap-6">
                   <div>
@@ -1181,7 +1181,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                 
                 <div className="grid md:grid-cols-3 gap-6">
                   {/* ID Card Checkbox */}
-                  <div className="p-6 bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200 rounded-xl hover:border-cyan-300 transition-all">
+                  <div className="p-6 bg-linear-to-br from-slate-50 to-slate-100 border border-slate-200 rounded-xl hover:border-cyan-300 transition-all">
                     <label className="flex items-center gap-4 cursor-pointer group">
                       <div className="relative">
                         <input
@@ -1191,7 +1191,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                           onChange={handleInputChange}
                           className="peer sr-only"
                         />
-                        <div className="w-14 h-8 bg-slate-300 rounded-full peer-checked:bg-gradient-to-r peer-checked:from-cyan-500 peer-checked:to-blue-600 transition-all"></div>
+                        <div className="w-14 h-8 bg-slate-300 rounded-full peer-checked:bg-linear-to-r peer-checked:from-cyan-500 peer-checked:to-blue-600 transition-all"></div>
                         <div className="absolute left-1 top-1 w-6 h-6 bg-white rounded-full shadow-md transition-all peer-checked:translate-x-6"></div>
                       </div>
                       <div className="flex-1">
@@ -1205,7 +1205,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                   </div>
 
                   {/* Diary Checkbox */}
-                  <div className="p-6 bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200 rounded-xl hover:border-cyan-300 transition-all">
+                  <div className="p-6 bg-linear-to-br from-slate-50 to-slate-100 border border-slate-200 rounded-xl hover:border-cyan-300 transition-all">
                     <label className="flex items-center gap-4 cursor-pointer group">
                       <div className="relative">
                         <input
@@ -1215,7 +1215,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                           onChange={handleInputChange}
                           className="peer sr-only"
                         />
-                        <div className="w-14 h-8 bg-slate-300 rounded-full peer-checked:bg-gradient-to-r peer-checked:from-cyan-500 peer-checked:to-blue-600 transition-all"></div>
+                        <div className="w-14 h-8 bg-slate-300 rounded-full peer-checked:bg-linear-to-r peer-checked:from-cyan-500 peer-checked:to-blue-600 transition-all"></div>
                         <div className="absolute left-1 top-1 w-6 h-6 bg-white rounded-full shadow-md transition-all peer-checked:translate-x-6"></div>
                       </div>
                       <div className="flex-1">
@@ -1230,7 +1230,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                   </div>
 
                   {/* Visiting Card Checkbox */}
-                  <div className="p-6 bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200 rounded-xl hover:border-cyan-300 transition-all">
+                  <div className="p-6 bg-linear-to-br from-slate-50 to-slate-100 border border-slate-200 rounded-xl hover:border-cyan-300 transition-all">
                     <label className="flex items-center gap-4 cursor-pointer group">
                       <div className="relative">
                         <input
@@ -1240,7 +1240,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                           onChange={handleInputChange}
                           className="peer sr-only"
                         />
-                        <div className="w-14 h-8 bg-slate-300 rounded-full peer-checked:bg-gradient-to-r peer-checked:from-cyan-500 peer-checked:to-blue-600 transition-all"></div>
+                        <div className="w-14 h-8 bg-slate-300 rounded-full peer-checked:bg-linear-to-r peer-checked:from-cyan-500 peer-checked:to-blue-600 transition-all"></div>
                         <div className="absolute left-1 top-1 w-6 h-6 bg-white rounded-full shadow-md transition-all peer-checked:translate-x-6"></div>
                       </div>
                       <div className="flex-1">
@@ -1286,7 +1286,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
               </div>
 
               {/* Leave Allocation Info */}
-              <div className="mt-8 p-6 bg-gradient-to-br from-blue-50 to-cyan-50 border border-blue-200 rounded-xl">
+              <div className="mt-8 p-6 bg-linear-to-br from-blue-50 to-cyan-50 border border-blue-200 rounded-xl">
                 <h4 className="text-lg font-semibold text-slate-900 mb-4">Default Leave Allocation</h4>
                 <div className="grid md:grid-cols-3 gap-4">
                   <div className="flex items-center justify-between p-4 bg-white rounded-lg">

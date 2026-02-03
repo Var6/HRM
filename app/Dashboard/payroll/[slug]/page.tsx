@@ -2,16 +2,18 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
-  Calendar, Users, Download, ChevronLeft, ChevronRight, 
+  Calendar, Users, Download, ChevronLeft, ChevronRight, ChevronDown,
   Eye, Edit, CheckCircle, XCircle, Clock, Send,
   ArrowUpCircle, ArrowDownCircle, User, Receipt,
   CreditCard, Building2, AlertTriangle, DollarSign,
   Search, Filter, Trash2, Lock, Unlock, Save,
-  FileText, Mail, X, Ban
+  FileText, Mail, X, Ban, FileJson
 } from 'lucide-react';
 import { SalaryStructure, PayrollStatus } from '@/types/types';
 import type { EmployeeSalaryData } from '@/lib/payslip-utils';
 import { downloadPayslip, downloadBulkPayslips } from '@/lib/payslip-utils';
+import { exportPayslipToExcel } from '@/lib/payroll-export-helpers';
+import ApprovalModal from '@/components/payslip/ApprovalModal';
 import Link from 'next/link';
 
 const convertToEmployeeSalaryData = (emp: SalaryStructure): EmployeeSalaryData => {
@@ -67,6 +69,9 @@ export default function PayrollSlugPage() {
   const [holdReason, setHoldReason] = useState('');
   const [holdEmployeeCode, setHoldEmployeeCode] = useState<string | null>(null);
   const [processingBulk, setProcessingBulk] = useState(false);
+  const [showApprovalModal, setShowApprovalModal] = useState(false);
+  const [employeesForApproval, setEmployeesForApproval] = useState<any[]>([]);
+  const [payslipDropdown, setPayslipDropdown] = useState<string | null>(null);
 
   const [monthName, year] = slug ? slug.split('-') : ['january', '2026'];
   const monthIndex = months.findIndex(m => m.toLowerCase() === monthName.toLowerCase());
@@ -156,19 +161,117 @@ export default function PayrollSlugPage() {
   const handleBulkProcess = async () => {
     if (selectedEmployees.size === 0) return;
     
-    setProcessingBulk(true);
+    // Get employees for approval modal
+    const employeesToApprove = filteredEmployees.filter(emp =>
+      selectedEmployees.has(emp.employeeCode)
+    );
+
+    const approvalEmployees = employeesToApprove.map(emp => ({
+      employeeCode: emp.employeeCode,
+      employeeName: emp.employeeName,
+      designation: emp.designation,
+      department: emp.department,
+      grossSalary: emp.grossSalary,
+      presentDays: emp.presentDays || 0,
+      totalDaysInMonth: 30,
+      currentDeductions: {
+        pf: emp.deductions?.pf || 0,
+        esic: emp.deductions?.esic || 0,
+        advance: emp.deductions?.advance || emp.deductions?.salaryAdvance || 0,
+        loan: emp.deductions?.loan || 0,
+        tds: emp.deductions?.tds || 0,
+        lop: emp.deductions?.lop || emp.lopAmount || 0,
+      },
+    }));
+
+    setEmployeesForApproval(approvalEmployees);
+    setShowApprovalModal(true);
+  };
+
+  const handleApprovalSubmit = async (approvalData: any[]) => {
     try {
-      const promises = Array.from(selectedEmployees).map(employeeCode =>
-        handleStatusChange(employeeCode, true)
-      );
-      await Promise.all(promises);
-      setSelectedEmployees(new Set());
+      setProcessingBulk(true);
+      
+      const response = await fetch('/api/payroll/approve-with-lop', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          approvals: approvalData,
+          month: months[currentMonth],
+          year: currentYear,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Update salary data with approved employees
+        setSalaryData(prev =>
+          prev.map(emp => {
+            const approved = approvalData.find(a => a.employeeCode === emp.employeeCode);
+            if (approved) {
+              return {
+                ...emp,
+                salaryProcessed: true,
+                salaryHold: false,
+                approvalDate: result.approvalDate,
+                approvalTime: result.approvalTime,
+                deductions: {
+                  ...emp.deductions,
+                  pf: approved.adjustedPF,
+                  esic: approved.adjustedESIC,
+                  advance: approved.adjustedAdvance,
+                  loan: approved.adjustedLoan,
+                  tds: approved.adjustedTDS,
+                  lop: approved.adjustedLOP,
+                },
+                netSalary: approved.adjustedLOP ? 
+                  emp.grossSalary - (approved.adjustedPF + approved.adjustedESIC + approved.adjustedAdvance + approved.adjustedLoan + approved.adjustedTDS + approved.adjustedLOP) :
+                  emp.netSalary,
+              };
+            }
+            return emp;
+          })
+        );
+
+        setSelectedEmployees(new Set());
+        setShowApprovalModal(false);
+        setEmployeesForApproval([]);
+      } else {
+        console.error('Approval failed:', result.message);
+      }
     } catch (error) {
-      console.error('Error processing bulk:', error);
+      console.error('Error submitting approvals:', error);
     } finally {
       setProcessingBulk(false);
     }
   };
+
+  const handleSingleApproval = (employeeCode: string) => {
+    const employee = filteredEmployees.find(emp => emp.employeeCode === employeeCode);
+    if (!employee) return;
+
+    const approvalEmployee = {
+      employeeCode: employee.employeeCode,
+      employeeName: employee.employeeName,
+      designation: employee.designation,
+      department: employee.department,
+      grossSalary: employee.grossSalary,
+      presentDays: employee.presentDays || 0,
+      totalDaysInMonth: 30,
+      currentDeductions: {
+        pf: employee.deductions?.pf || 0,
+        esic: employee.deductions?.esic || 0,
+        advance: employee.deductions?.advance || employee.deductions?.salaryAdvance || 0,
+        loan: employee.deductions?.loan || 0,
+        tds: employee.deductions?.tds || 0,
+        lop: employee.deductions?.lop || employee.lopAmount || 0,
+      },
+    };
+
+    setEmployeesForApproval([approvalEmployee]);
+    setShowApprovalModal(true);
+  };;
 
   const handleBulkDownload = () => {
     const employees = filteredEmployees
@@ -248,7 +351,7 @@ export default function PayrollSlugPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+      <div className="flex items-center justify-center min-h-screen bg-linear-to-br from-slate-50 to-slate-100">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-cyan-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-slate-600">Loading payroll data...</p>
@@ -258,7 +361,7 @@ export default function PayrollSlugPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6 pt-9">
+    <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-100 p-6 pt-9">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -305,7 +408,7 @@ export default function PayrollSlugPage() {
           <div className="grid md:grid-cols-4 gap-6 mb-6">
             <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
               <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-gradient-to-br from-cyan-50 to-blue-50 rounded-lg">
+                <div className="p-3 bg-linear-to-br from-cyan-50 to-blue-50 rounded-lg">
                   <Users className="w-6 h-6 text-cyan-600" />
                 </div>
                 <span className="text-xs font-semibold text-cyan-600 bg-cyan-50 px-2 py-1 rounded-full">
@@ -318,7 +421,7 @@ export default function PayrollSlugPage() {
 
             <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
               <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg">
+                <div className="p-3 bg-linear-to-br from-green-50 to-emerald-50 rounded-lg">
                   <CheckCircle className="w-6 h-6 text-green-600" />
                 </div>
                 <span className="text-xs font-semibold text-green-600 bg-green-50 px-2 py-1 rounded-full">
@@ -333,7 +436,7 @@ export default function PayrollSlugPage() {
 
             <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
               <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-gradient-to-br from-red-50 to-rose-50 rounded-lg">
+                <div className="p-3 bg-linear-to-br from-red-50 to-rose-50 rounded-lg">
                   <XCircle className="w-6 h-6 text-red-600" />
                 </div>
                 <span className="text-xs font-semibold text-red-600 bg-red-50 px-2 py-1 rounded-full">
@@ -346,7 +449,7 @@ export default function PayrollSlugPage() {
 
             <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
               <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg">
+                <div className="p-3 bg-linear-to-br from-purple-50 to-pink-50 rounded-lg">
                   <DollarSign className="w-6 h-6 text-purple-600" />
                 </div>
               </div>
@@ -478,7 +581,7 @@ export default function PayrollSlugPage() {
                         className="w-16 h-16 rounded-xl object-cover border-2 border-slate-200"
                       />
                     ) : (
-                      <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-cyan-100 to-blue-100 flex items-center justify-center border-2 border-slate-200">
+                      <div className="w-16 h-16 rounded-xl bg-linear-to-br from-cyan-100 to-blue-100 flex items-center justify-center border-2 border-slate-200">
                         <User className="w-8 h-8 text-cyan-600" />
                       </div>
                     )}
@@ -517,50 +620,79 @@ export default function PayrollSlugPage() {
                       <Eye className="w-4 h-4" />
                     </button>
                     {employee.salaryProcessed && (
-                      <button
-                        onClick={() =>
-                          downloadPayslip(
-                            convertToEmployeeSalaryData(employee),
-                            months[currentMonth],
-                            String(currentYear)
-                          )
-                        }
-                        className="px-3 py-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-all flex items-center gap-2"
-                        title="Download Payslip"
-                      >
-                        <Receipt className="w-4 h-4" />
-                      </button>
+                      <div className="relative">
+                        <button
+                          onClick={() => setPayslipDropdown(payslipDropdown === employee.employeeCode ? null : employee.employeeCode)}
+                          className="px-3 py-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-all flex items-center gap-2"
+                          title="Download Payslip"
+                        >
+                          <Receipt className="w-4 h-4" />
+                          <ChevronDown className="w-3 h-3" />
+                        </button>
+                        {payslipDropdown === employee.employeeCode && (
+                          <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-slate-200 z-50">
+                            <button
+                              onClick={() => {
+                                downloadPayslip(
+                                  convertToEmployeeSalaryData(employee),
+                                  months[currentMonth],
+                                  String(currentYear)
+                                );
+                                setPayslipDropdown(null);
+                              }}
+                              className="w-full text-left px-4 py-3 hover:bg-cyan-50 flex items-center gap-2 text-cyan-600 font-medium border-b border-slate-100 first:rounded-t-lg"
+                            >
+                              <FileText className="w-4 h-4" />
+                              Download as PDF
+                            </button>
+                            <button
+                              onClick={() => {
+                                exportPayslipToExcel(
+                                  convertToEmployeeSalaryData(employee),
+                                  months[currentMonth],
+                                  String(currentYear)
+                                );
+                                setPayslipDropdown(null);
+                              }}
+                              className="w-full text-left px-4 py-3 hover:bg-green-50 flex items-center gap-2 text-green-600 font-medium last:rounded-b-lg"
+                            >
+                              <FileJson className="w-4 h-4" />
+                              Download as Excel
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>
 
                 {/* Stats */}
                 <div className="grid md:grid-cols-5 gap-4">
-                  <div className="p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg border border-green-200">
+                  <div className="p-4 bg-linear-to-br from-green-50 to-emerald-50 rounded-lg border border-green-200">
                     <p className="text-xs text-green-700 mb-1 font-semibold">GROSS SALARY</p>
                     <p className="text-2xl font-bold text-green-600">
                       {formatCurrency(employee.grossSalary)}
                     </p>
                   </div>
-                  <div className="p-4 bg-gradient-to-br from-red-50 to-rose-50 rounded-lg border border-red-200">
+                  <div className="p-4 bg-linear-to-br from-red-50 to-rose-50 rounded-lg border border-red-200">
                     <p className="text-xs text-red-700 mb-1 font-semibold">DEDUCTIONS</p>
                     <p className="text-2xl font-bold text-red-600">
                       {formatCurrency(employee.totalDeductions)}
                     </p>
                   </div>
-                  <div className="p-4 bg-gradient-to-br from-cyan-50 to-blue-50 rounded-lg border border-cyan-200">
+                  <div className="p-4 bg-linear-to-br from-cyan-50 to-blue-50 rounded-lg border border-cyan-200">
                     <p className="text-xs text-cyan-700 mb-1 font-semibold">NET SALARY</p>
                     <p className="text-2xl font-bold text-cyan-600">
                       {formatCurrency(employee.netSalary)}
                     </p>
                   </div>
-                  <div className="p-4 bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg border border-slate-200">
+                  <div className="p-4 bg-linear-to-br from-slate-50 to-slate-100 rounded-lg border border-slate-200">
                     <p className="text-xs text-slate-600 mb-1 font-semibold">BANK A/C</p>
                     <p className="text-lg font-bold text-slate-900">{employee.bankAccount}</p>
                   </div>
 
                   {/* Status Control */}
-                  <div className="p-4 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-lg border border-purple-200">
+                  <div className="p-4 bg-linear-to-br from-purple-50 to-indigo-50 rounded-lg border border-purple-200">
                     {employee.salaryHold ? (
                       <div className="space-y-2">
                         <span className="px-3 py-1 bg-red-100 text-red-700 text-xs font-semibold rounded-full block text-center">
@@ -594,7 +726,7 @@ export default function PayrollSlugPage() {
                         </span>
                         <div className="flex gap-1">
                           <button
-                            onClick={() => handleStatusChange(employee.employeeCode, true)}
+                            onClick={() => handleSingleApproval(employee.employeeCode)}
                             className="flex-1 px-2 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 flex items-center justify-center gap-1"
                             title="Mark as Processed"
                           >
@@ -691,6 +823,19 @@ export default function PayrollSlugPage() {
             </div>
           </div>
         )}
+
+        {/* Approval Modal */}
+        <ApprovalModal
+          employees={employeesForApproval}
+          month={months[currentMonth]}
+          year={currentYear}
+          isOpen={showApprovalModal}
+          onClose={() => {
+            setShowApprovalModal(false);
+            setEmployeesForApproval([]);
+          }}
+          onApprove={handleApprovalSubmit}
+        />
       </div>
     </div>
   );

@@ -9,7 +9,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
+    <div className="flex h-screen bg-linear-to-br from-slate-50 via-white to-slate-100">
       
       {/* Sidebar */}
       <Sidebar />

@@ -85,7 +85,7 @@ export default function EmployeeDetail() {
   };
     if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6 pt-7 mt-7 flex items-center justify-center">
+      <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-100 p-6 pt-7 mt-7 flex items-center justify-center">
         <p className="text-slate-500 text-lg">Loading employee details...</p>
       </div>
     );
@@ -93,7 +93,7 @@ export default function EmployeeDetail() {
 
   if (!employee) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6 pt-7 mt-7 flex items-center justify-center">
+      <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-100 p-6 pt-7 mt-7 flex items-center justify-center">
         <div className="text-center">
           <p className="text-slate-500 text-lg mb-4">Employee not found</p>
           <button onClick={()=>window.history.back()} className="text-cyan-600 hover:underline">Back</button>
@@ -103,7 +103,7 @@ export default function EmployeeDetail() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6 pt-7 mt-7">
+    <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-100 p-6 pt-7 mt-7">
       <div className="max-w-7xl mx-auto">
         
         {/* Header */}
@@ -119,7 +119,7 @@ export default function EmployeeDetail() {
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
             <div className="flex items-start gap-6">
               {/* Photo */}
-              <div className="flex-shrink-0">
+              <div className="shrink-0">
                 {employee.photograph ? (
                   <img 
                     src={employee.photograph} 
@@ -127,7 +127,7 @@ export default function EmployeeDetail() {
                     className="w-32 h-32 rounded-xl object-cover border-4 border-slate-200"
                   />
                 ) : (
-                  <div className="w-32 h-32 rounded-xl bg-gradient-to-br from-cyan-100 to-blue-100 flex items-center justify-center border-4 border-slate-200">
+                  <div className="w-32 h-32 rounded-xl bg-linear-to-br from-cyan-100 to-blue-100 flex items-center justify-center border-4 border-slate-200">
                     <User className="w-16 h-16 text-cyan-600" />
                   </div>
                 )}
@@ -171,7 +171,7 @@ export default function EmployeeDetail() {
 
                 {/* Quick Stats */}
                 <div className="grid md:grid-cols-4 gap-4">
-                  <div className="flex items-center gap-3 p-3 bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg">
+                  <div className="flex items-center gap-3 p-3 bg-linear-to-br from-slate-50 to-slate-100 rounded-lg">
                     <Building className="w-5 h-5 text-cyan-600" />
                     <div>
                       <p className="text-xs text-slate-500">Branch</p>
@@ -179,7 +179,7 @@ export default function EmployeeDetail() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 p-3 bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg">
+                  <div className="flex items-center gap-3 p-3 bg-linear-to-br from-slate-50 to-slate-100 rounded-lg">
                     <Calendar className="w-5 h-5 text-cyan-600" />
                     <div>
                       <p className="text-xs text-slate-500">Joining Date</p>
@@ -193,7 +193,7 @@ export default function EmployeeDetail() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 p-3 bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg">
+                  <div className="flex items-center gap-3 p-3 bg-linear-to-br from-slate-50 to-slate-100 rounded-lg">
                     <Clock className="w-5 h-5 text-cyan-600" />
                     <div>
                       <p className="text-xs text-slate-500">Tenure</p>
@@ -203,7 +203,7 @@ export default function EmployeeDetail() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 p-3 bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg">
+                  <div className="flex items-center gap-3 p-3 bg-linear-to-br from-slate-50 to-slate-100 rounded-lg">
                     <DollarSign className="w-5 h-5 text-cyan-600" />
                     <div>
                       <p className="text-xs text-slate-500">Net Salary</p>
@@ -255,7 +255,7 @@ export default function EmployeeDetail() {
                   key={idx}
                   className={`flex items-center gap-4 px-6 py-4 ${style.bg} border ${style.border} rounded-xl`}
                 >
-                  <Icon className={`w-6 h-6 flex-shrink-0 ${style.color}`} />
+                  <Icon className={`w-6 h-6 shrink-0 ${style.color}`} />
                   <div className="flex-1">
                     <p className={`font-medium ${style.color}`}>{notification.message}</p>
                     <p className="text-xs text-slate-500 mt-1">
@@ -282,7 +282,7 @@ export default function EmployeeDetail() {
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
               <button
                 onClick={() => toggleSection('personal')}
-                className="w-full px-6 py-4 flex items-center justify-between bg-gradient-to-r from-slate-50 to-slate-100 hover:from-slate-100 hover:to-slate-200 transition-all"
+                className="w-full px-6 py-4 flex items-center justify-between bg-linear-to-r from-slate-50 to-slate-100 hover:from-slate-100 hover:to-slate-200 transition-all"
               >
                 <div className="flex items-center gap-3">
                   <User className="w-6 h-6 text-cyan-600" />
@@ -363,7 +363,7 @@ export default function EmployeeDetail() {
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
               <button
                 onClick={() => toggleSection('employment')}
-                className="w-full px-6 py-4 flex items-center justify-between bg-gradient-to-r from-slate-50 to-slate-100 hover:from-slate-100 hover:to-slate-200 transition-all"
+                className="w-full px-6 py-4 flex items-center justify-between bg-linear-to-r from-slate-50 to-slate-100 hover:from-slate-100 hover:to-slate-200 transition-all"
               >
                 <div className="flex items-center gap-3">
                   <Briefcase className="w-6 h-6 text-cyan-600" />
@@ -444,7 +444,7 @@ export default function EmployeeDetail() {
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
               <button
                 onClick={() => toggleSection('experience')}
-                className="w-full px-6 py-4 flex items-center justify-between bg-gradient-to-r from-slate-50 to-slate-100 hover:from-slate-100 hover:to-slate-200 transition-all"
+                className="w-full px-6 py-4 flex items-center justify-between bg-linear-to-r from-slate-50 to-slate-100 hover:from-slate-100 hover:to-slate-200 transition-all"
               >
                 <div className="flex items-center gap-3">
                   <FileText className="w-6 h-6 text-cyan-600" />
@@ -478,7 +478,7 @@ export default function EmployeeDetail() {
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
               <button
                 onClick={() => toggleSection('salary')}
-                className="w-full px-6 py-4 flex items-center justify-between bg-gradient-to-r from-slate-50 to-slate-100 hover:from-slate-100 hover:to-slate-200 transition-all"
+                className="w-full px-6 py-4 flex items-center justify-between bg-linear-to-r from-slate-50 to-slate-100 hover:from-slate-100 hover:to-slate-200 transition-all"
               >
                 <div className="flex items-center gap-3">
                   <DollarSign className="w-6 h-6 text-cyan-600" />
@@ -532,7 +532,7 @@ export default function EmployeeDetail() {
                   </div>
 
                   {/* Summary */}
-                  <div className="p-6 bg-gradient-to-br from-cyan-50 to-blue-50 rounded-xl border-2 border-cyan-200">
+                  <div className="p-6 bg-linear-to-br from-cyan-50 to-blue-50 rounded-xl border-2 border-cyan-200">
                     <div className="grid md:grid-cols-3 gap-6">
                       <div>
                         <p className="text-sm text-slate-600 mb-1">Total Earnings</p>
@@ -556,7 +556,7 @@ export default function EmployeeDetail() {
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
               <button
                 onClick={() => toggleSection('documents')}
-                className="w-full px-6 py-4 flex items-center justify-between bg-gradient-to-r from-slate-50 to-slate-100 hover:from-slate-100 hover:to-slate-200 transition-all"
+                className="w-full px-6 py-4 flex items-center justify-between bg-linear-to-r from-slate-50 to-slate-100 hover:from-slate-100 hover:to-slate-200 transition-all"
               >
                 <div className="flex items-center gap-3">
                   <CreditCard className="w-6 h-6 text-cyan-600" />
@@ -656,7 +656,7 @@ export default function EmployeeDetail() {
                       </div>
                       <div className="w-full bg-slate-200 rounded-full h-2">
                         <div 
-                          className="bg-gradient-to-r from-cyan-500 to-blue-600 h-2 rounded-full transition-all"
+                          className="bg-linear-to-r from-cyan-500 to-blue-600 h-2 rounded-full transition-all"
                           style={{ width: `${percentage}%` }}
                         ></div>
                       </div>

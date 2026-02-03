@@ -36,17 +36,17 @@ export default function Sidebar() {
     <aside
       className={`${
         sidebarOpen ? 'w-72' : 'w-20'
-      } bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 border-r border-slate-700 transition-all duration-300 flex flex-col relative`}
+      } bg-linear-to-b from-slate-900 via-slate-800 to-slate-900 border-r border-slate-700 transition-all duration-300 flex flex-col relative`}
     >
       {/* Logo */}
       <div className="p-6 border-b border-slate-700">
         <div className="flex items-center gap-3">
-          <div className="bg-gradient-to-br from-cyan-500 to-blue-600 p-2.5 rounded-lg">
+          <div className="bg-linear-to-br from-cyan-500 to-blue-600 p-2.5 rounded-lg">
             <Users className="w-6 h-6 text-white" />
           </div>
           {sidebarOpen && (
             <div>
-              <h1 className="text-xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
+              <h1 className="text-xl font-bold bg-linear-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
                 HRM Pro
               </h1>
               <p className="text-xs text-slate-400 -mt-0.5">Dashboard</p>
@@ -65,7 +65,7 @@ export default function Sidebar() {
         <button
           className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
             isActive
-              ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg'
+              ? 'bg-linear-to-r from-cyan-500 to-blue-600 text-white shadow-lg'
               : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
           }`}
         >

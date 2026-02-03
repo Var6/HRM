@@ -119,7 +119,7 @@ export default function PayrollReports() {
                 <Printer className="w-4 h-4" />
                 Print
               </button>
-              <button className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-lg hover:from-cyan-600 hover:to-blue-700 transition-all flex items-center gap-2 shadow-lg shadow-cyan-500/25">
+              <button className="px-6 py-3 bg-linear-to-r from-cyan-500 to-blue-600 text-white rounded-lg hover:from-cyan-600 hover:to-blue-700 transition-all flex items-center gap-2 shadow-lg shadow-cyan-500/25">
                 <Download className="w-5 h-5" />
                 Export All
               </button>
@@ -183,7 +183,7 @@ export default function PayrollReports() {
                 <button className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-all">
                   Reset
                 </button>
-                <button className="px-6 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-lg hover:from-cyan-600 hover:to-blue-700 transition-all">
+                <button className="px-6 py-2 bg-linear-to-r from-cyan-500 to-blue-600 text-white rounded-lg hover:from-cyan-600 hover:to-blue-700 transition-all">
                   Apply Filters
                 </button>
               </div>
@@ -194,7 +194,7 @@ export default function PayrollReports() {
           <div className="grid md:grid-cols-4 gap-6 mb-6">
             <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
               <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg">
+                <div className="p-3 bg-linear-to-br from-green-50 to-emerald-50 rounded-lg">
                   <IndianRupee className="w-6 h-6 text-green-600" />
                 </div>
                 <TrendingUp className="w-5 h-5 text-green-500" />
@@ -206,7 +206,7 @@ export default function PayrollReports() {
 
             <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
               <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-gradient-to-br from-cyan-50 to-blue-50 rounded-lg">
+                <div className="p-3 bg-linear-to-br from-cyan-50 to-blue-50 rounded-lg">
                   <Users className="w-6 h-6 text-cyan-600" />
                 </div>
                 <CheckCircle className="w-5 h-5 text-cyan-500" />
@@ -218,7 +218,7 @@ export default function PayrollReports() {
 
             <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
               <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-gradient-to-br from-amber-50 to-orange-50 rounded-lg">
+                <div className="p-3 bg-linear-to-br from-amber-50 to-orange-50 rounded-lg">
                   <ArrowDownCircle className="w-6 h-6 text-amber-600" />
                 </div>
                 <Activity className="w-5 h-5 text-amber-500" />
@@ -230,7 +230,7 @@ export default function PayrollReports() {
 
             <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
               <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg">
+                <div className="p-3 bg-linear-to-br from-purple-50 to-pink-50 rounded-lg">
                   <DollarSign className="w-6 h-6 text-purple-600" />
                 </div>
                 <BarChart3 className="w-5 h-5 text-purple-500" />
@@ -258,7 +258,7 @@ export default function PayrollReports() {
                   onClick={() => setSelectedReport(tab.id)}
                   className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg transition-all text-sm ${
                     selectedReport === tab.id
-                      ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg'
+                      ? 'bg-linear-to-r from-cyan-500 to-blue-600 text-white shadow-lg'
                       : 'text-slate-600 hover:bg-slate-100'
                   }`}
                 >
@@ -287,7 +287,7 @@ export default function PayrollReports() {
                       <span className="font-bold text-slate-900">58%</span>
                     </div>
                     <div className="w-full bg-slate-200 rounded-full h-3">
-                      <div className="bg-gradient-to-r from-cyan-500 to-blue-600 h-3 rounded-full" style={{ width: '58%' }}></div>
+                      <div className="bg-linear-to-r from-cyan-500 to-blue-600 h-3 rounded-full" style={{ width: '58%' }}></div>
                     </div>
                   </div>
                   <div>
@@ -296,7 +296,7 @@ export default function PayrollReports() {
                       <span className="font-bold text-slate-900">23%</span>
                     </div>
                     <div className="w-full bg-slate-200 rounded-full h-3">
-                      <div className="bg-gradient-to-r from-green-500 to-emerald-600 h-3 rounded-full" style={{ width: '23%' }}></div>
+                      <div className="bg-linear-to-r from-green-500 to-emerald-600 h-3 rounded-full" style={{ width: '23%' }}></div>
                     </div>
                   </div>
                   <div>
@@ -305,7 +305,7 @@ export default function PayrollReports() {
                       <span className="font-bold text-slate-900">5%</span>
                     </div>
                     <div className="w-full bg-slate-200 rounded-full h-3">
-                      <div className="bg-gradient-to-r from-purple-500 to-pink-600 h-3 rounded-full" style={{ width: '5%' }}></div>
+                      <div className="bg-linear-to-r from-purple-500 to-pink-600 h-3 rounded-full" style={{ width: '5%' }}></div>
                     </div>
                   </div>
                   <div>
@@ -314,7 +314,7 @@ export default function PayrollReports() {
                       <span className="font-bold text-slate-900">14%</span>
                     </div>
                     <div className="w-full bg-slate-200 rounded-full h-3">
-                      <div className="bg-gradient-to-r from-amber-500 to-orange-600 h-3 rounded-full" style={{ width: '14%' }}></div>
+                      <div className="bg-linear-to-r from-amber-500 to-orange-600 h-3 rounded-full" style={{ width: '14%' }}></div>
                     </div>
                   </div>
                 </div>
@@ -332,7 +332,7 @@ export default function PayrollReports() {
                       <span className="font-bold text-slate-900">57%</span>
                     </div>
                     <div className="w-full bg-slate-200 rounded-full h-3">
-                      <div className="bg-gradient-to-r from-red-500 to-rose-600 h-3 rounded-full" style={{ width: '57%' }}></div>
+                      <div className="bg-linear-to-r from-red-500 to-rose-600 h-3 rounded-full" style={{ width: '57%' }}></div>
                     </div>
                   </div>
                   <div>
@@ -341,7 +341,7 @@ export default function PayrollReports() {
                       <span className="font-bold text-slate-900">7%</span>
                     </div>
                     <div className="w-full bg-slate-200 rounded-full h-3">
-                      <div className="bg-gradient-to-r from-orange-500 to-amber-600 h-3 rounded-full" style={{ width: '7%' }}></div>
+                      <div className="bg-linear-to-r from-orange-500 to-amber-600 h-3 rounded-full" style={{ width: '7%' }}></div>
                     </div>
                   </div>
                   <div>
@@ -350,7 +350,7 @@ export default function PayrollReports() {
                       <span className="font-bold text-slate-900">15%</span>
                     </div>
                     <div className="w-full bg-slate-200 rounded-full h-3">
-                      <div className="bg-gradient-to-r from-purple-500 to-pink-600 h-3 rounded-full" style={{ width: '15%' }}></div>
+                      <div className="bg-linear-to-r from-purple-500 to-pink-600 h-3 rounded-full" style={{ width: '15%' }}></div>
                     </div>
                   </div>
                   <div>
@@ -359,7 +359,7 @@ export default function PayrollReports() {
                       <span className="font-bold text-slate-900">21%</span>
                     </div>
                     <div className="w-full bg-slate-200 rounded-full h-3">
-                      <div className="bg-gradient-to-r from-slate-500 to-slate-600 h-3 rounded-full" style={{ width: '21%' }}></div>
+                      <div className="bg-linear-to-r from-slate-500 to-slate-600 h-3 rounded-full" style={{ width: '21%' }}></div>
                     </div>
                   </div>
                 </div>
@@ -418,7 +418,7 @@ export default function PayrollReports() {
                   className="bg-white rounded-xl border-2 border-slate-200 hover:border-cyan-300 shadow-sm p-6 text-left transition-all hover:shadow-lg group"
                 >
                   <div className="flex items-start justify-between mb-4">
-                    <div className={`p-3 bg-gradient-to-br from-${report.color}-50 to-${report.color}-100 rounded-lg group-hover:scale-110 transition-transform`}>
+                    <div className={`p-3 bg-linear-to-br from-${report.color}-50 to-${report.color}-100 rounded-lg group-hover:scale-110 transition-transform`}>
                       <report.icon className={`w-8 h-8 text-${report.color}-600`} />
                     </div>
                     <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-cyan-600 group-hover:translate-x-1 transition-all" />
@@ -434,7 +434,7 @@ export default function PayrollReports() {
         {/* Monthly Register Tab */}
         {selectedReport === 'monthly-register' && (
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="p-6 border-b border-slate-200 bg-gradient-to-r from-cyan-50 to-blue-50">
+            <div className="p-6 border-b border-slate-200 bg-linear-to-r from-cyan-50 to-blue-50">
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-2xl font-bold text-slate-900 mb-1">Monthly Salary Register</h2>
@@ -588,7 +588,7 @@ export default function PayrollReports() {
           <div className="space-y-6">
             {/* PF Report */}
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-              <div className="p-6 border-b border-slate-200 bg-gradient-to-r from-green-50 to-emerald-50">
+              <div className="p-6 border-b border-slate-200 bg-linear-to-r from-green-50 to-emerald-50">
                 <div className="flex items-center justify-between">
                   <div>
                     <h2 className="text-2xl font-bold text-slate-900 mb-1">Provident Fund (PF) Report</h2>
@@ -645,7 +645,7 @@ export default function PayrollReports() {
 
             {/* ESIC Report */}
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-              <div className="p-6 border-b border-slate-200 bg-gradient-to-r from-blue-50 to-cyan-50">
+              <div className="p-6 border-b border-slate-200 bg-linear-to-r from-blue-50 to-cyan-50">
                 <div className="flex items-center justify-between">
                   <div>
                     <h2 className="text-2xl font-bold text-slate-900 mb-1">Employee State Insurance (ESIC) Report</h2>
@@ -699,7 +699,7 @@ export default function PayrollReports() {
         {/* Bank Transfer Sheet Tab */}
         {selectedReport === 'bank-transfer' && (
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="p-6 border-b border-slate-200 bg-gradient-to-r from-purple-50 to-pink-50">
+            <div className="p-6 border-b border-slate-200 bg-linear-to-r from-purple-50 to-pink-50">
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-2xl font-bold text-slate-900 mb-1">Bank Transfer Sheet</h2>
@@ -819,7 +819,7 @@ export default function PayrollReports() {
                       </div>
                       <div className="w-full bg-slate-200 rounded-full h-4">
                         <div 
-                          className={`bg-gradient-to-r ${colors[idx]} h-4 rounded-full flex items-center justify-end pr-2`}
+                          className={`bg-linear-to-r ${colors[idx]} h-4 rounded-full flex items-center justify-end pr-2`}
                           style={{ width: `${percentage}%` }}
                         >
                           <span className="text-xs text-white font-semibold">{dept.employees} emp</span>
@@ -838,7 +838,7 @@ export default function PayrollReports() {
           <div className="space-y-6">
             {/* Loans Report */}
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-              <div className="p-6 border-b border-slate-200 bg-gradient-to-r from-red-50 to-rose-50">
+              <div className="p-6 border-b border-slate-200 bg-linear-to-r from-red-50 to-rose-50">
                 <div className="flex items-center justify-between">
                   <div>
                     <h2 className="text-2xl font-bold text-slate-900 mb-1">Employee Loans Report</h2>
@@ -894,7 +894,7 @@ export default function PayrollReports() {
 
             {/* Salary Advances Report */}
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-              <div className="p-6 border-b border-slate-200 bg-gradient-to-r from-amber-50 to-orange-50">
+              <div className="p-6 border-b border-slate-200 bg-linear-to-r from-amber-50 to-orange-50">
                 <div className="flex items-center justify-between">
                   <div>
                     <h2 className="text-2xl font-bold text-slate-900 mb-1">Salary Advances Report</h2>
@@ -948,7 +948,7 @@ export default function PayrollReports() {
           <div className="space-y-6">
             {/* Monthly Trends Table */}
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-              <div className="p-6 border-b border-slate-200 bg-gradient-to-r from-blue-50 to-cyan-50">
+              <div className="p-6 border-b border-slate-200 bg-linear-to-r from-blue-50 to-cyan-50">
                 <h2 className="text-2xl font-bold text-slate-900 mb-1">6-Month Payroll Trends</h2>
                 <p className="text-slate-600">Historical payroll data and analysis</p>
               </div>
@@ -1018,7 +1018,7 @@ export default function PayrollReports() {
               <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
                 <h3 className="text-xl font-bold text-slate-900 mb-6">Key Metrics</h3>
                 <div className="space-y-4">
-                  <div className="p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg border-2 border-green-200">
+                  <div className="p-4 bg-linear-to-br from-green-50 to-emerald-50 rounded-lg border-2 border-green-200">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm font-semibold text-green-800">Average Monthly Payroll</span>
                       <TrendingUp className="w-5 h-5 text-green-600" />
@@ -1027,7 +1027,7 @@ export default function PayrollReports() {
                     <p className="text-xs text-green-700 mt-1">Last 6 months</p>
                   </div>
 
-                  <div className="p-4 bg-gradient-to-br from-cyan-50 to-blue-50 rounded-lg border-2 border-cyan-200">
+                  <div className="p-4 bg-linear-to-br from-cyan-50 to-blue-50 rounded-lg border-2 border-cyan-200">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm font-semibold text-cyan-800">Stable Headcount</span>
                       <CheckCircle className="w-5 h-5 text-cyan-600" />
@@ -1036,7 +1036,7 @@ export default function PayrollReports() {
                     <p className="text-xs text-cyan-700 mt-1">No change in 6 months</p>
                   </div>
 
-                  <div className="p-4 bg-gradient-to-br from-amber-50 to-orange-50 rounded-lg border-2 border-amber-200">
+                  <div className="p-4 bg-linear-to-br from-amber-50 to-orange-50 rounded-lg border-2 border-amber-200">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm font-semibold text-amber-800">Deduction Rate</span>
                       <Percent className="w-5 h-5 text-amber-600" />

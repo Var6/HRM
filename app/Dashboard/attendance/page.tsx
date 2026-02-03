@@ -457,14 +457,14 @@ setTimeout(() => setShowSuccessToast(false), 3000);
 
 if (loading) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6 pt-9 flex items-center justify-center">
+    <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-100 p-6 pt-9 flex items-center justify-center">
       <p className="text-slate-500 text-lg">Loading attendance data...</p>
     </div>
   );
 }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6 pt-9">
+    <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-100 p-6 pt-9">
       <div className="max-w-7xl mx-auto">
         {showSuccessToast && (
   <div className="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2 z-50 animate-slide-in">
@@ -489,7 +489,7 @@ if (loading) {
               </button>
               <button 
                 onClick={() => setShowHolidayModal(true)}
-                className="px-6 py-3 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-lg hover:from-orange-600 hover:to-red-700 transition-all flex items-center gap-2 shadow-lg shadow-orange-500/25"
+                className="px-6 py-3 bg-linear-to-r from-orange-500 to-red-600 text-white rounded-lg hover:from-orange-600 hover:to-red-700 transition-all flex items-center gap-2 shadow-lg shadow-orange-500/25"
               >
                 <Calendar className="w-5 h-5" />
                 Manage Holidays
@@ -501,7 +501,7 @@ if (loading) {
           <div className="grid md:grid-cols-4 gap-6 mb-6">
             <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
               <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-gradient-to-br from-cyan-50 to-blue-50 rounded-lg">
+                <div className="p-3 bg-linear-to-br from-cyan-50 to-blue-50 rounded-lg">
                   <Users className="w-6 h-6 text-cyan-600" />
                 </div>
               </div>
@@ -511,7 +511,7 @@ if (loading) {
 
             <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
               <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg">
+                <div className="p-3 bg-linear-to-br from-green-50 to-emerald-50 rounded-lg">
                   <CheckCircle className="w-6 h-6 text-green-600" />
                 </div>
               </div>
@@ -521,7 +521,7 @@ if (loading) {
 
             <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
               <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-gradient-to-br from-amber-50 to-orange-50 rounded-lg">
+                <div className="p-3 bg-linear-to-br from-amber-50 to-orange-50 rounded-lg">
                   <Calendar className="w-6 h-6 text-amber-600" />
                 </div>
               </div>
@@ -531,7 +531,7 @@ if (loading) {
 
             <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
               <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg">
+                <div className="p-3 bg-linear-to-br from-purple-50 to-pink-50 rounded-lg">
                   <TrendingUp className="w-6 h-6 text-purple-600" />
                 </div>
               </div>
@@ -554,7 +554,7 @@ if (loading) {
                   onClick={() => setSelectedView(tab.id as any)}
                   className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-lg transition-all ${
                     selectedView === tab.id
-                      ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg'
+                      ? 'bg-linear-to-r from-cyan-500 to-blue-600 text-white shadow-lg'
                       : 'text-slate-600 hover:bg-slate-100'
                   }`}
                 >
@@ -599,7 +599,7 @@ if (loading) {
                   <div className="p-6">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-start gap-4">
-                        <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-cyan-100 to-blue-100 flex items-center justify-center border-2 border-slate-200">
+                        <div className="w-16 h-16 rounded-xl bg-linear-to-br from-cyan-100 to-blue-100 flex items-center justify-center border-2 border-slate-200">
                          {employee.photograph ? (
                                            <img 
                                              src={employee.photograph} 
@@ -607,7 +607,7 @@ if (loading) {
                                                className="w-full h-full object-cover"
                                            />
                                          ) : (
-                                           <div className="w-24 h-24 rounded-xl bg-gradient-to-br from-cyan-100 to-blue-100 flex items-center justify-center border-4 border-slate-200">
+                                           <div className="w-24 h-24 rounded-xl bg-linear-to-br from-cyan-100 to-blue-100 flex items-center justify-center border-4 border-slate-200">
                                              <User className="w-12 h-12 text-cyan-600" />
                                            </div>
                                          )}
@@ -654,14 +654,14 @@ if (loading) {
 
                     {/* Quick Stats - NOW FIXED with safe access to 'attendance' */}
                    <div className="grid md:grid-cols-4 gap-4 mb-4">
-  <div className="p-3 bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg">
+  <div className="p-3 bg-linear-to-br from-slate-50 to-slate-100 rounded-lg">
     <p className="text-xs text-slate-500 mb-1">Total Leaves Taken (FY)</p>
     <p className="text-2xl font-bold text-slate-900">
       {employee.totalLeavesTaken.toFixed(1)}
     </p>
   </div>
 
-  <div className="p-3 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg">
+  <div className="p-3 bg-linear-to-br from-green-50 to-emerald-50 rounded-lg">
     <p className="text-xs text-slate-500 mb-1">Leave Balance (FY)</p>
     <p className="text-2xl font-bold text-green-600">
       {Math.max(0, (
@@ -672,14 +672,14 @@ if (loading) {
     </p>
   </div>
 
-  <div className="p-3 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-lg">
+  <div className="p-3 bg-linear-to-br from-blue-50 to-cyan-50 rounded-lg">
     <p className="text-xs text-slate-500 mb-1">Earned Leave (Allocated)</p>
     <p className="text-2xl font-bold text-blue-600">
       {(employee.leaveBalance?.earnedLeave || 0).toFixed(1)}
     </p>
   </div>
 
-  <div className="p-3 bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg">
+  <div className="p-3 bg-linear-to-br from-purple-50 to-pink-50 rounded-lg">
     <p className="text-xs text-slate-500 mb-1">Casual Leave (Allocated)</p>
     <p className="text-2xl font-bold text-purple-600">
       {(employee.leaveBalance?.casualLeave || 0).toFixed(1)}
@@ -868,7 +868,7 @@ if (loading) {
                 return (
                   <div key={employee._id} className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-200 hover:border-cyan-300 transition-all">
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-cyan-100 to-blue-100 flex items-center justify-center">
+                      <div className="w-12 h-12 rounded-lg bg-linear-to-br from-cyan-100 to-blue-100 flex items-center justify-center">
                        {employee.photograph ? (
                                            <img 
                                              src={employee.photograph} 
@@ -876,7 +876,7 @@ if (loading) {
                                              className="w-full h-full object-cover" 
                                            />
                                          ) : (
-                                           <div className="w-24 h-24 rounded-xl bg-gradient-to-br from-cyan-100 to-blue-100 flex items-center justify-center border-4 border-slate-200">
+                                           <div className="w-24 h-24 rounded-xl bg-linear-to-br from-cyan-100 to-blue-100 flex items-center justify-center border-4 border-slate-200">
                                              <User className="w-12 h-12 text-cyan-600" />
                                            </div>
                                          )}
@@ -962,7 +962,7 @@ if (loading) {
   <button 
     onClick={() => fetchAttendanceData()}
     disabled={loading}
-    className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-lg hover:from-cyan-600 hover:to-blue-700 transition-all flex items-center gap-2 shadow-lg disabled:opacity-50"
+    className="px-6 py-3 bg-linear-to-r from-cyan-500 to-blue-600 text-white rounded-lg hover:from-cyan-600 hover:to-blue-700 transition-all flex items-center gap-2 shadow-lg disabled:opacity-50"
   >
     <Activity className="w-5 h-5" />
     {loading ? 'Refreshing...' : 'Refresh Data'}
@@ -1031,7 +1031,7 @@ if (loading) {
                         </div>
                         <div className="w-full bg-slate-200 rounded-full h-3">
                           <div 
-                            className="bg-gradient-to-r from-cyan-500 to-blue-600 h-3 rounded-full transition-all"
+                            className="bg-linear-to-r from-cyan-500 to-blue-600 h-3 rounded-full transition-all"
                             style={{ width: `${percentage}%` }}
                           ></div>
                         </div>
@@ -1051,7 +1051,7 @@ if (loading) {
               <div className="grid md:grid-cols-1 gap-4">
                 <button 
                   onClick={handleExcelExport}
-                  className="p-4 bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200 rounded-lg hover:border-green-400 hover:shadow-lg transition-all text-left"
+                  className="p-4 bg-linear-to-br from-green-50 to-emerald-50 border-2 border-green-200 rounded-lg hover:border-green-400 hover:shadow-lg transition-all text-left"
                 >
                   <FileText className="w-8 h-8 text-green-600 mb-2" />
                   <p className="font-semibold text-slate-900">Download Attendance Report (Excel)</p>
@@ -1114,7 +1114,7 @@ if (loading) {
               </div>
 
               {/* Add Holiday Form */}
-              <div className="bg-gradient-to-r from-cyan-50 to-blue-50 rounded-lg p-4 mb-6 border border-cyan-200">
+              <div className="bg-linear-to-r from-cyan-50 to-blue-50 rounded-lg p-4 mb-6 border border-cyan-200">
                 <h4 className="font-bold text-slate-900 mb-4">Add New Holiday</h4>
                 <form onSubmit={handleAddHoliday} className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div>
@@ -1154,7 +1154,7 @@ if (loading) {
                   <div className="flex items-end">
                     <button
                       type="submit"
-                      className="w-full px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-lg hover:from-cyan-600 hover:to-blue-700 transition-all font-medium"
+                      className="w-full px-4 py-2 bg-linear-to-r from-cyan-500 to-blue-600 text-white rounded-lg hover:from-cyan-600 hover:to-blue-700 transition-all font-medium"
                     >
                       Add Holiday
                     </button>

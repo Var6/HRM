@@ -103,7 +103,7 @@ export default function EmployeePayrollDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+      <div className="flex items-center justify-center min-h-screen bg-linear-to-br from-slate-50 to-slate-100">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-cyan-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-slate-600">Loading employee payroll...</p>
@@ -114,7 +114,7 @@ export default function EmployeePayrollDetailPage() {
 
   if (error || !salaryData) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+      <div className="flex items-center justify-center min-h-screen bg-linear-to-br from-slate-50 to-slate-100">
         <div className="text-center max-w-md">
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <User className="w-8 h-8 text-red-600" />
@@ -133,7 +133,7 @@ export default function EmployeePayrollDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6 pt-9">
+    <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-100 p-6 pt-9">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -186,7 +186,7 @@ export default function EmployeePayrollDetailPage() {
                 className="w-32 h-32 rounded-xl object-cover border-2 border-slate-200"
               />
             ) : (
-              <div className="w-32 h-32 rounded-xl bg-gradient-to-br from-cyan-100 to-blue-100 flex items-center justify-center border-2 border-slate-200">
+              <div className="w-32 h-32 rounded-xl bg-linear-to-br from-cyan-100 to-blue-100 flex items-center justify-center border-2 border-slate-200">
                 <User className="w-16 h-16 text-cyan-600" />
               </div>
             )}
@@ -236,7 +236,7 @@ export default function EmployeePayrollDetailPage() {
         <div className="grid md:grid-cols-3 gap-6 mb-6">
           <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
             <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg">
+              <div className="p-3 bg-linear-to-br from-green-50 to-emerald-50 rounded-lg">
                 <DollarSign className="w-6 h-6 text-green-600" />
               </div>
             </div>
@@ -246,7 +246,7 @@ export default function EmployeePayrollDetailPage() {
 
           <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
             <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-gradient-to-br from-red-50 to-rose-50 rounded-lg">
+              <div className="p-3 bg-linear-to-br from-red-50 to-rose-50 rounded-lg">
                 <DollarSign className="w-6 h-6 text-red-600" />
               </div>
             </div>
@@ -256,7 +256,7 @@ export default function EmployeePayrollDetailPage() {
 
           <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
             <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-gradient-to-br from-cyan-50 to-blue-50 rounded-lg">
+              <div className="p-3 bg-linear-to-br from-cyan-50 to-blue-50 rounded-lg">
                 <DollarSign className="w-6 h-6 text-cyan-600" />
               </div>
             </div>

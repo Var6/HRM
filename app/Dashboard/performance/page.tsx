@@ -332,7 +332,7 @@ export default function PerformanceManagement() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6 pt-9">
+    <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-100 p-6 pt-9">
       <div className="max-w-7xl mx-auto">
         
         {/* Header */}
@@ -354,7 +354,7 @@ export default function PerformanceManagement() {
                 <Download className="w-4 h-4" />
                 Export
               </button>
-              <button className="px-6 py-3 bg-gradient-to-r from-blue-400 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all flex items-center gap-2 shadow-lg shadow-blue-500/25">
+              <button className="px-6 py-3 bg-linear-to-r from-blue-400 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all flex items-center gap-2 shadow-lg shadow-blue-500/25">
                 <Plus className="w-5 h-5" />
                 New Review
               </button>
@@ -365,7 +365,7 @@ export default function PerformanceManagement() {
           <div className="grid md:grid-cols-4 gap-6 mb-6">
             <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
               <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-gradient-to-br from-blue-50 to-blue-50 rounded-lg">
+                <div className="p-3 bg-linear-to-br from-blue-50 to-blue-50 rounded-lg">
                   <Award className="w-6 h-6 text-blue-600" />
                 </div>
                 <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
@@ -390,7 +390,7 @@ export default function PerformanceManagement() {
 
             <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
               <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg">
+                <div className="p-3 bg-linear-to-br from-green-50 to-emerald-50 rounded-lg">
                   <CheckCircle className="w-6 h-6 text-green-600" />
                 </div>
                 <span className="text-xs font-semibold text-green-600 bg-green-50 px-2 py-1 rounded-full">
@@ -404,7 +404,7 @@ export default function PerformanceManagement() {
 
             <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
               <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-gradient-to-br from-cyan-50 to-blue-50 rounded-lg">
+                <div className="p-3 bg-linear-to-br from-cyan-50 to-blue-50 rounded-lg">
                   <Target className="w-6 h-6 text-cyan-600" />
                 </div>
                 <span className="text-xs font-semibold text-cyan-600 bg-cyan-50 px-2 py-1 rounded-full">
@@ -418,7 +418,7 @@ export default function PerformanceManagement() {
 
             <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
               <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-gradient-to-br from-amber-50 to-orange-50 rounded-lg">
+                <div className="p-3 bg-linear-to-br from-amber-50 to-orange-50 rounded-lg">
                   <AlertCircle className="w-6 h-6 text-amber-600" />
                 </div>
                 <span className="text-xs font-semibold text-amber-600 bg-amber-50 px-2 py-1 rounded-full">
@@ -446,7 +446,7 @@ export default function PerformanceManagement() {
                   onClick={() => setSelectedView(tab.id as any)}
                   className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all ${
                     selectedView === tab.id
-                      ? 'bg-gradient-to-r from-blue-400 to-blue-600 text-white shadow-lg'
+                      ? 'bg-linear-to-r from-blue-400 to-blue-600 text-white shadow-lg'
                       : 'text-slate-600 hover:bg-slate-100'
                   }`}
                 >
@@ -468,7 +468,7 @@ export default function PerformanceManagement() {
                 className="bg-white rounded-xl border-2 border-slate-200 hover:border-blue-300 shadow-sm p-6 text-left transition-all hover:shadow-lg group"
               >
                 <div className="flex items-start justify-between mb-4">
-                  <div className="p-3 bg-gradient-to-br from-blue-50 to-blue-50 rounded-lg group-hover:scale-110 transition-transform">
+                  <div className="p-3 bg-linear-to-br from-blue-50 to-blue-50 rounded-lg group-hover:scale-110 transition-transform">
                     <Award className="w-8 h-8 text-blue-600" />
                   </div>
                   <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
@@ -490,7 +490,7 @@ export default function PerformanceManagement() {
                 className="bg-white rounded-xl border-2 border-slate-200 hover:border-cyan-300 shadow-sm p-6 text-left transition-all hover:shadow-lg group"
               >
                 <div className="flex items-start justify-between mb-4">
-                  <div className="p-3 bg-gradient-to-br from-cyan-50 to-blue-50 rounded-lg group-hover:scale-110 transition-transform">
+                  <div className="p-3 bg-linear-to-br from-cyan-50 to-blue-50 rounded-lg group-hover:scale-110 transition-transform">
                     <Target className="w-8 h-8 text-cyan-600" />
                   </div>
                   <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-cyan-600 group-hover:translate-x-1 transition-all" />
@@ -512,7 +512,7 @@ export default function PerformanceManagement() {
                 className="bg-white rounded-xl border-2 border-slate-200 hover:border-green-300 shadow-sm p-6 text-left transition-all hover:shadow-lg group"
               >
                 <div className="flex items-start justify-between mb-4">
-                  <div className="p-3 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg group-hover:scale-110 transition-transform">
+                  <div className="p-3 bg-linear-to-br from-green-50 to-emerald-50 rounded-lg group-hover:scale-110 transition-transform">
                     <BarChart3 className="w-8 h-8 text-green-600" />
                   </div>
                   <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-green-600 group-hover:translate-x-1 transition-all" />
@@ -548,7 +548,7 @@ export default function PerformanceManagement() {
                   <div key={review.id} className="p-4 bg-slate-50 rounded-lg border border-slate-200 hover:border-blue-300 transition-all">
                     <div className="flex items-start justify-between">
                       <div className="flex items-start gap-4">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-100 to-blue-100 flex items-center justify-center border-2 border-slate-200">
+                        <div className="w-12 h-12 rounded-xl bg-linear-to-br from-blue-100 to-blue-100 flex items-center justify-center border-2 border-slate-200">
                           <User className="w-6 h-6 text-blue-600" />
                         </div>
                         <div>
@@ -610,10 +610,10 @@ export default function PerformanceManagement() {
                       <div className="w-full bg-slate-200 rounded-full h-2">
                         <div 
                           className={`h-2 rounded-full ${
-                            goal.progress >= 75 ? 'bg-gradient-to-r from-green-500 to-emerald-600' :
-                            goal.progress >= 50 ? 'bg-gradient-to-r from-cyan-500 to-blue-600' :
-                            goal.progress >= 25 ? 'bg-gradient-to-r from-amber-500 to-orange-600' :
-                            'bg-gradient-to-r from-red-500 to-rose-600'
+                            goal.progress >= 75 ? 'bg-linear-to-r from-green-500 to-emerald-600' :
+                            goal.progress >= 50 ? 'bg-linear-to-r from-cyan-500 to-blue-600' :
+                            goal.progress >= 25 ? 'bg-linear-to-r from-amber-500 to-orange-600' :
+                            'bg-linear-to-r from-red-500 to-rose-600'
                           }`}
                           style={{ width: `${goal.progress}%` }}
                         ></div>
@@ -654,7 +654,7 @@ export default function PerformanceManagement() {
                   <div className="p-6">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-start gap-4">
-                        <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-100 to-blue-100 flex items-center justify-center border-2 border-slate-200">
+                        <div className="w-16 h-16 rounded-xl bg-linear-to-br from-blue-100 to-blue-100 flex items-center justify-center border-2 border-slate-200">
                           <User className="w-8 h-8 text-blue-600" />
                         </div>
                         <div>
@@ -692,11 +692,11 @@ export default function PerformanceManagement() {
                     {/* Quick Stats */}
                     {review.status === 'completed' && (
                       <div className="grid md:grid-cols-2 gap-4 mb-4">
-                        <div className="p-4 bg-gradient-to-br from-blue-50 to-blue-50 rounded-lg border border-blue-200">
+                        <div className="p-4 bg-linear-to-br from-blue-50 to-blue-50 rounded-lg border border-blue-200">
                           <p className="text-xs text-blue-700 mb-2 font-semibold">OVERALL RATING</p>
                           {renderStars(review.overallRating)}
                         </div>
-                        <div className="p-4 bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg border border-slate-200">
+                        <div className="p-4 bg-linear-to-br from-slate-50 to-slate-100 rounded-lg border border-slate-200">
                           <p className="text-xs text-slate-600 mb-2 font-semibold">REVIEW STATUS</p>
                           <div className="flex items-center gap-2">
                             <CheckCircle className="w-5 h-5 text-green-600" />
@@ -748,7 +748,7 @@ export default function PerformanceManagement() {
                             <ul className="space-y-2">
                               {review.strengths.map((strength, idx) => (
                                 <li key={idx} className="flex items-start gap-2 p-3 bg-green-50 rounded-lg border border-green-200">
-                                  <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                                  <CheckCircle className="w-5 h-5 text-green-600 shrink-0 mt-0.5" />
                                   <span className="text-sm text-slate-700">{strength}</span>
                                 </li>
                               ))}
@@ -764,7 +764,7 @@ export default function PerformanceManagement() {
                             <ul className="space-y-2">
                               {review.areasOfImprovement.map((area, idx) => (
                                 <li key={idx} className="flex items-start gap-2 p-3 bg-amber-50 rounded-lg border border-amber-200">
-                                  <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                                  <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                                   <span className="text-sm text-slate-700">{area}</span>
                                 </li>
                               ))}
@@ -781,7 +781,7 @@ export default function PerformanceManagement() {
                           <ul className="space-y-2">
                             {review.goals.map((goal, idx) => (
                               <li key={idx} className="flex items-start gap-2 p-3 bg-cyan-50 rounded-lg border border-cyan-200">
-                                <Flag className="w-5 h-5 text-cyan-600 flex-shrink-0 mt-0.5" />
+                                <Flag className="w-5 h-5 text-cyan-600 shrink-0 mt-0.5" />
                                 <span className="text-sm text-slate-700">{goal}</span>
                               </li>
                             ))}
@@ -816,7 +816,7 @@ export default function PerformanceManagement() {
                         <button className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-all">
                           Cancel
                         </button>
-                        <button className="px-6 py-2 bg-gradient-to-r from-blue-400 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all flex items-center gap-2">
+                        <button className="px-6 py-2 bg-linear-to-r from-blue-400 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all flex items-center gap-2">
                           <Edit className="w-4 h-4" />
                           Start Review
                         </button>
@@ -835,7 +835,7 @@ export default function PerformanceManagement() {
             {/* Filter Buttons */}
             <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
               <div className="flex items-center gap-3 flex-wrap">
-                <button className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-lg shadow-lg">
+                <button className="px-4 py-2 bg-linear-to-r from-cyan-500 to-blue-600 text-white rounded-lg shadow-lg">
                   All Goals
                 </button>
                 <button className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-all">
@@ -895,11 +895,11 @@ export default function PerformanceManagement() {
                     <div className="w-full bg-slate-200 rounded-full h-3">
                       <div 
                         className={`h-3 rounded-full transition-all ${
-                          goal.status === 'completed' ? 'bg-gradient-to-r from-green-500 to-emerald-600' :
-                          goal.status === 'at-risk' ? 'bg-gradient-to-r from-red-500 to-rose-600' :
-                          goal.progress >= 75 ? 'bg-gradient-to-r from-cyan-500 to-blue-600' :
-                          goal.progress >= 50 ? 'bg-gradient-to-r from-blue-400 to-indigo-600' :
-                          'bg-gradient-to-r from-amber-500 to-orange-600'
+                          goal.status === 'completed' ? 'bg-linear-to-r from-green-500 to-emerald-600' :
+                          goal.status === 'at-risk' ? 'bg-linear-to-r from-red-500 to-rose-600' :
+                          goal.progress >= 75 ? 'bg-linear-to-r from-cyan-500 to-blue-600' :
+                          goal.progress >= 50 ? 'bg-linear-to-r from-blue-400 to-indigo-600' :
+                          'bg-linear-to-r from-amber-500 to-orange-600'
                         }`}
                         style={{ width: `${goal.progress}%` }}
                       ></div>
@@ -945,7 +945,7 @@ export default function PerformanceManagement() {
             <div className="grid md:grid-cols-4 gap-6">
               <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
-                  <div className="p-3 bg-gradient-to-br from-emerald-50 to-green-50 rounded-lg">
+                  <div className="p-3 bg-linear-to-br from-emerald-50 to-green-50 rounded-lg">
                     <ArrowUpCircle className="w-6 h-6 text-emerald-600" />
                   </div>
                 </div>
@@ -957,7 +957,7 @@ export default function PerformanceManagement() {
 
               <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
-                  <div className="p-3 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg">
+                  <div className="p-3 bg-linear-to-br from-green-50 to-emerald-50 rounded-lg">
                     <CheckCircle className="w-6 h-6 text-green-600" />
                   </div>
                 </div>
@@ -969,7 +969,7 @@ export default function PerformanceManagement() {
 
               <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
-                  <div className="p-3 bg-gradient-to-br from-amber-50 to-orange-50 rounded-lg">
+                  <div className="p-3 bg-linear-to-br from-amber-50 to-orange-50 rounded-lg">
                     <ArrowDownCircle className="w-6 h-6 text-amber-600" />
                   </div>
                 </div>
@@ -981,7 +981,7 @@ export default function PerformanceManagement() {
 
               <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
-                  <div className="p-3 bg-gradient-to-br from-red-50 to-rose-50 rounded-lg">
+                  <div className="p-3 bg-linear-to-br from-red-50 to-rose-50 rounded-lg">
                     <XCircle className="w-6 h-6 text-red-600" />
                   </div>
                 </div>
@@ -1071,7 +1071,7 @@ export default function PerformanceManagement() {
                       <span className="font-bold text-slate-900">{stats.completedReviews} ({((stats.completedReviews / stats.totalReviews) * 100).toFixed(0)}%)</span>
                     </div>
                     <div className="w-full bg-slate-200 rounded-full h-3">
-                      <div className="bg-gradient-to-r from-green-500 to-emerald-600 h-3 rounded-full" style={{ width: `${(stats.completedReviews / stats.totalReviews) * 100}%` }}></div>
+                      <div className="bg-linear-to-r from-green-500 to-emerald-600 h-3 rounded-full" style={{ width: `${(stats.completedReviews / stats.totalReviews) * 100}%` }}></div>
                     </div>
                   </div>
                   <div>
@@ -1080,7 +1080,7 @@ export default function PerformanceManagement() {
                       <span className="font-bold text-slate-900">{stats.pendingReviews} ({((stats.pendingReviews / stats.totalReviews) * 100).toFixed(0)}%)</span>
                     </div>
                     <div className="w-full bg-slate-200 rounded-full h-3">
-                      <div className="bg-gradient-to-r from-amber-500 to-orange-600 h-3 rounded-full" style={{ width: `${(stats.pendingReviews / stats.totalReviews) * 100}%` }}></div>
+                      <div className="bg-linear-to-r from-amber-500 to-orange-600 h-3 rounded-full" style={{ width: `${(stats.pendingReviews / stats.totalReviews) * 100}%` }}></div>
                     </div>
                   </div>
                 </div>
@@ -1098,7 +1098,7 @@ export default function PerformanceManagement() {
                       <span className="font-bold text-slate-900">{stats.completedGoals} ({((stats.completedGoals / stats.totalGoals) * 100).toFixed(0)}%)</span>
                     </div>
                     <div className="w-full bg-slate-200 rounded-full h-3">
-                      <div className="bg-gradient-to-r from-green-500 to-emerald-600 h-3 rounded-full" style={{ width: `${(stats.completedGoals / stats.totalGoals) * 100}%` }}></div>
+                      <div className="bg-linear-to-r from-green-500 to-emerald-600 h-3 rounded-full" style={{ width: `${(stats.completedGoals / stats.totalGoals) * 100}%` }}></div>
                     </div>
                   </div>
                   <div>
@@ -1107,7 +1107,7 @@ export default function PerformanceManagement() {
                       <span className="font-bold text-slate-900">{stats.inProgressGoals} ({((stats.inProgressGoals / stats.totalGoals) * 100).toFixed(0)}%)</span>
                     </div>
                     <div className="w-full bg-slate-200 rounded-full h-3">
-                      <div className="bg-gradient-to-r from-cyan-500 to-blue-600 h-3 rounded-full" style={{ width: `${(stats.inProgressGoals / stats.totalGoals) * 100}%` }}></div>
+                      <div className="bg-linear-to-r from-cyan-500 to-blue-600 h-3 rounded-full" style={{ width: `${(stats.inProgressGoals / stats.totalGoals) * 100}%` }}></div>
                     </div>
                   </div>
                   <div>
@@ -1116,7 +1116,7 @@ export default function PerformanceManagement() {
                       <span className="font-bold text-slate-900">{stats.atRiskGoals} ({((stats.atRiskGoals / stats.totalGoals) * 100).toFixed(0)}%)</span>
                     </div>
                     <div className="w-full bg-slate-200 rounded-full h-3">
-                      <div className="bg-gradient-to-r from-red-500 to-rose-600 h-3 rounded-full" style={{ width: `${(stats.atRiskGoals / stats.totalGoals) * 100}%` }}></div>
+                      <div className="bg-linear-to-r from-red-500 to-rose-600 h-3 rounded-full" style={{ width: `${(stats.atRiskGoals / stats.totalGoals) * 100}%` }}></div>
                     </div>
                   </div>
                 </div>
@@ -1151,7 +1151,7 @@ export default function PerformanceManagement() {
                       </div>
                       <div className="w-full bg-slate-200 rounded-full h-3">
                         <div 
-                          className="bg-gradient-to-r from-blue-400 to-blue-600 h-3 rounded-full"
+                          className="bg-linear-to-r from-blue-400 to-blue-600 h-3 rounded-full"
                           style={{ width: `${(avgRating / 5) * 100}%` }}
                         ></div>
                       </div>
@@ -1174,9 +1174,9 @@ export default function PerformanceManagement() {
                   .map((review, idx) => (
                     <div key={review.id} className="flex items-center gap-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
                       <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-white ${
-                        idx === 0 ? 'bg-gradient-to-br from-amber-400 to-yellow-500' :
-                        idx === 1 ? 'bg-gradient-to-br from-slate-300 to-slate-400' :
-                        'bg-gradient-to-br from-orange-400 to-amber-500'
+                        idx === 0 ? 'bg-linear-to-br from-amber-400 to-yellow-500' :
+                        idx === 1 ? 'bg-linear-to-br from-slate-300 to-slate-400' :
+                        'bg-linear-to-br from-orange-400 to-amber-500'
                       }`}>
                         {idx + 1}
                       </div>

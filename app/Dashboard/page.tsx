@@ -88,7 +88,7 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
+    <div className="h-screen bg-linear-to-br from-slate-50 via-white to-slate-100">
       {/* Sidebar */}
 
       {/* Main Content */}
@@ -153,11 +153,11 @@ export default function Dashboard() {
                 className="relative bg-white rounded-2xl p-6 border border-slate-200 hover:border-cyan-300 hover:shadow-lg transition-all group overflow-hidden"
               >
                 {/* Background Gradient */}
-                <div className={`absolute inset-0 bg-gradient-to-br ${stat.bg} opacity-0 group-hover:opacity-100 transition-opacity`}></div>
+                <div className={`absolute inset-0 bg-linear-to-br ${stat.bg} opacity-0 group-hover:opacity-100 transition-opacity`}></div>
                 
                 <div className="relative">
                   <div className="flex items-start justify-between mb-4">
-                    <div className={`p-3 bg-gradient-to-br ${stat.color} rounded-xl shadow-lg`}>
+                    <div className={`p-3 bg-linear-to-br ${stat.color} rounded-xl shadow-lg`}>
                       <stat.icon className="w-6 h-6 text-white" />
                     </div>
                     <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${
@@ -202,7 +202,7 @@ export default function Dashboard() {
                       </div>
                       <div className="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
                         <div 
-                          className={`h-full bg-gradient-to-r ${
+                          className={`h-full bg-linear-to-r ${
                             percentages[idx] > 80 
                               ? 'from-green-500 to-emerald-600' 
                               : percentages[idx] > 50 
@@ -239,7 +239,7 @@ export default function Dashboard() {
                     </div>
                     <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
                       <div 
-                        className={`h-full bg-gradient-to-r from-${dept.color}-500 to-${dept.color}-600 group-hover:scale-x-105 transition-transform origin-left`}
+                        className={`h-full bg-linear-to-r from-${dept.color}-500 to-${dept.color}-600 group-hover:scale-x-105 transition-transform origin-left`}
                         style={{ width: `${(dept.employees / 324) * 100}%` }}
                       ></div>
                     </div>
@@ -264,7 +264,7 @@ export default function Dashboard() {
               <div className="space-y-4">
                 {activities.map((activity, idx) => (
                   <div key={idx} className="flex items-start gap-4 p-3 hover:bg-slate-50 rounded-lg transition-all group">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
                       activity.type === 'success' 
                         ? 'bg-green-100 text-green-600' 
                         : activity.type === 'warning'
@@ -300,7 +300,7 @@ export default function Dashboard() {
                     key={idx} 
                     className="flex items-center gap-4 p-4 border border-slate-200 rounded-xl hover:border-cyan-300 hover:shadow-md transition-all group"
                   >
-                    <div className={`w-12 h-12 rounded-lg bg-gradient-to-br from-${event.color}-500/20 to-${event.color}-600/20 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform`}>
+                    <div className={`w-12 h-12 rounded-lg bg-linear-to-br from-${event.color}-500/20 to-${event.color}-600/20 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform`}>
                       <Calendar className={`w-6 h-6 text-${event.color}-600`} />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -317,10 +317,10 @@ export default function Dashboard() {
           </div>
 
           {/* Top Performers */}
-          <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl p-6 border border-slate-700 shadow-xl">
+          <div className="bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl p-6 border border-slate-700 shadow-xl">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-xl flex items-center justify-center">
+                <div className="w-12 h-12 bg-linear-to-br from-yellow-400 to-orange-500 rounded-xl flex items-center justify-center">
                   <Star className="w-6 h-6 text-white" />
                 </div>
                 <div>
@@ -342,11 +342,11 @@ export default function Dashboard() {
                   <div className="flex flex-col items-center text-center">
                     <div className="relative mb-4">
                       {idx === 0 && (
-                        <div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg">
+                        <div className="absolute -top-2 -right-2 w-6 h-6 bg-linear-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg">
                           <span className="text-xs font-bold text-white">🏆</span>
                         </div>
                       )}
-                      <div className="w-16 h-16 rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center text-white font-bold text-lg shadow-lg group-hover:scale-110 transition-transform">
+                      <div className="w-16 h-16 rounded-full bg-linear-to-br from-cyan-400 to-blue-600 flex items-center justify-center text-white font-bold text-lg shadow-lg group-hover:scale-110 transition-transform">
                         {performer.avatar}
                       </div>
                     </div>
@@ -354,7 +354,7 @@ export default function Dashboard() {
                     <p className="text-xs text-slate-400 mb-3">{performer.department}</p>
                     <div className="w-full bg-slate-700 rounded-full h-2 overflow-hidden">
                       <div 
-                        className="h-full bg-gradient-to-r from-green-500 to-emerald-600"
+                        className="h-full bg-linear-to-r from-green-500 to-emerald-600"
                         style={{ width: `${performer.score}%` }}
                       ></div>
                     </div>

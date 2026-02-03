@@ -5,6 +5,10 @@ import PayrollHistory from "@/models/PayrollHistory";
 import MonthlyAttendance from "@/models/Attendance";
 import Holiday from "@/models/Holiday";
 import { calculateLOP, calculateLOPAmount, getWorkingDaysInMonth } from "@/lib/attendance-utils";
+import { CACHE_CONFIG } from "@/lib/optimization-config";
+
+// Cache payroll data for 10 minutes (600 seconds)
+export const revalidate = 600;
 
 export async function GET(req: Request) {
   try {
@@ -18,10 +22,10 @@ export async function GET(req: Request) {
     const holidays = await Holiday.find({
       year,
       month: monthIndex
-    });
+    }).lean();
     const holidayDates = holidays.map(h => new Date(h.date));
 
-    const employees = await Employee.find({ status: { $ne: 'inactive' } }).sort({ createdAt: -1 });
+    const employees = await Employee.find({ status: { $ne: 'inactive' } }).sort({ createdAt: -1 }).lean();
 
     const payrollData = await Promise.all(
       employees.map(async (emp) => {
@@ -36,7 +40,7 @@ export async function GET(req: Request) {
           employeeId: emp._id,
           month: monthIndex,
           year
-        });
+        }).lean();
 
         let lopDays = 0;
         let lopAmount = 0;
@@ -131,6 +135,10 @@ export async function GET(req: Request) {
       payrollData,
       month,
       year
+    }, {
+      headers: {
+        'Cache-Control': `public, max-age=${CACHE_CONFIG.PAYROLL_CACHE_TIME}`,
+      }
     });
   } catch (error) {
     console.error("GET /api/payroll error:", error);

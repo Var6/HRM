@@ -15,20 +15,20 @@ export default function Navbar() {
   ];
 
   return (
-    <nav className="sticky top-0 z-50 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border-b border-slate-700/50 backdrop-blur-sm">
+    <nav className="sticky top-0 z-50 bg-linear-to-r from-slate-900 via-slate-800 to-slate-900 border-b border-slate-700/50 backdrop-blur-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo & Brand */}
           <div className="flex items-center gap-8">
             <div className="flex items-center gap-3 group cursor-pointer">
               <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-lg blur-sm group-hover:blur-md transition-all duration-300"></div>
-                <div className="relative bg-gradient-to-br from-cyan-500 to-blue-600 p-2 rounded-lg transform group-hover:scale-105 transition-transform duration-300">
+                <div className="absolute inset-0 bg-linear-to-br from-cyan-400 to-blue-600 rounded-lg blur-sm group-hover:blur-md transition-all duration-300"></div>
+                <div className="relative bg-linear-to-br from-cyan-500 to-blue-600 p-2 rounded-lg transform group-hover:scale-105 transition-transform duration-300">
                   <Users className="w-6 h-6 text-white" />
                 </div>
               </div>
               <div>
-                <h1 className="text-xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
+                <h1 className="text-xl font-bold bg-linear-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
                   HRM Pro
                 </h1>
                 <p className="text-[10px] text-slate-400 -mt-1">Human Resource Management</p>
@@ -75,7 +75,7 @@ export default function Navbar() {
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
                 className="flex items-center gap-2 px-3 py-2 bg-slate-700/50 hover:bg-slate-700 rounded-lg transition-all group"
               >
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-linear-to-br from-cyan-400 to-blue-600 flex items-center justify-center">
                   <User className="w-4 h-4 text-white" />
                 </div>
                 <div className="hidden sm:block text-left">

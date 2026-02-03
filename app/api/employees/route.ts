@@ -1,20 +1,29 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import Employee from "@/models/Employee";
+import { CACHE_CONFIG } from "@/lib/optimization-config";
+
+// Enable caching for 5 minutes (300 seconds)
+export const revalidate = 300;
 
 /**
  * GET ALL EMPLOYEES
  * GET /api/employees
+ * Cached for better performance
  */
 export async function GET() {
   try {
     await connectDB();
 
-    const employees = await Employee.find().sort({ createdAt: -1 });
+    const employees = await Employee.find().sort({ createdAt: -1 }).lean();
 
     return NextResponse.json({
       success: true,
       employees,
+    }, {
+      headers: {
+        'Cache-Control': `public, max-age=${CACHE_CONFIG.EMPLOYEE_CACHE_TIME}`,
+      }
     });
   } catch (error) {
     console.error("GET /api/employees error:", error);

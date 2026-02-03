@@ -318,7 +318,7 @@ const generateCalendar = () => {
   
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6 pt-9 flex items-center justify-center">
+      <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-100 p-6 pt-9 flex items-center justify-center">
         <p className="text-slate-500 text-lg">Loading attendance...</p>
       </div>
     );
@@ -326,13 +326,13 @@ const generateCalendar = () => {
   
   if (!employee || !attendance) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6 pt-9 flex items-center justify-center">
+      <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-100 p-6 pt-9 flex items-center justify-center">
         <p className="text-slate-500 text-lg">Employee not found</p>
       </div>
     );
   }  
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6 pt-9">
+    <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-100 p-6 pt-9">
       <div className="max-w-7xl mx-auto">
         
         {/* Header */}
@@ -356,7 +356,7 @@ const generateCalendar = () => {
           {/* Employee Info Card */}
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
             <div className="flex items-start gap-6">
-              <div className="flex-shrink-0">
+              <div className="shrink-0">
                 {employee.photograph ? (
                   <img 
                     src={employee.photograph} 
@@ -364,7 +364,7 @@ const generateCalendar = () => {
                     className="w-24 h-24 rounded-xl object-cover border-4 border-slate-200"
                   />
                 ) : (
-                  <div className="w-24 h-24 rounded-xl bg-gradient-to-br from-cyan-100 to-blue-100 flex items-center justify-center border-4 border-slate-200">
+                  <div className="w-24 h-24 rounded-xl bg-linear-to-br from-cyan-100 to-blue-100 flex items-center justify-center border-4 border-slate-200">
                     <User className="w-12 h-12 text-cyan-600" />
                   </div>
                 )}
@@ -663,8 +663,8 @@ const generateCalendar = () => {
                     <div 
                       className={`h-3 rounded-full transition-all ${
                         attendance.summary.casualLeavesTaken > attendance.leaveBalance.casualLeave 
-                          ? 'bg-gradient-to-r from-red-500 to-red-600' 
-                          : 'bg-gradient-to-r from-blue-500 to-cyan-500'
+                          ? 'bg-linear-to-r from-red-500 to-red-600' 
+                          : 'bg-linear-to-r from-blue-500 to-cyan-500'
                       }`}
                       style={{ 
                         width: `${Math.min(100, (attendance.summary.casualLeavesTaken / Math.max(attendance.leaveBalance.casualLeave, attendance.summary.casualLeavesTaken)) * 100)}%` 
@@ -696,8 +696,8 @@ const generateCalendar = () => {
                     <div 
                       className={`h-3 rounded-full transition-all ${
                         attendance.summary.earnedLeavesTaken > attendance.leaveBalance.earnedLeave 
-                          ? 'bg-gradient-to-r from-red-500 to-red-600' 
-                          : 'bg-gradient-to-r from-green-500 to-emerald-500'
+                          ? 'bg-linear-to-r from-red-500 to-red-600' 
+                          : 'bg-linear-to-r from-green-500 to-emerald-500'
                       }`}
                       style={{ 
                         width: `${Math.min(100, (attendance.summary.earnedLeavesTaken / Math.max(attendance.leaveBalance.earnedLeave, attendance.summary.earnedLeavesTaken)) * 100)}%` 
@@ -843,7 +843,7 @@ const generateCalendar = () => {
                   <button
                     onClick={markHolidayOnCalendar}
                     disabled={!holidayName.trim() || markingHoliday}
-                    className="flex-1 px-4 py-2 bg-gradient-to-r from-pink-500 to-rose-600 text-white rounded-lg hover:from-pink-600 hover:to-rose-700 transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 px-4 py-2 bg-linear-to-r from-pink-500 to-rose-600 text-white rounded-lg hover:from-pink-600 hover:to-rose-700 transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {markingHoliday ? 'Marking...' : 'Mark Holiday'}
                   </button>

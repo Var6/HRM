@@ -133,7 +133,7 @@ export default function TimesheetManagement() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6 pt-9">
+    <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-100 p-6 pt-9">
       <div className="max-w-7xl mx-auto">
         
         {/* Header */}
@@ -154,7 +154,7 @@ export default function TimesheetManagement() {
               </button>
               <button 
                 onClick={handleAddEntry}
-                className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-lg hover:from-cyan-600 hover:to-blue-700 transition-all flex items-center gap-2 shadow-lg shadow-cyan-500/25"
+                className="px-6 py-3 bg-linear-to-r from-cyan-500 to-blue-600 text-white rounded-lg hover:from-cyan-600 hover:to-blue-700 transition-all flex items-center gap-2 shadow-lg shadow-cyan-500/25"
               >
                 <Plus className="w-5 h-5" />
                 Add Time Entry
@@ -166,7 +166,7 @@ export default function TimesheetManagement() {
           <div className="grid md:grid-cols-4 gap-6 mb-6">
             <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
               <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-gradient-to-br from-cyan-50 to-blue-50 rounded-lg">
+                <div className="p-3 bg-linear-to-br from-cyan-50 to-blue-50 rounded-lg">
                   <Clock className="w-6 h-6 text-cyan-600" />
                 </div>
                 <span className="text-xs font-semibold text-cyan-600 bg-cyan-50 px-2 py-1 rounded-full">
@@ -182,7 +182,7 @@ export default function TimesheetManagement() {
 
             <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
               <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg">
+                <div className="p-3 bg-linear-to-br from-green-50 to-emerald-50 rounded-lg">
                   <DollarSign className="w-6 h-6 text-green-600" />
                 </div>
                 <span className="text-xs font-semibold text-green-600 bg-green-50 px-2 py-1 rounded-full">
@@ -198,7 +198,7 @@ export default function TimesheetManagement() {
 
             <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
               <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-gradient-to-br from-amber-50 to-orange-50 rounded-lg">
+                <div className="p-3 bg-linear-to-br from-amber-50 to-orange-50 rounded-lg">
                   <Zap className="w-6 h-6 text-amber-600" />
                 </div>
                 <span className="text-xs font-semibold text-amber-600 bg-amber-50 px-2 py-1 rounded-full">
@@ -212,7 +212,7 @@ export default function TimesheetManagement() {
 
             <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
               <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg">
+                <div className="p-3 bg-linear-to-br from-purple-50 to-pink-50 rounded-lg">
                   <Target className="w-6 h-6 text-purple-600" />
                 </div>
                 <span className="text-xs font-semibold text-purple-600 bg-purple-50 px-2 py-1 rounded-full">
@@ -239,7 +239,7 @@ export default function TimesheetManagement() {
                   onClick={() => setSelectedView(tab.id as any)}
                   className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-lg transition-all ${
                     selectedView === tab.id
-                      ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg'
+                      ? 'bg-linear-to-r from-cyan-500 to-blue-600 text-white shadow-lg'
                       : 'text-slate-600 hover:bg-slate-100'
                   }`}
                 >
@@ -312,8 +312,8 @@ export default function TimesheetManagement() {
                   <div 
                     className={`h-3 rounded-full transition-all ${
                       dailyStats.totalHours >= 8 
-                        ? 'bg-gradient-to-r from-green-500 to-emerald-600'
-                        : 'bg-gradient-to-r from-cyan-500 to-blue-600'
+                        ? 'bg-linear-to-r from-green-500 to-emerald-600'
+                        : 'bg-linear-to-r from-cyan-500 to-blue-600'
                     }`}
                     style={{ width: `${Math.min((dailyStats.totalHours / 8) * 100, 100)}%` }}
                   ></div>
@@ -334,7 +334,7 @@ export default function TimesheetManagement() {
                     <p className="text-slate-600 mb-4">No time entries for this day</p>
                     <button
                       onClick={handleAddEntry}
-                      className="px-6 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-lg hover:from-cyan-600 hover:to-blue-700 transition-all"
+                      className="px-6 py-2 bg-linear-to-r from-cyan-500 to-blue-600 text-white rounded-lg hover:from-cyan-600 hover:to-blue-700 transition-all"
                     >
                       Add First Entry
                     </button>
@@ -423,7 +423,7 @@ export default function TimesheetManagement() {
                         <p className="text-xl font-bold text-green-600">{dailyStats.billableHours.toFixed(1)} hrs</p>
                       </div>
                     </div>
-                    <button className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-lg hover:from-cyan-600 hover:to-blue-700 transition-all flex items-center gap-2 shadow-lg">
+                    <button className="px-6 py-3 bg-linear-to-r from-cyan-500 to-blue-600 text-white rounded-lg hover:from-cyan-600 hover:to-blue-700 transition-all flex items-center gap-2 shadow-lg">
                       <Send className="w-5 h-5" />
                       Submit Timesheet
                     </button>
@@ -458,7 +458,7 @@ export default function TimesheetManagement() {
                     <p className="text-xs text-amber-600 font-semibold mb-1">Status</p>
                     <p className="text-sm font-bold text-amber-700">Draft</p>
                   </div>
-                  <button className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-lg hover:from-cyan-600 hover:to-blue-700 transition-all flex items-center gap-2 shadow-lg">
+                  <button className="px-6 py-3 bg-linear-to-r from-cyan-500 to-blue-600 text-white rounded-lg hover:from-cyan-600 hover:to-blue-700 transition-all flex items-center gap-2 shadow-lg">
                     <Send className="w-5 h-5" />
                     Submit Week
                   </button>
@@ -583,7 +583,7 @@ export default function TimesheetManagement() {
                 </div>
               </div>
 
-              <div className="bg-gradient-to-br from-cyan-50 to-blue-50 rounded-xl border border-cyan-200 shadow-sm p-6">
+              <div className="bg-linear-to-br from-cyan-50 to-blue-50 rounded-xl border border-cyan-200 shadow-sm p-6">
                 <h4 className="text-sm font-semibold text-cyan-900 mb-4">Weekly Target</h4>
                 <div className="mb-4">
                   <div className="flex items-center justify-between mb-2">
@@ -594,7 +594,7 @@ export default function TimesheetManagement() {
                   </div>
                   <div className="w-full bg-white rounded-full h-3">
                     <div 
-                      className="bg-gradient-to-r from-cyan-500 to-blue-600 h-3 rounded-full transition-all"
+                      className="bg-linear-to-r from-cyan-500 to-blue-600 h-3 rounded-full transition-all"
                       style={{ width: `${(weeklyStats.totalHours / 40) * 100}%` }}
                     ></div>
                   </div>
@@ -635,7 +635,7 @@ export default function TimesheetManagement() {
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="p-3 bg-gradient-to-br from-cyan-50 to-blue-50 rounded-lg">
+                  <div className="p-3 bg-linear-to-br from-cyan-50 to-blue-50 rounded-lg">
                     <Clock className="w-6 h-6 text-cyan-600" />
                   </div>
                   <div>
@@ -650,7 +650,7 @@ export default function TimesheetManagement() {
 
               <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="p-3 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg">
+                  <div className="p-3 bg-linear-to-br from-green-50 to-emerald-50 rounded-lg">
                     <DollarSign className="w-6 h-6 text-green-600" />
                   </div>
                   <div>
@@ -663,7 +663,7 @@ export default function TimesheetManagement() {
 
               <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="p-3 bg-gradient-to-br from-amber-50 to-orange-50 rounded-lg">
+                  <div className="p-3 bg-linear-to-br from-amber-50 to-orange-50 rounded-lg">
                     <Zap className="w-6 h-6 text-amber-600" />
                   </div>
                   <div>
@@ -676,7 +676,7 @@ export default function TimesheetManagement() {
 
               <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="p-3 bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg">
+                  <div className="p-3 bg-linear-to-br from-purple-50 to-pink-50 rounded-lg">
                     <Award className="w-6 h-6 text-purple-600" />
                   </div>
                   <div>
@@ -709,7 +709,7 @@ export default function TimesheetManagement() {
                       </div>
                       <div className="w-full bg-slate-200 rounded-full h-2">
                         <div 
-                          className="bg-gradient-to-r from-cyan-500 to-blue-600 h-2 rounded-full transition-all"
+                          className="bg-linear-to-r from-cyan-500 to-blue-600 h-2 rounded-full transition-all"
                           style={{ width: `${percentage}%` }}
                         ></div>
                       </div>
@@ -756,7 +756,7 @@ export default function TimesheetManagement() {
             <div className="grid md:grid-cols-3 gap-6">
               <button className="bg-white rounded-xl border-2 border-slate-200 hover:border-cyan-300 shadow-sm p-6 text-left transition-all hover:shadow-lg">
                 <div className="flex items-start justify-between mb-4">
-                  <div className="p-3 bg-gradient-to-br from-cyan-50 to-blue-50 rounded-lg">
+                  <div className="p-3 bg-linear-to-br from-cyan-50 to-blue-50 rounded-lg">
                     <FileText className="w-8 h-8 text-cyan-600" />
                   </div>
                   <Download className="w-5 h-5 text-slate-400" />
@@ -767,7 +767,7 @@ export default function TimesheetManagement() {
 
               <button className="bg-white rounded-xl border-2 border-slate-200 hover:border-green-300 shadow-sm p-6 text-left transition-all hover:shadow-lg">
                 <div className="flex items-start justify-between mb-4">
-                  <div className="p-3 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg">
+                  <div className="p-3 bg-linear-to-br from-green-50 to-emerald-50 rounded-lg">
                     <DollarSign className="w-8 h-8 text-green-600" />
                   </div>
                   <Download className="w-5 h-5 text-slate-400" />
@@ -778,7 +778,7 @@ export default function TimesheetManagement() {
 
               <button className="bg-white rounded-xl border-2 border-slate-200 hover:border-purple-300 shadow-sm p-6 text-left transition-all hover:shadow-lg">
                 <div className="flex items-start justify-between mb-4">
-                  <div className="p-3 bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg">
+                  <div className="p-3 bg-linear-to-br from-purple-50 to-pink-50 rounded-lg">
                     <BarChart3 className="w-8 h-8 text-purple-600" />
                   </div>
                   <Download className="w-5 h-5 text-slate-400" />
@@ -803,7 +803,7 @@ export default function TimesheetManagement() {
                       <span className="font-bold text-green-600">152h (90%)</span>
                     </div>
                     <div className="w-full bg-slate-200 rounded-full h-4">
-                      <div className="bg-gradient-to-r from-green-500 to-emerald-600 h-4 rounded-full" style={{ width: '90%' }}></div>
+                      <div className="bg-linear-to-r from-green-500 to-emerald-600 h-4 rounded-full" style={{ width: '90%' }}></div>
                     </div>
                   </div>
                   <div>
@@ -812,7 +812,7 @@ export default function TimesheetManagement() {
                       <span className="font-bold text-slate-600">16.5h (10%)</span>
                     </div>
                     <div className="w-full bg-slate-200 rounded-full h-4">
-                      <div className="bg-gradient-to-r from-slate-400 to-slate-500 h-4 rounded-full" style={{ width: '10%' }}></div>
+                      <div className="bg-linear-to-r from-slate-400 to-slate-500 h-4 rounded-full" style={{ width: '10%' }}></div>
                     </div>
                   </div>
                 </div>
@@ -832,7 +832,7 @@ export default function TimesheetManagement() {
                         <span className="w-16 text-sm font-medium text-slate-600">{week}</span>
                         <div className="flex-1 bg-slate-200 rounded-full h-3">
                           <div 
-                            className="bg-gradient-to-r from-amber-500 to-orange-600 h-3 rounded-full"
+                            className="bg-linear-to-r from-amber-500 to-orange-600 h-3 rounded-full"
                             style={{ width: `${(overtime / 10) * 100}%` }}
                           ></div>
                         </div>
@@ -866,7 +866,7 @@ export default function TimesheetManagement() {
                         </div>
                         <div className="w-full bg-slate-200 rounded-full h-2">
                           <div 
-                            className="bg-gradient-to-r from-cyan-500 to-blue-600 h-2 rounded-full"
+                            className="bg-linear-to-r from-cyan-500 to-blue-600 h-2 rounded-full"
                             style={{ width: `${percentage}%` }}
                           ></div>
                         </div>
@@ -967,7 +967,7 @@ export default function TimesheetManagement() {
                 >
                   Cancel
                 </button>
-                <button className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-lg hover:from-cyan-600 hover:to-blue-700 transition-all font-medium flex items-center gap-2">
+                <button className="px-6 py-3 bg-linear-to-r from-cyan-500 to-blue-600 text-white rounded-lg hover:from-cyan-600 hover:to-blue-700 transition-all font-medium flex items-center gap-2">
                   <Save className="w-5 h-5" />
                   Save Entry
                 </button>
