@@ -14,9 +14,21 @@ export async function GET(req: Request) {
   try {
     await connectDB();
     const { searchParams } = new URL(req.url);
-    const month = searchParams.get('month');
-    const year = Number(searchParams.get('year'));
-    const monthIndex = new Date(`${month} 1, ${year}`).getMonth();
+    const monthParam = searchParams.get('month');
+    const yearParam = searchParams.get('year');
+    
+    // Handle both number and string month parameters
+    let monthIndex = 0;
+    let year = new Date().getFullYear();
+    
+    if (monthParam) {
+      monthIndex = isNaN(Number(monthParam)) ? 
+        new Date(`${monthParam} 1, ${yearParam || new Date().getFullYear()}`).getMonth() : 
+        Number(monthParam);
+    }
+    if (yearParam) {
+      year = Number(yearParam);
+    }
 
     // Get all holidays for this month
     const holidays = await Holiday.find({
@@ -85,55 +97,49 @@ export async function GET(req: Request) {
         const netSalary = grossSalary - totalDeductions;
 
         // Get history for this month
+        const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
         const history = await PayrollHistory.findOne({
           employeeId: emp._id,
-          month,
+          month: months[monthIndex],
           year
         });
 
         return {
-          employeeId: emp._id.toString(),
-          employeeName: emp.name,
-          employeeCode: emp.employeeCode,
-          designation: emp.designation,
-          department: emp.department,
-          branch: emp.branchName || 'Corporate Office',
-          photograph: emp.photograph || null,
-          earnings,
-          deductions: {
-            ...standardDeductionsObj,
-            lop: lopAmount
+          _id: emp._id.toString(),
+          employeeId: {
+            _id: emp._id.toString(),
+            employeeCode: emp.employeeCode,
+            employeeName: emp.name,
+            designation: emp.designation,
+            department: emp.department,
+            branch: emp.branchName || 'Corporate Office',
+            photograph: emp.photograph || null,
+            hra: emp.salary?.earnings?.hra || 0,
+            conveyance: emp.salary?.earnings?.conveyance || 0,
+            pf: emp.salary?.deductions?.pf || 0,
+            esic: emp.salary?.deductions?.esic || 0,
+            uan: emp.uanNo || '',
+            pfNumber: emp.pfNo || '',
+            esiNumber: emp.esiNo || '',
+            accountNumber: emp.bankAccountNo || '',
+            ifsc: emp.bankIfsc || '',
+            bankName: emp.bankName || ''
           },
-          grossSalary,
-          lopDays,
-          lopAmount,
-          absentDays,
-          standardDeductions,
-          totalDeductions,
+          month: monthIndex,
+          year,
+          baseSalary: emp.salary?.earnings?.basic || 0,
+          allowances: Object.values(earnings).reduce((sum: number, val: any) => sum + Number(val || 0), 0) - (emp.salary?.earnings?.basic || 0),
+          deductions: totalDeductions,
           netSalary,
-          bankAccount: emp.bankAccountNo || 'N/A',
-          pfNumber: emp.pfNo || 'N/A',
-          uanNumber: emp.uanNo || 'N/A',
-          esiNumber: emp.esiNo || 'N/A',
-          salaryProcessed: history?.salaryProcessed || false,
-          salaryHold: history?.salaryHold || false,
-          salaryHoldReason: history?.salaryHoldReason || null,
-          workingDays: getWorkingDaysInMonth(monthIndex, year, holidayDates),
-          presentDays: attendance ? 
-            getWorkingDaysInMonth(monthIndex, year, holidayDates) - (attendance.summary?.totalAbsent || 0) : 
-            getWorkingDaysInMonth(monthIndex, year, holidayDates),
-          fatherName: emp.fatherName || 'N/A',
-          panNumber: emp.panCardNo || 'N/A',
-          dateOfJoining: emp.dateOfJoining || 'N/A',
-          aadharNumber: emp.aadharCardNo || 'N/A'
+          createdAt: new Date()
         };
       })
     );
 
     return NextResponse.json({
       success: true,
-      payrollData,
-      month,
+      data: payrollData,
+      month: monthIndex,
       year
     }, {
       headers: {

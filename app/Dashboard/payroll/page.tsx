@@ -115,8 +115,44 @@ const fetchPayrollData = async () => {
     }
 
     const data = JSON.parse(text);
-    if (data.success && data.payrollData) {
-      setSalaryData(data.payrollData);
+    if (data.success && data.data) {
+      // Flatten the nested structure from API into format expected by the page
+      const flattenedData = data.data.map((record: any) => {
+        const emp = record.employeeId || {};
+        const baseSalary = record.baseSalary || 0;
+        const allowances = record.allowances || 0;
+        const grossSalary = baseSalary + allowances;
+        
+        return {
+          _id: record._id,
+          employeeCode: emp.employeeCode || '',
+          employeeName: emp.employeeName || '',
+          designation: emp.designation || '',
+          department: emp.department || '',
+          branch: emp.branch || 'Corporate Office',
+          photograph: emp.photograph || null,
+          baseSalary: baseSalary,
+          allowances: allowances,
+          grossSalary: grossSalary,
+          deductions: record.deductions || 0,
+          netSalary: record.netSalary || 0,
+          totalDeductions: record.deductions || 0,
+          hra: emp.hra || 0,
+          conveyance: emp.conveyance || 0,
+          pf: emp.pf || 0,
+          esic: emp.esic || 0,
+          uan: emp.uan || '',
+          pfNumber: emp.pfNumber || '',
+          esiNumber: emp.esiNumber || '',
+          accountNumber: emp.accountNumber || '',
+          ifsc: emp.ifsc || '',
+          bankName: emp.bankName || '',
+          month: record.month,
+          year: record.year,
+          createdAt: record.createdAt
+        };
+      });
+      setSalaryData(flattenedData);
     } else {
       console.error('Invalid response format:', data);
       setSalaryData([]);
