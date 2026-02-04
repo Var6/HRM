@@ -24,7 +24,7 @@ export default function Sidebar() {
   { icon: Home, label: 'Dashboard', href: '/Dashboard' },
   { icon: Users, label: 'Employees', href: '/Dashboard/employees' },
   { icon: Calendar, label: 'Attendance', href: '/Dashboard/attendance' },
-  { icon: Clock, label: 'Timesheet', href: '/Dashboard/timesheet' },
+  { icon: Clock, label: 'Requests', href: '/Dashboard/requests' },
   { icon: FileText, label: 'Payroll', href: '/Dashboard/payroll' },
   { icon: BarChart3, label: 'Reports', href: '/Dashboard/reports' },
   { icon: Briefcase, label: 'Recruitment', href: '/Dashboard/recruitment' },

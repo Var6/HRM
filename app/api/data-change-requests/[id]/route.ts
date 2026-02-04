@@ -7,12 +7,13 @@ import Notification from '@/models/Notification';
 // GET specific data change request
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
+    const { id } = await params;
     
-    const dataChangeRequest = await DataChangeRequest.findById(params.id)
+    const dataChangeRequest = await DataChangeRequest.findById(id)
       .populate('employeeId', 'firstName lastName department designation email mobileNumber')
       .populate('reviewedBy', 'firstName lastName');
 
@@ -40,10 +41,11 @@ export async function GET(
 // PATCH - Update data change request (Approve/Reject)
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
+    const { id } = await params;
     
     const body = await request.json();
     const { status, hrRemarks, rejectionReason, reviewedBy } = body;
@@ -64,7 +66,7 @@ export async function PATCH(
       );
     }
 
-    const dataChangeRequest = await DataChangeRequest.findById(params.id);
+    const dataChangeRequest = await DataChangeRequest.findById(id);
     
     if (!dataChangeRequest) {
       return NextResponse.json(

@@ -6,12 +6,13 @@ import Notification from '@/models/Notification';
 // GET specific leave request
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await dbConnect();
+    await connectDB();
+    const { id } = await params;
     
-    const leaveRequest = await LeaveRequest.findById(params.id)
+    const leaveRequest = await LeaveRequest.findById(id)
       .populate('employeeId', 'firstName lastName department designation email mobileNumber')
       .populate('reviewedBy', 'firstName lastName');
 
@@ -39,10 +40,11 @@ export async function GET(
 // PATCH - Update leave request (Approve/Reject)
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
+    const { id } = await params;
     
     const body = await request.json();
     const { status, hrRemarks, rejectionReason, reviewedBy } = body;
@@ -63,7 +65,7 @@ export async function PATCH(
       );
     }
 
-    const leaveRequest = await LeaveRequest.findById(params.id);
+    const leaveRequest = await LeaveRequest.findById(id);
     
     if (!leaveRequest) {
       return NextResponse.json(
