@@ -5,6 +5,28 @@ import { connectDB } from "@/lib/mongodb";
 import Increment from "@/models/Increment";
 import Employee from "@/models/Employee";
 
+export async function GET(req: Request) {
+  try {
+    await connectDB();
+
+    const increments = await Increment.find()
+      .populate('employeeId', 'employeeCode employeeName designation department')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    return NextResponse.json({
+      success: true,
+      increments
+    });
+  } catch (error) {
+    console.error("GET /api/increments error:", error);
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
+  }
+}
+
 export async function POST(req: Request) {
   try {
     await connectDB();

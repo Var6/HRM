@@ -10,6 +10,15 @@ export async function GET(
 ) {
   try {
     const { employeeId } = await params;
+
+    // Validate employeeId
+    if (!employeeId || employeeId === 'undefined' || !employeeId.match(/^[0-9a-f]{24}$/i)) {
+      return NextResponse.json(
+        { error: 'Invalid or missing employee ID' },
+        { status: 400 }
+      );
+    }
+
     await connectDB();
 
     const records = await Performance.find({ employeeId })

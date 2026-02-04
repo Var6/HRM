@@ -130,6 +130,7 @@ export type SalaryComponent = 'basic' | 'hra' | 'conveyance' | 'monthly_bonus' |
 export type DeductionComponent = 'pf' | 'esic' | 'lop' | 'salary_advance' | 'loan' | 'tds';
 
 export interface SalaryStructure {
+  _id?: string; // MongoDB ObjectId
   employeeId: number | string;
   employeeName: string;
   photograph?: string | null;

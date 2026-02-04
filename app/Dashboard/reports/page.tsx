@@ -171,7 +171,7 @@ export default function PayrollReports() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6 pt-9 flex items-center justify-center">
+      <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-100 p-6 pt-9 flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <Loader className="w-12 h-12 text-cyan-600 animate-spin" />
           <p className="text-slate-600">Loading reports...</p>
@@ -181,7 +181,7 @@ export default function PayrollReports() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6 pt-9">
+    <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-100 p-6 pt-9">
       <style>{`
         @media print {
           body {
@@ -302,7 +302,7 @@ export default function PayrollReports() {
           <div className="grid md:grid-cols-4 gap-6 mb-6 no-print">
             <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
               <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg">
+                <div className="p-3 bg-linear-to-br from-green-50 to-emerald-50 rounded-lg">
                   <IndianRupee className="w-6 h-6 text-green-600" />
                 </div>
                 <TrendingUp className="w-5 h-5 text-green-500" />
@@ -314,7 +314,7 @@ export default function PayrollReports() {
 
             <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
               <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-gradient-to-br from-cyan-50 to-blue-50 rounded-lg">
+                <div className="p-3 bg-linear-to-br from-cyan-50 to-blue-50 rounded-lg">
                   <Users className="w-6 h-6 text-cyan-600" />
                 </div>
                 <CheckCircle className="w-5 h-5 text-cyan-500" />
@@ -326,7 +326,7 @@ export default function PayrollReports() {
 
             <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
               <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-gradient-to-br from-amber-50 to-orange-50 rounded-lg">
+                <div className="p-3 bg-linear-to-br from-amber-50 to-orange-50 rounded-lg">
                   <ArrowDownCircle className="w-6 h-6 text-amber-600" />
                 </div>
                 <Activity className="w-5 h-5 text-amber-500" />
@@ -338,7 +338,7 @@ export default function PayrollReports() {
 
             <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
               <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg">
+                <div className="p-3 bg-linear-to-br from-purple-50 to-pink-50 rounded-lg">
                   <DollarSign className="w-6 h-6 text-purple-600" />
                 </div>
                 <BarChart3 className="w-5 h-5 text-purple-500" />
@@ -366,7 +366,7 @@ export default function PayrollReports() {
                   onClick={() => setSelectedReport(tab.id)}
                   className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg transition-all text-sm ${
                     selectedReport === tab.id
-                      ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg'
+                      ? 'bg-linear-to-r from-cyan-500 to-blue-600 text-white shadow-lg'
                       : 'text-slate-600 hover:bg-slate-100'
                   }`}
                 >
@@ -431,11 +431,11 @@ export default function PayrollReports() {
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className={`p-3 rounded-lg group-hover:scale-110 transition-transform ${
-                      report.color === 'cyan' ? 'bg-gradient-to-br from-cyan-50 to-cyan-100' :
-                      report.color === 'green' ? 'bg-gradient-to-br from-green-50 to-green-100' :
-                      report.color === 'purple' ? 'bg-gradient-to-br from-purple-50 to-purple-100' :
-                      report.color === 'amber' ? 'bg-gradient-to-br from-amber-50 to-amber-100' :
-                      'bg-gradient-to-br from-blue-50 to-blue-100'
+                      report.color === 'cyan' ? 'bg-linear-to-br from-cyan-50 to-cyan-100' :
+                      report.color === 'green' ? 'bg-linear-to-br from-green-50 to-green-100' :
+                      report.color === 'purple' ? 'bg-linear-to-br from-purple-50 to-purple-100' :
+                      report.color === 'amber' ? 'bg-linear-to-br from-amber-50 to-amber-100' :
+                      'bg-linear-to-br from-blue-50 to-blue-100'
                     }`}>
                       <report.icon className={`w-8 h-8 ${
                         report.color === 'cyan' ? 'text-cyan-600' :
@@ -463,7 +463,7 @@ export default function PayrollReports() {
               <div className="print-meta">{months[selectedMonth]} {selectedYear}</div>
             </div>
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="p-6 border-b border-slate-200 bg-gradient-to-r from-cyan-50 to-blue-50">
+            <div className="p-6 border-b border-slate-200 bg-linear-to-r from-cyan-50 to-blue-50">
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-2xl font-bold text-slate-900 mb-1">Monthly Salary Register</h2>
@@ -537,7 +537,7 @@ export default function PayrollReports() {
               <div className="print-meta">{months[selectedMonth]} {selectedYear}</div>
             </div>
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-              <div className="p-6 border-b border-slate-200 bg-gradient-to-r from-green-50 to-emerald-50">
+              <div className="p-6 border-b border-slate-200 bg-linear-to-r from-green-50 to-emerald-50">
                 <h2 className="text-2xl font-bold text-slate-900 mb-1">PF & ESIC Report</h2>
                 <p className="text-slate-600">{months[selectedMonth]} {selectedYear}</p>
               </div>
@@ -583,7 +583,7 @@ export default function PayrollReports() {
               <div className="print-meta">Salary Disbursement - {months[selectedMonth]} {selectedYear}</div>
             </div>
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="p-6 border-b border-slate-200 bg-gradient-to-r from-purple-50 to-pink-50">
+            <div className="p-6 border-b border-slate-200 bg-linear-to-r from-purple-50 to-pink-50">
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-2xl font-bold text-slate-900 mb-1">Bank Transfer Sheet</h2>
@@ -700,7 +700,7 @@ export default function PayrollReports() {
                         </div>
                         <div className="w-full bg-slate-200 rounded-full h-4">
                           <div 
-                            className={`bg-gradient-to-r ${colors[idx % colors.length]} h-4 rounded-full flex items-center justify-end pr-2`}
+                            className={`bg-linear-to-r ${colors[idx % colors.length]} h-4 rounded-full flex items-center justify-end pr-2`}
                             style={{ width: `${percentage}%` }}
                           >
                             <span className="text-xs text-white font-semibold">{dept.employees} emp</span>
@@ -723,7 +723,7 @@ export default function PayrollReports() {
               <div className="print-meta">Historical Analysis</div>
             </div>
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-              <div className="p-6 border-b border-slate-200 bg-gradient-to-r from-blue-50 to-cyan-50">
+              <div className="p-6 border-b border-slate-200 bg-linear-to-r from-blue-50 to-cyan-50">
                 <h2 className="text-2xl font-bold text-slate-900 mb-1">6-Month Payroll Trends</h2>
                 <p className="text-slate-600">Historical payroll data and analysis</p>
               </div>
@@ -766,7 +766,7 @@ export default function PayrollReports() {
                       <div key={idx} className="flex-1 flex flex-col items-center gap-2">
                         <div className="relative w-full">
                           <div 
-                            className="w-full bg-gradient-to-t from-cyan-500 to-blue-600 rounded-t-lg transition-all hover:from-cyan-600 hover:to-blue-700 cursor-pointer"
+                            className="w-full bg-linear-to-t from-cyan-500 to-blue-600 rounded-t-lg transition-all hover:from-cyan-600 hover:to-blue-700 cursor-pointer"
                             style={{ height: `${height * 2}px` }}
                           ></div>
                         </div>
@@ -780,7 +780,7 @@ export default function PayrollReports() {
               <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
                 <h3 className="text-xl font-bold text-slate-900 mb-6">Key Metrics</h3>
                 <div className="space-y-4">
-                  <div className="p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg border-2 border-green-200">
+                  <div className="p-4 bg-linear-to-br from-green-50 to-emerald-50 rounded-lg border-2 border-green-200">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm font-semibold text-green-800">Average Monthly Payroll</span>
                       <TrendingUp className="w-5 h-5 text-green-600" />
@@ -789,7 +789,7 @@ export default function PayrollReports() {
                     <p className="text-xs text-green-700 mt-1">Last 6 months</p>
                   </div>
 
-                  <div className="p-4 bg-gradient-to-br from-cyan-50 to-blue-50 rounded-lg border-2 border-cyan-200">
+                  <div className="p-4 bg-linear-to-br from-cyan-50 to-blue-50 rounded-lg border-2 border-cyan-200">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm font-semibold text-cyan-800">Active Employees</span>
                       <CheckCircle className="w-5 h-5 text-cyan-600" />

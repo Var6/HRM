@@ -83,17 +83,23 @@ const emptyEmployee: EmployeeFormData = {
 
 export default function CreateEmployee() {
   const [formData, setFormData] = useState<EmployeeFormData>(emptyEmployee);
-
   const [activeTab, setActiveTab] = useState<ActiveTab>('personal');
   const [employeeId, setEmployeeId] = useState<string | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [sameAsPermAddress, setSameAsPermAddress] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [showError, setShowError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const router=useRouter();
 
-  
+  // Validate phone number (10 digits for India)
+  const isValidIndianPhone = (phone: string): boolean => {
+    const phoneRegex = /^[6-9]\d{9}$/;
+    return phoneRegex.test(phone.replace(/[\s-]/g, ''));
+  };
 
   // Handle input changes
 const handleInputChange = (
@@ -186,42 +192,43 @@ setPhotoPreview(data.url);
 };
 
 React.useEffect(() => {
-  const pathParts = window.location.pathname.split('/').filter(Boolean);
-  const id = pathParts[pathParts.length - 1];
+  const initializeForm = async () => {
+    if (typeof window === 'undefined') return;
+    
+    try {
+      const pathParts = window.location.pathname.split('/').filter(Boolean);
+      const id = pathParts[pathParts.length - 1];
+      
+      if (!id || id === 'recruitment' || !/^[0-9a-fA-F]{24}$/.test(id)) {
+        setFormData(emptyEmployee);
+        setIsEditMode(false);
+        setEmployeeId(null);
+        setPhotoPreview(null);
+        return;
+      }
+      
+      setEmployeeId(id);
+      setIsEditMode(true);
+      
+      const res = await fetch(`/api/employees/${id}`);
+      if (!res.ok) {
+        console.error('Failed to fetch employee. Status:', res.status);
+        setShowError(true);
+        setErrorMessage('Failed to load employee data');
+        return;
+      }
+      
+      const data = await res.json();
+      setFormData(data.employee);
+      setPhotoPreview(data.employee.photograph || null);
+    } catch (error) {
+      console.error('Error initializing form:', error);
+      setShowError(true);
+      setErrorMessage('Error loading form. Please refresh the page.');
+    }
+  };
   
-  // If no ID, id is 'recruitment', or not a valid MongoDB ID
-  if (!id || id === 'recruitment' || !/^[0-9a-fA-F]{24}$/.test(id)) {
-    setFormData(emptyEmployee);
-    setIsEditMode(false);
-    setEmployeeId(null);
-    setPhotoPreview(null);
-    return;
-  }
-  setEmployeeId(id);
-  setIsEditMode(true);
-
-  const fetchEmployee = async () => {
-  const res = await fetch(`/api/employees/${id}`);
-
- if (!res.ok) {
-  const errorText = await res.text();
-  console.error('Failed to fetch employee. Status:', res.status, 'Response:', errorText);
-  return;
-}
-
-  const text = await res.text();
-  if (!text) {
-    console.error('Empty response from server');
-    return;
-  }
-
-  const data = JSON.parse(text);
-  setFormData(data.employee);
-  setPhotoPreview(data.employee.photograph || null);
-};
-
-
-  fetchEmployee();
+  initializeForm();
 }, []);
 
   // Copy permanent address to correspondence address
@@ -236,22 +243,110 @@ React.useEffect(() => {
 
 
 
+  // Validate form data
+const validateFormData = (): string | null => {
+  if (!formData.name?.trim()) return 'Full name is required';
+  if (!formData.dateOfBirth) return 'Date of birth is required';
+  if (!formData.fatherName?.trim()) return 'Father\'s name is required';
+  if (!formData.motherName?.trim()) return 'Mother\'s name is required';
+  if (!formData.maritalStatus) return 'Marital status is required';
+  if (!formData.educationQualification?.trim()) return 'Education qualification is required';
+  if (!formData.permanentAddress?.trim()) return 'Permanent address is required';
+  if (!formData.correspondenceAddress?.trim()) return 'Correspondence address is required';
+  if (!formData.EcontactNo?.trim()) return 'Emergency contact number is required';
+  if (!formData.mobileNumber?.trim()) return 'Mobile number is required';
+  if (!formData.email?.trim()) return 'Email address is required';
+  if (!formData.employeeCode?.trim()) return 'Employee code is required';
+  if (!formData.dateOfJoining) return 'Date of joining is required';
+  if (!formData.department) return 'Department is required';
+  if (!formData.designation?.trim()) return 'Designation is required';
+  if (!formData.branchName?.trim()) return 'Branch name is required';
+  if (!formData.modeOfPayment) return 'Mode of payment is required';
+  if (!formData.status) return 'Employee status is required';
+  
+  // Validate phone numbers
+  if (formData.mobileNumber && !isValidIndianPhone(formData.mobileNumber)) {
+    return 'Mobile number must be valid 10-digit number (starting with 6-9)';
+  }
+  if (formData.EcontactNo && !isValidIndianPhone(formData.EcontactNo)) {
+    return 'Emergency contact must be valid 10-digit number (starting with 6-9)';
+  }
+  if (formData.mobileNumberProvided && !isValidIndianPhone(formData.mobileNumberProvided)) {
+    return 'Office mobile number must be valid 10-digit number (starting with 6-9)';
+  }
+  
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(formData.email)) {
+    return 'Please enter a valid email address';
+  }
+  
+  return null;
+};
+
   // Handle form submission
 const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
   e.preventDefault();
-  if (!formData) return;
-
-  const method = isEditMode ? 'PUT' : 'POST';
-  const url = isEditMode ? `/api/employees/${employeeId}` : '/api/employees';
-
-  await fetch(url, {
-    method,
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(formData)
-  });
-
-  setShowSuccess(true);
-  setTimeout(() => setShowSuccess(false), 3000);
+  
+  setShowError(false);
+  setShowSuccess(false);
+  setErrorMessage('');
+  
+  if (!formData) {
+    setShowError(true);
+    setErrorMessage('Form data is missing');
+    return;
+  }
+  
+  const validationError = validateFormData();
+  if (validationError) {
+    setShowError(true);
+    setErrorMessage(validationError);
+    return;
+  }
+  
+  setIsSubmitting(true);
+  
+  try {
+    const method = isEditMode ? 'PUT' : 'POST';
+    const url = isEditMode ? `/api/employees/${employeeId}` : '/api/employees';
+    
+    const response = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(formData)
+    });
+    
+    const responseData = await response.json();
+    
+    if (!response.ok) {
+      if (response.status === 400 && responseData.error) {
+        setShowError(true);
+        setErrorMessage(responseData.error);
+      } else if (response.status === 409) {
+        setShowError(true);
+        setErrorMessage('Employee code already exists. Please use a different code.');
+      } else {
+        setShowError(true);
+        setErrorMessage(`Error: ${responseData.error || 'Failed to save employee data'}`);
+      }
+      return;
+    }
+    
+    setShowSuccess(true);
+    setErrorMessage('');
+    setTimeout(() => {
+      setShowSuccess(false);
+      if (!isEditMode) {
+        router.push('/Dashboard/employees');
+      }
+    }, 2000);
+  } catch (error) {
+    console.error('Error submitting form:', error);
+    setShowError(true);
+    setErrorMessage('An error occurred while saving. Please try again.');
+  } finally {
+    setIsSubmitting(false);
+  }
 };
 
 
@@ -307,6 +402,17 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 </h4>
 
               <p className="text-sm text-green-700">The employee has been added to the database.</p>
+            </div>
+          </div>
+        )}
+
+        {/* Error Message */}
+        {showError && (
+          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-3 animate-in slide-in-from-top">
+            <AlertCircle className="w-6 h-6 text-red-600" />
+            <div>
+              <h4 className="font-semibold text-red-900">Error</h4>
+              <p className="text-sm text-red-700">{errorMessage}</p>
             </div>
           </div>
         )}

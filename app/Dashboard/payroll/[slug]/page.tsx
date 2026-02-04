@@ -89,12 +89,74 @@ export default function PayrollSlugPage() {
         `/api/payroll?month=${months[currentMonth]}&year=${currentYear}`
       );
       const data = await response.json();
-      if (data.success) {
-        setSalaryData(data.payrollData);
+      console.log('Payroll [slug] API response:', data);
+      if (data.success && Array.isArray(data.data)) {
+        const flattenedData = data.data.map((record: any) => {
+          const emp = record.employeeId || {};
+          const baseSalary = record.baseSalary || 0;
+          const allowances = record.allowances || 0;
+          const grossSalary = record.grossSalary ?? (baseSalary + allowances);
+          const earnings = record.earnings || {};
+          const deductionsBreakdown = record.deductionsBreakdown || {};
+
+          return {
+            _id: record._id,
+            employeeId: emp._id || record._id,
+            employeeCode: emp.employeeCode || '',
+            employeeName: emp.employeeName || '',
+            designation: emp.designation || '',
+            department: emp.department || '',
+            branch: emp.branch || 'Corporate Office',
+            photograph: emp.photograph || null,
+            dateOfJoining: emp.dateOfJoining || '',
+            fatherName: emp.fatherName || 'N/A',
+            panNumber: emp.panNumber || 'N/A',
+            uanNumber: emp.uan || '',
+            esiNumber: emp.esiNumber || '',
+            aadharNumber: emp.aadharNumber || 'N/A',
+            presentDays: record.presentDays ?? record.workingDays ?? 0,
+            totalDaysInMonth: record.workingDays ?? 0,
+            bankAccount: record.bankAccount || emp.accountNumber || '',
+            accountNumber: emp.accountNumber || '',
+            baseSalary: baseSalary,
+            allowances: allowances,
+            grossSalary: grossSalary,
+            netSalary: record.netSalary || 0,
+            totalDeductions: record.totalDeductions || record.deductions || 0,
+            earnings: {
+              basic: earnings.basic ?? baseSalary,
+              hra: earnings.hra ?? emp.hra ?? 0,
+              conveyance: earnings.conveyance ?? emp.conveyance ?? 0,
+              monthlyBonus: earnings.monthlyBonus ?? 0,
+              quarterlyBonus: earnings.quarterlyBonus ?? 0,
+              specialAllowance: earnings.specialAllowance ?? 0
+            },
+            deductions: {
+              pf: deductionsBreakdown.pf ?? emp.pf ?? 0,
+              esic: deductionsBreakdown.esic ?? emp.esic ?? 0,
+              advance: deductionsBreakdown.advance ?? 0,
+              loan: deductionsBreakdown.loan ?? 0,
+              tds: deductionsBreakdown.tds ?? 0,
+              lop: deductionsBreakdown.lop ?? 0,
+              salaryAdvance: deductionsBreakdown.advance ?? 0
+            },
+            salaryProcessed: record.salaryProcessed ?? false,
+            salaryHold: record.salaryHold ?? false,
+            salaryHoldReason: record.salaryHoldReason ?? '',
+            month: record.month,
+            year: record.year,
+            createdAt: record.createdAt
+          };
+        });
+        setSalaryData(flattenedData);
         setPayrollStatus(data.status || 'draft');
+      } else {
+        console.error('Invalid response format:', data);
+        setSalaryData([]);
       }
     } catch (error) {
       console.error('Error fetching payroll:', error);
+      setSalaryData([]);
     } finally {
       setLoading(false);
     }
@@ -310,7 +372,7 @@ export default function PayrollSlugPage() {
     console.log('Viewing details for employee ID:', employeeId);
   };
 
-  const filteredEmployees = salaryData.filter(emp => {
+  const filteredEmployees = (salaryData || []).filter(emp => {
     const matchesSearch = 
       emp.employeeName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       emp.employeeCode?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -328,13 +390,13 @@ export default function PayrollSlugPage() {
   });
 
   const stats = {
-    totalEmployees: salaryData.length,
-    totalPayroll: salaryData.reduce((sum, emp) => sum + (emp.netSalary || 0), 0),
-    totalProcessed: salaryData.filter(emp => emp.salaryProcessed).length,
-    totalOnHold: salaryData.filter(emp => emp.salaryHold).length,
-    totalDeductions: salaryData.reduce((sum, emp) => sum + (emp.totalDeductions || 0), 0),
-    averageSalary: salaryData.length > 0 
-      ? salaryData.reduce((sum, emp) => sum + (emp.netSalary || 0), 0) / salaryData.length 
+    totalEmployees: (salaryData || []).length,
+    totalPayroll: (salaryData || []).reduce((sum, emp) => sum + (emp.netSalary || 0), 0),
+    totalProcessed: (salaryData || []).filter(emp => emp.salaryProcessed).length,
+    totalOnHold: (salaryData || []).filter(emp => emp.salaryHold).length,
+    totalDeductions: (salaryData || []).reduce((sum, emp) => sum + (emp.totalDeductions || 0), 0),
+    averageSalary: (salaryData || []).length > 0 
+      ? (salaryData || []).reduce((sum, emp) => sum + (emp.netSalary || 0), 0) / (salaryData || []).length 
       : 0,
   };
 
@@ -347,7 +409,9 @@ export default function PayrollSlugPage() {
     }).format(amount);
   };
 
-  const departments = [...new Set(salaryData.map(emp => emp.department))];
+  const departments = Array.from(
+    new Set((salaryData || []).map(emp => emp.department).filter(Boolean))
+  );
 
   if (loading) {
     return (
@@ -478,8 +542,8 @@ export default function PayrollSlugPage() {
                 className="px-4 py-3 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
               >
                 <option value="all">All Departments</option>
-                {departments.map(dept => (
-                  <option key={dept} value={dept}>{dept}</option>
+                {departments.map((dept, idx) => (
+                  <option key={`${dept}-${idx}`} value={dept}>{dept}</option>
                 ))}
               </select>
 

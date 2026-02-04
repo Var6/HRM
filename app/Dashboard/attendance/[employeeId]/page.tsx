@@ -474,7 +474,7 @@ const generateCalendar = () => {
           {date.getDate()}
         </span>
         {holiday ? (
-          <span className="text-xs text-pink-600 font-bold text-center leading-tight break-words max-w-[60px]">{getHolidayName(date)}</span>
+          <span className="text-xs text-pink-600 font-bold text-center leading-tight wrap-break-word max-w-15">{getHolidayName(date)}</span>
         ) : isTues ? (
           <span className="text-xs text-purple-600 font-medium">OFF</span> // ✅ Show OFF for Tuesday
         ) : displayAsPresent ? (

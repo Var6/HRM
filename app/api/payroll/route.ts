@@ -4,7 +4,7 @@ import Employee from "@/models/Employee";
 import PayrollHistory from "@/models/PayrollHistory";
 import MonthlyAttendance from "@/models/Attendance";
 import Holiday from "@/models/Holiday";
-import { calculateLOP, calculateLOPAmount, getWorkingDaysInMonth } from "@/lib/attendance-utils";
+import { calculateLOP, calculateLOPAmount, getAttendanceSummary, getWorkingDaysInMonth } from "@/lib/attendance-utils";
 import { CACHE_CONFIG } from "@/lib/optimization-config";
 
 // Cache payroll data for 10 minutes (600 seconds)
@@ -30,6 +30,8 @@ export async function GET(req: Request) {
       year = Number(yearParam);
     }
 
+    console.log('Payroll API called with:', { monthParam, yearParam, monthIndex, year });
+
     // Get all holidays for this month
     const holidays = await Holiday.find({
       year,
@@ -37,7 +39,13 @@ export async function GET(req: Request) {
     }).lean();
     const holidayDates = holidays.map(h => new Date(h.date));
 
-    const employees = await Employee.find({ status: { $ne: 'inactive' } }).sort({ createdAt: -1 }).lean();
+    const employees = await Employee.find({ 
+      $or: [
+        { status: { $exists: false } },
+        { status: { $ne: 'inactive' } }
+      ]
+    }).sort({ createdAt: -1 }).lean();
+    console.log('Found employees:', employees.length);
 
     const payrollData = await Promise.all(
       employees.map(async (emp) => {
@@ -53,6 +61,12 @@ export async function GET(req: Request) {
           month: monthIndex,
           year
         }).lean();
+
+        const workingDays = getWorkingDaysInMonth(monthIndex, year, holidayDates);
+        const attendanceSummary = attendance
+          ? getAttendanceSummary(attendance.records || [], monthIndex, year)
+          : null;
+        const presentDays = attendanceSummary ? attendanceSummary.totalPresent : workingDays;
 
         let lopDays = 0;
         let lopAmount = 0;
@@ -131,6 +145,29 @@ export async function GET(req: Request) {
           allowances: Object.values(earnings).reduce((sum: number, val: any) => sum + Number(val || 0), 0) - (emp.salary?.earnings?.basic || 0),
           deductions: totalDeductions,
           netSalary,
+          grossSalary,
+          presentDays,
+          workingDays,
+          earnings: {
+            basic: emp.salary?.earnings?.basic || 0,
+            hra: emp.salary?.earnings?.hra || 0,
+            conveyance: emp.salary?.earnings?.conveyance || 0,
+            monthlyBonus: emp.salary?.earnings?.monthlyBonus || 0,
+            quarterlyBonus: emp.salary?.earnings?.quarterlyBonus || 0,
+            specialAllowance: emp.salary?.earnings?.specialAllowance || 0
+          },
+          deductionsBreakdown: {
+            pf: emp.salary?.deductions?.pf || 0,
+            esic: emp.salary?.deductions?.esic || 0,
+            advance: emp.salary?.deductions?.advance || emp.salary?.deductions?.salaryAdvance || 0,
+            loan: emp.salary?.deductions?.loan || 0,
+            tds: emp.salary?.deductions?.tds || 0,
+            lop: lopAmount
+          },
+          salaryProcessed: history?.salaryProcessed ?? emp.salary?.salaryProcessed ?? false,
+          salaryHold: history?.salaryHold ?? emp.salary?.salaryHold ?? false,
+          salaryHoldReason: history?.salaryHoldReason ?? emp.salary?.salaryHoldReason ?? '',
+          bankAccount: emp.bankAccountNo || '',
           createdAt: new Date()
         };
       })

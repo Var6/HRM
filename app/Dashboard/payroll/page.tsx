@@ -115,7 +115,9 @@ const fetchPayrollData = async () => {
     }
 
     const data = JSON.parse(text);
-    if (data.success && data.data) {
+    console.log('Payroll API response:', data);
+    
+    if (data.success && data.data && Array.isArray(data.data)) {
       // Flatten the nested structure from API into format expected by the page
       const flattenedData = data.data.map((record: any) => {
         const emp = record.employeeId || {};
@@ -152,9 +154,10 @@ const fetchPayrollData = async () => {
           createdAt: record.createdAt
         };
       });
+      console.log('Flattened data:', flattenedData);
       setSalaryData(flattenedData);
     } else {
-      console.error('Invalid response format:', data);
+      console.error('Invalid response format - no data array:', data);
       setSalaryData([]);
     }
   } catch (error) {
@@ -393,7 +396,8 @@ const stats = {
 
             {/* Employee Salary Cards */}
             <div className="space-y-4">
-              {filteredEmployees.map((employee) => (
+              {filteredEmployees.length > 0 ? (
+                filteredEmployees.map((employee) => (
                 <div
                   key={employee.employeeCode
 }
@@ -430,7 +434,7 @@ const stats = {
 
                       <div className="flex items-center gap-2">
                         <button
-                          onClick={() => router.push(`/Dashboard/payrolldetails/${employee.employeeId}`)}
+                          onClick={() => router.push(`/Dashboard/payrolldetails/${employee._id}`)}
                           className="px-4 py-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-all flex items-center gap-2"
                         >
                           <Edit2Icon className="w-4 h-4" />
@@ -630,7 +634,26 @@ const stats = {
                     )}
                   </div>
                 </div>
-              ))}
+              ))
+              ) : (
+                <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
+                  <AlertTriangle className="w-12 h-12 text-slate-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-slate-900 mb-2">No Employees Found</h3>
+                  <p className="text-slate-600 mb-4">
+                    {salaryData.length === 0 
+                      ? 'No employees available for payroll. Please add employees first.' 
+                      : 'No employees match your search criteria.'}
+                  </p>
+                  {salaryData.length === 0 && (
+                    <button
+                      onClick={() => router.push('/Dashboard/recruitment')}
+                      className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-all"
+                    >
+                      Add Employees
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -679,12 +702,12 @@ const stats = {
                       <td className="px-4 py-4">
                         <div className="flex items-center justify-center gap-2">
                           <button className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-all"
-                          onClick={()=>router.push(`/Dashboard/recruitment/${employee.employeeId}`)}
+                          onClick={()=>router.push(`/Dashboard/recruitment/${employee._id}`)}
                           >
                             <Edit className="w-4 h-4" />
                           </button>
                           <button className="p-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition-all"
-                          onClick={()=>router.push(`/Dashboard/payrolldetails/${employee.employeeId}`)}
+                          onClick={()=>router.push(`/Dashboard/payrolldetails/${employee._id}`)}
                           >
                             <Eye className="w-4 h-4" />
                           </button>
@@ -1287,7 +1310,7 @@ const stats = {
                 </div>
                 <div className="grid md:grid-cols-2 gap-4">
                   {deptAnalysisReport.data?.slice(0, 4).map((dept: any, idx: number) => (
-                    <div key={idx} className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg p-4 border border-slate-200">
+                    <div key={idx} className="bg-linear-to-br from-slate-50 to-slate-100 rounded-lg p-4 border border-slate-200">
                       <h5 className="font-semibold text-slate-900 mb-3">{dept.department}</h5>
                       <div className="space-y-2 text-sm">
                         <div className="flex justify-between">

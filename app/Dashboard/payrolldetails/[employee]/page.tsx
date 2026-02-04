@@ -127,6 +127,12 @@ export default function EmployeePayrollPage() {
   });
 
   useEffect(() => {
+    // Only fetch data if employeeId is valid (not undefined, null, or string 'undefined')
+    if (!employeeId || employeeId === 'undefined') {
+      setLoading(false);
+      return;
+    }
+
     fetchEmployeeData();
     fetchPaymentHistory();
     fetchPerformanceRecords();

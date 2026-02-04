@@ -60,6 +60,32 @@ export default function EmployeeDetail() {
   const tenureYears = employee?.dateOfJoining ? Math.floor((new Date().getTime() - new Date(employee.dateOfJoining).getTime()) / (1000 * 60 * 60 * 24 * 30 * 12)) : 0;
   const remainingMonths = employee?.dateOfJoining ? Math.floor((new Date().getTime() - new Date(employee.dateOfJoining).getTime()) / (1000 * 60 * 60 * 24 * 30)) % 12 : 0;
 
+  // Calculate retirement (assuming retirement age is 60)
+  const calculateRetirement = () => {
+    if (!employee?.dateOfBirth) return { retirementDate: null, daysLeft: 0, isRetired: false };
+    
+    const dob = new Date(employee.dateOfBirth);
+    const retirementAge = 60;
+    const retirementDate = new Date(dob.getFullYear() + retirementAge, dob.getMonth(), dob.getDate());
+    const today = new Date();
+    
+    const isRetired = today > retirementDate;
+    const daysLeft = Math.floor((retirementDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    const yearsLeft = Math.floor(daysLeft / 365);
+    const monthsLeft = Math.floor((daysLeft % 365) / 30);
+    
+    return { 
+      retirementDate, 
+      daysLeft, 
+      yearsLeft, 
+      monthsLeft,
+      isRetired,
+      retirementDateFormatted: retirementDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+    };
+  };
+
+  const retirementInfo = calculateRetirement();
+
   const toggleSection = (section: string) => {
     const newExpanded = new Set(expandedSections);
     if (newExpanded.has(section)) {
@@ -203,11 +229,31 @@ export default function EmployeeDetail() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 p-3 bg-linear-to-br from-slate-50 to-slate-100 rounded-lg">
-                    <DollarSign className="w-5 h-5 text-cyan-600" />
+                  <div className={`flex items-center gap-3 p-3 bg-linear-to-br rounded-lg ${
+                    retirementInfo.isRetired 
+                      ? 'from-red-50 to-red-100' 
+                      : retirementInfo.yearsLeft < 2 
+                      ? 'from-orange-50 to-orange-100'
+                      : 'from-slate-50 to-slate-100'
+                  }`}>
+                    <Calendar className={`w-5 h-5 ${
+                      retirementInfo.isRetired 
+                        ? 'text-red-600' 
+                        : retirementInfo.yearsLeft < 2 
+                        ? 'text-orange-600'
+                        : 'text-cyan-600'
+                    }`} />
                     <div>
-                      <p className="text-xs text-slate-500">Net Salary</p>
-                      <p className="font-semibold text-slate-900">₹{netSalary.toLocaleString('en-IN')}</p>
+                      <p className="text-xs text-slate-500">Retirement</p>
+                      <p className="font-semibold text-slate-900">
+                        {retirementInfo.isRetired 
+                          ? 'Retired' 
+                          : `${retirementInfo.yearsLeft}y ${retirementInfo.monthsLeft}m left`
+                        }
+                      </p>
+                      <p className="text-xs text-slate-600 mt-0.5">
+                        {retirementInfo.retirementDateFormatted}
+                      </p>
                     </div>
                   </div>
                 </div>

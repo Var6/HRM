@@ -14,8 +14,15 @@ export async function GET(request: NextRequest) {
     const year = parseInt(searchParams.get('year') || String(new Date().getFullYear()));
 
     const employees = await Employee.find({
-      status: { $ne: 'inactive' },
-      bankAccount: { $exists: true, $ne: 'N/A' },
+      $and: [
+        {
+          $or: [
+            { status: { $exists: false } },
+            { status: { $ne: 'inactive' } }
+          ]
+        },
+        { bankAccount: { $exists: true, $ne: 'N/A' } }
+      ]
     }).lean();
 
     const bankTransferSheet = employees.map((emp: any) => {

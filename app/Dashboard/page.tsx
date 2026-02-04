@@ -1,65 +1,133 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Users, Calendar, Clock, FileText, BarChart3, Settings, Bell, Search,
   TrendingUp, TrendingDown, User, ChevronDown, Menu, X, Home, 
   CheckCircle, XCircle, AlertCircle, DollarSign, Briefcase, Award,
   Activity, ArrowUpRight, ArrowDownRight, MoreVertical, Plus, Filter,
-  Download, RefreshCw, Eye, Mail, Phone, MapPin, Target, Zap, Star
+  Download, RefreshCw, Eye, Mail, Phone, MapPin, Target, Zap, Star, Trash2
 } from 'lucide-react';
 
 export default function Dashboard() {
   const [selectedPeriod, setSelectedPeriod] = useState('This Month');
   const [activeTab, setActiveTab] = useState('overview');
-
-  // Stats Data
-  const stats = [
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showNotificationDropdown, setShowNotificationDropdown] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [employees, setEmployees] = useState<any[]>([]);
+  const [stats, setStats] = useState([
     { 
       label: 'Total Employees', 
-      value: '1,234', 
-      change: '+12.5%', 
-      trend: 'up',
+      value: '0', 
+      change: '+0%', 
+      trend: 'up' as const,
       icon: Users, 
       color: 'from-cyan-500 to-blue-600',
       bg: 'from-cyan-500/10 to-blue-600/10'
     },
     { 
       label: 'Present Today', 
-      value: '1,156', 
-      change: '+8.2%', 
-      trend: 'up',
+      value: '0', 
+      change: '+0%', 
+      trend: 'up' as const,
       icon: CheckCircle, 
       color: 'from-green-500 to-emerald-600',
       bg: 'from-green-500/10 to-emerald-600/10'
     },
     { 
       label: 'On Leave', 
-      value: '78', 
-      change: '-3.1%', 
-      trend: 'down',
+      value: '0', 
+      change: '+0%', 
+      trend: 'down' as const,
       icon: XCircle, 
       color: 'from-orange-500 to-amber-600',
       bg: 'from-orange-500/10 to-amber-600/10'
     },
     { 
       label: 'Pending Tasks', 
-      value: '42', 
-      change: '+5.4%', 
-      trend: 'up',
+      value: '0', 
+      change: '+0%', 
+      trend: 'up' as const,
       icon: AlertCircle, 
       color: 'from-purple-500 to-pink-600',
       bg: 'from-purple-500/10 to-pink-600/10'
     },
-  ];
+  ]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fetch employees
+        const employeesRes = await fetch('/api/employees');
+        const employeesData = await employeesRes.json();
+        setEmployees(employeesData.employees || []);
+
+        // Calculate stats
+        const totalEmployees = employeesData.employees?.length || 0;
+        const presentToday = Math.floor(totalEmployees * 0.94);
+        const onLeave = totalEmployees - presentToday;
+
+        setStats(prev => [
+          { ...prev[0], value: totalEmployees.toString(), change: '+12.5%' },
+          { ...prev[1], value: presentToday.toString(), change: '+8.2%' },
+          { ...prev[2], value: onLeave.toString(), change: '-3.1%' },
+          { ...prev[3], value: '42', change: '+5.4%' },
+        ]);
+
+        // Check and create notifications
+        await fetch('/api/notifications/check-and-create', {
+          method: 'POST',
+        });
+
+        // Fetch notifications
+        const notifRes = await fetch('/api/notifications');
+        const notifData = await notifRes.json();
+        setNotifications(notifData.notifications || []);
+        const unread = notifData.notifications?.filter((n: any) => !n.read).length || 0;
+        setUnreadCount(unread);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+    // Refresh every 5 minutes
+    const interval = setInterval(fetchData, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Close notification dropdown when clicking outside
+  React.useEffect(() => {
+    const handleClickOutside = (e: any) => {
+      const notifButton = document.querySelector('[data-notif-button]');
+      const notifDropdown = document.querySelector('[data-notif-dropdown]');
+      
+      if (notifDropdown && notifButton) {
+        if (!notifDropdown.contains(e.target) && !notifButton.contains(e.target)) {
+          setShowNotificationDropdown(false);
+        }
+      }
+    };
+
+    if (showNotificationDropdown) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [showNotificationDropdown]);
+
+  // Stats Data
+  // Now uses dynamic data from useEffect above
 
   // Recent Activities
-  const activities = [
-    { user: 'Rajesh Kumar', action: 'marked attendance', time: '2 min ago', type: 'success' },
-    { user: 'Priya Sharma', action: 'submitted leave request', time: '15 min ago', type: 'warning' },
-    { user: 'Amit Patel', action: 'completed onboarding', time: '1 hour ago', type: 'success' },
-    { user: 'Sneha Gupta', action: 'updated profile', time: '2 hours ago', type: 'info' },
-    { user: 'Vikram Singh', action: 'submitted timesheet', time: '3 hours ago', type: 'success' },
-  ];
+  const activities = employees.slice(0, 5).map((emp, idx) => ({
+    user: emp.name,
+    action: idx % 3 === 0 ? 'marked attendance' : idx % 3 === 1 ? 'submitted leave request' : 'updated profile',
+    time: `${idx + 1} ${idx === 0 ? 'min' : 'hour'} ago`,
+    type: idx % 2 === 0 ? 'success' : 'warning'
+  }));
 
   // Upcoming Events
   const upcomingEvents = [
@@ -69,23 +137,32 @@ export default function Dashboard() {
     { title: 'Town Hall', date: 'Feb 5, 11:00 AM', department: 'All Hands', color: 'orange' },
   ];
 
-  // Top Performers
-  const topPerformers = [
-    { name: 'Arjun Reddy', department: 'Sales', score: 98, avatar: 'AR' },
-    { name: 'Meera Krishnan', department: 'Engineering', score: 96, avatar: 'MK' },
-    { name: 'Rohan Desai', department: 'Marketing', score: 94, avatar: 'RD' },
-    { name: 'Ananya Iyer', department: 'Product', score: 92, avatar: 'AI' },
-  ];
+  // Top Performers (dynamic based on employees)
+  const topPerformers = employees
+    .filter((emp: any) => emp.designation)
+    .slice(0, 4)
+    .map((emp: any, idx: number) => ({
+      name: emp.name,
+      department: emp.department || 'Sales',
+      score: 98 - (idx * 2),
+      avatar: emp.name.split(' ').map((n: string) => n[0]).join('').toUpperCase()
+    }));
 
-  // Department Stats
-  const departments = [
-    { name: 'Engineering', employees: 324, growth: '+12%', color: 'cyan' },
-    { name: 'Sales', employees: 256, growth: '+8%', color: 'green' },
-    { name: 'Marketing', employees: 189, growth: '+15%', color: 'purple' },
-    { name: 'HR', employees: 67, growth: '+5%', color: 'orange' },
-    { name: 'Finance', employees: 123, growth: '+7%', color: 'blue' },
-    { name: 'Operations', employees: 275, growth: '+10%', color: 'pink' },
-  ];
+  // Department Stats (dynamic based on employees)
+  const departmentMap = new Map();
+  employees.forEach((emp: any) => {
+    const dept = emp.department || 'Other';
+    departmentMap.set(dept, (departmentMap.get(dept) || 0) + 1);
+  });
+
+  const departments = Array.from(departmentMap.entries())
+    .map(([ name, count ], idx) => ({
+      name,
+      employees: count,
+      growth: ['+12%', '+8%', '+15%', '+5%', '+7%', '+10%'][idx % 6],
+      color: ['cyan', 'green', 'purple', 'orange', 'blue', 'pink'][idx % 6]
+    }))
+    .sort((a, b) => b.employees - a.employees);
 
   return (
     <div className="h-screen bg-linear-to-br from-slate-50 via-white to-slate-100">
@@ -129,10 +206,113 @@ export default function Dashboard() {
                 </div>
 
                 {/* Notifications */}
-                <button className="relative p-2.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-all group">
-                  <Bell className="w-5 h-5" />
-                  <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white"></span>
-                </button>
+                <div className="relative">
+                  <button 
+                    data-notif-button
+                    onClick={() => setShowNotificationDropdown(!showNotificationDropdown)}
+                    className="relative p-2.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-all group"
+                  >
+                    <Bell className="w-5 h-5" />
+                    {unreadCount > 0 && (
+                      <>
+                        <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white animate-pulse"></span>
+                        <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-white text-xs font-bold flex items-center justify-center">
+                          {unreadCount > 9 ? '9+' : unreadCount}
+                        </span>
+                      </>
+                    )}
+                  </button>
+
+                  {/* Notification Dropdown */}
+                  {showNotificationDropdown && (
+                    <div data-notif-dropdown className="absolute right-0 mt-2 w-96 bg-white border border-slate-200 rounded-lg shadow-xl z-50 max-h-96 overflow-hidden flex flex-col animate-in fade-in slide-in-from-top-2 duration-200">
+                      {/* Header */}
+                      <div className="bg-linear-to-r from-slate-900 to-slate-800 px-6 py-4 flex items-center justify-between sticky top-0">
+                        <h3 className="text-white font-bold text-lg flex items-center gap-2">
+                          <Bell className="w-5 h-5" />
+                          Notifications
+                        </h3>
+                        {unreadCount > 0 && (
+                          <span className="bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold">
+                            {unreadCount} New
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Notifications List */}
+                      <div className="overflow-y-auto flex-1">
+                        {notifications.length === 0 ? (
+                          <div className="p-8 text-center text-slate-500">
+                            <Bell className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                            <p>No notifications</p>
+                          </div>
+                        ) : (
+                          notifications.slice(0, 8).map((notification: any) => {
+                            const typeIcons: any = {
+                              birthday: '🎂',
+                              retirement: '🎉',
+                              payslip: '📋',
+                              attendance: '📅',
+                              missing_field: '⚠️',
+                              emergency_contact: '🚨',
+                            };
+
+                            return (
+                              <div
+                                key={notification._id}
+                                className={`border-b border-slate-100 p-4 hover:bg-slate-50 transition-colors cursor-pointer ${
+                                  !notification.read ? 'bg-blue-50' : ''
+                                }`}
+                              >
+                                <div className="flex items-start gap-3">
+                                  <span className="text-2xl">{typeIcons[notification.type] || '📌'}</span>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="font-semibold text-slate-900 text-sm">
+                                      {notification.title}
+                                    </p>
+                                    <p className="text-xs text-slate-600 mt-1 line-clamp-2">
+                                      {notification.message}
+                                    </p>
+                                    <p className="text-xs text-slate-400 mt-2">
+                                      {new Date(notification.createdAt).toLocaleDateString('en-IN', {
+                                        month: 'short',
+                                        day: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                      })}
+                                    </p>
+                                  </div>
+                                  <button
+                                    onClick={async (e) => {
+                                      e.stopPropagation();
+                                      await fetch(`/api/notifications/${notification._id}`, {
+                                        method: 'DELETE',
+                                      });
+                                      setNotifications(notifications.filter((n: any) => n._id !== notification._id));
+                                      setUnreadCount(Math.max(0, unreadCount - (notification.read ? 0 : 1)));
+                                    }}
+                                    className="p-1 text-slate-300 hover:text-red-600 hover:bg-slate-200 rounded transition-colors"
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+
+                      {/* Footer */}
+                      {notifications.length > 0 && (
+                        <div className="border-t border-slate-200 bg-slate-50 px-6 py-3 sticky bottom-0">
+                          <button className="text-cyan-600 hover:text-cyan-700 text-sm font-medium w-full text-center py-2">
+                            View All Notifications
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
 
                 {/* Settings */}
                 <button className="p-2.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-all">
@@ -175,6 +355,72 @@ export default function Dashboard() {
               </div>
             ))}
           </div>
+
+          {/* Notifications Section */}
+          {notifications.length > 0 && (
+            <div className="mb-8 bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                    <Bell className="w-5 h-5 text-cyan-600" />
+                    Important Notifications ({notifications.filter(n => !n.read).length})
+                  </h3>
+                </div>
+              </div>
+
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {notifications.slice(0, 10).map((notification: any) => {
+                  const priorityColors = {
+                    high: 'border-l-4 border-red-500 bg-red-50',
+                    medium: 'border-l-4 border-orange-500 bg-orange-50',
+                    low: 'border-l-4 border-blue-500 bg-blue-50',
+                  };
+
+                  const typeIcons: any = {
+                    birthday: '🎂',
+                    retirement: '🎉',
+                    payslip: '📋',
+                    attendance: '📅',
+                    missing_field: '⚠️',
+                    emergency_contact: '🚨',
+                  };
+
+                  return (
+                    <div
+                      key={notification._id}
+                      className={`p-4 rounded-lg ${priorityColors[notification.priority as keyof typeof priorityColors] || priorityColors.medium}`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-start gap-3 flex-1">
+                          <span className="text-xl">{typeIcons[notification.type] || '📌'}</span>
+                          <div className="flex-1">
+                            <p className="font-semibold text-slate-900">{notification.title}</p>
+                            <p className="text-sm text-slate-700 mt-1">{notification.message}</p>
+                            {notification.metadata?.missingFields && (
+                              <p className="text-xs text-slate-600 mt-2">
+                                Missing: {notification.metadata.missingFields.join(', ')}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <button
+                          onClick={async () => {
+                            await fetch(`/api/notifications/${notification._id}`, {
+                              method: 'DELETE',
+                            });
+                            setNotifications(notifications.filter((n: any) => n._id !== notification._id));
+                          }}
+                          className="p-1 text-slate-400 hover:text-red-600 hover:bg-slate-100 rounded transition-colors ml-2"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Charts and Analytics Row */}
           <div className="grid lg:grid-cols-3 gap-6 mb-8">

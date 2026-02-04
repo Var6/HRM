@@ -17,7 +17,12 @@ export async function GET(request: Request) {
     const year = parseInt(searchParams.get('year') || String(new Date().getFullYear()));
 
     // Fetch all active employees with lean query
-    const employees = await Employee.find({ status: { $ne: 'inactive' } }).sort({ createdAt: -1 }).lean();
+    const employees = await Employee.find({ 
+      $or: [
+        { status: { $exists: false } },
+        { status: { $ne: 'inactive' } }
+      ]
+    }).sort({ createdAt: -1 }).lean();
 
     // Fetch or create attendance records for all employees
     const data = await Promise.all(

@@ -12,7 +12,12 @@ export async function GET(request: NextRequest) {
     const month = searchParams.get('month');
     const year = parseInt(searchParams.get('year') || String(new Date().getFullYear()));
 
-    const employees = await Employee.find({ status: { $ne: 'inactive' } }).lean();
+    const employees = await Employee.find({ 
+      $or: [
+        { status: { $exists: false } },
+        { status: { $ne: 'inactive' } }
+      ]
+    }).lean();
 
     // Group by department
     const departmentMap: Record<string, any> = {};

@@ -1,10 +1,12 @@
 'use client';
 import React, { useState } from 'react';
-import { Menu, X, Bell, Search, User, ChevronDown, Users, Calendar, FileText, Settings, BarChart3, Clock } from 'lucide-react';
+import { Menu, X, Bell, Search, User, ChevronDown, Users, Calendar, FileText, Settings, BarChart3, Clock, LogOut } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const router = useRouter();
 
   const navItems = [
     { icon: Users, label: 'Employees', href: '#employees' },
@@ -69,6 +71,11 @@ export default function Navbar() {
               <span className="absolute -top-1 -right-1 w-5 h-5 bg-cyan-500/20 rounded-full group-hover:scale-110 transition-transform"></span>
             </button>
 
+            {/* Settings */}
+            <button className="relative p-2 text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg transition-all group">
+              <Settings className="w-5 h-5" />
+            </button>
+
             {/* Profile Dropdown */}
             <div className="relative">
               <button
@@ -97,9 +104,17 @@ export default function Navbar() {
                     <span className="text-sm">Settings</span>
                   </a>
                   <hr className="my-2 border-slate-700" />
-                  <a href="#logout" className="flex items-center gap-3 px-4 py-2 text-red-400 hover:bg-slate-700 transition-colors"   onClick={() => window.location.reload()}>
+                  <button 
+                    onClick={() => {
+                      localStorage.clear();
+                      sessionStorage.clear();
+                      router.push('/');
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-2 text-red-400 hover:bg-slate-700 transition-colors text-left"
+                  >
+                    <LogOut className="w-4 h-4" />
                     <span className="text-sm">Sign Out</span>
-                  </a>
+                  </button>
                 </div>
               )}
             </div>

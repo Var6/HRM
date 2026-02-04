@@ -16,7 +16,12 @@ export async function GET(request: NextRequest) {
     const year = parseInt(searchParams.get('year') || String(new Date().getFullYear()));
 
     const monthIndex = new Date(`${month} 1, ${year}`).getMonth();
-    const employees = await Employee.find({ status: { $ne: 'inactive' } }).lean();
+    const employees = await Employee.find({ 
+      $or: [
+        { status: { $exists: false } },
+        { status: { $ne: 'inactive' } }
+      ]
+    }).lean();
 
     const salaryRegister = await Promise.all(
       employees.map(async (emp: any) => {
