@@ -330,7 +330,7 @@ export default function PayslipsPage() {
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 16v-4m0 0V8m0 4l4-4m-4 4l-4-4M4 12a8 8 0 1116 0 8 8 0 01-16 0z" />
                     </svg>
-                    <span>Download HTML</span>
+                    <span>Download</span>
                   </button>
                 </div>
 

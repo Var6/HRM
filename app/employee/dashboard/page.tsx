@@ -73,14 +73,13 @@ export default function EmployeeDashboard() {
   }
 
   // Build full name from available fields - check 'name' field first (primary field in database)
-  let fullName = 'Employee';
-  if (employee?.name && employee.name.trim()) {
-    fullName = employee.name;
-  } else if (employee?.employeeName && employee.employeeName.trim()) {
-    fullName = employee.employeeName;
-  } else if (employee?.firstName || employee?.lastName) {
-    fullName = `${employee.firstName || ''} ${employee.lastName || ''}`.trim();
-  }
+  const fullName = employee?.name?.trim() 
+    ? employee.name 
+    : employee?.employeeName?.trim() 
+    ? employee.employeeName 
+    : (employee?.firstName || employee?.lastName)
+    ? `${employee.firstName || ''} ${employee.lastName || ''}`.trim()
+    : 'Employee';
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -192,11 +191,11 @@ export default function EmployeeDashboard() {
               <div className="flex justify-between py-2">
                 <span className="text-slate-600">Joining Date</span>
                 <span className="font-semibold text-slate-800">
-                  {new Date(employee.joiningDate).toLocaleDateString('en-IN', { 
+                  {employee.joiningDate ? new Date(employee.joiningDate).toLocaleDateString('en-IN', { 
                     day: '2-digit', 
                     month: 'short', 
                     year: 'numeric' 
-                  })}
+                  }) : 'Not available'}
                 </span>
               </div>
             </div>
@@ -213,7 +212,7 @@ export default function EmployeeDashboard() {
               </div>
               <div className="p-3 bg-green-50 rounded-lg border border-green-200">
                 <p className="text-sm text-green-800">
-                  <span className="font-semibold">HR Email:</span> hr@cscc.org
+                  <span className="font-semibold">HR Email:</span> hr@citizencooperative.in
                 </p>
               </div>
               <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">

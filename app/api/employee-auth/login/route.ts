@@ -41,8 +41,7 @@ export async function POST(request: NextRequest) {
     const employeeData = {
       _id: employee._id.toString(),
       employeeCode: employee.employeeCode,
-      firstName: employee.firstName,
-      lastName: employee.lastName,
+      name: employee.name,
       email: employee.email,
       department: employee.department,
       designation: employee.designation,

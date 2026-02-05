@@ -108,3 +108,62 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+// DELETE - Delete a data change request
+export async function DELETE(request: NextRequest) {
+  try {
+    await connectDB();
+    
+    const { searchParams } = new URL(request.url);
+    const requestId = searchParams.get('id');
+    const employeeId = searchParams.get('employeeId');
+
+    if (!requestId || !employeeId) {
+      return NextResponse.json(
+        { success: false, message: 'Request ID and Employee ID are required' },
+        { status: 400 }
+      );
+    }
+
+    // Find the request
+    const dataChangeRequest = await DataChangeRequest.findById(requestId);
+    
+    if (!dataChangeRequest) {
+      return NextResponse.json(
+        { success: false, message: 'Data change request not found' },
+        { status: 404 }
+      );
+    }
+
+    // Verify ownership - only the employee who created it can delete
+    if (dataChangeRequest.employeeId.toString() !== employeeId) {
+      return NextResponse.json(
+        { success: false, message: 'Unauthorized to delete this request' },
+        { status: 403 }
+      );
+    }
+
+    // Only allow deletion of pending requests
+    if (dataChangeRequest.status !== 'pending') {
+      return NextResponse.json(
+        { success: false, message: 'Only pending requests can be deleted' },
+        { status: 400 }
+      );
+    }
+
+    // Delete the request
+    await DataChangeRequest.findByIdAndDelete(requestId);
+
+    return NextResponse.json(
+      { success: true, message: 'Data change request deleted successfully' },
+      { status: 200 }
+    );
+
+  } catch (error) {
+    console.error('Error deleting data change request:', error);
+    return NextResponse.json(
+      { success: false, message: 'Failed to delete data change request' },
+      { status: 500 }
+    );
+  }
+}

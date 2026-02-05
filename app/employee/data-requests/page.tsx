@@ -7,8 +7,7 @@ import EmployeeNavbar from '@/components/employee/EmployeeNavbar';
 interface EmployeeData {
   _id: string;
   employeeCode: string;
-  firstName: string;
-  lastName: string;
+  name: string;
   email: string;
   department: string;
   designation: string;
@@ -117,6 +116,32 @@ export default function EmployeeDataRequests() {
     }
   };
 
+  const handleDelete = async (requestId: string) => {
+    if (!employee) return;
+
+    const confirmed = confirm('Are you sure you want to delete this request? This action cannot be undone.');
+    
+    if (!confirmed) return;
+
+    try {
+      const response = await fetch(`/api/data-change-requests?id=${requestId}&employeeId=${employee._id}`, {
+        method: 'DELETE',
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        alert('Data change request deleted successfully!');
+        fetchDataRequests(employee._id);
+      } else {
+        alert(data.message || 'Failed to delete data change request');
+      }
+    } catch (error) {
+      console.error('Error deleting data change request:', error);
+      alert('An error occurred. Please try again.');
+    }
+  };
+
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
       case 'approved':
@@ -174,7 +199,7 @@ export default function EmployeeDataRequests() {
     );
   }
 
-  const fullName = `${employee.firstName} ${employee.lastName}`;
+  const fullName = employee.name;
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -371,6 +396,17 @@ export default function EmployeeDataRequests() {
                       <p className="text-sm font-medium text-slate-700">
                         {new Date(request.requestedOn).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                       </p>
+                      {request.status === 'pending' && (
+                        <button
+                          onClick={() => handleDelete(request._id)}
+                          className="mt-3 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-medium rounded-lg transition-colors flex items-center justify-center w-full"
+                        >
+                          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                          Delete
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -391,7 +427,7 @@ export default function EmployeeDataRequests() {
             <li>• All data change requests require HR approval</li>
             <li>• Ensure the information you provide is accurate</li>
             <li>• Supporting documents may be required for certain changes</li>
-            <li>• Contact HR at <span className="font-semibold">hr@cscc.org</span> for urgent requests</li>
+            <li>• Contact HR at <span className="font-semibold">hr@citizencooperative.in</span> for urgent requests</li>
           </ul>
         </div>
       </div>

@@ -4,7 +4,7 @@ const NotificationSchema = new mongoose.Schema(
   {
     type: { 
       type: String, 
-      enum: ['birthday', 'retirement', 'payslip', 'attendance', 'missing_field', 'emergency_contact', 'leave_request'],
+      enum: ['birthday', 'retirement', 'payslip', 'attendance', 'missing_field', 'emergency_contact', 'leave_request', 'data_change_request'],
       required: true 
     },
     employeeId: { type: mongoose.Schema.Types.ObjectId, ref: 'Employee' },

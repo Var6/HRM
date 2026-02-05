@@ -17,12 +17,19 @@ interface EmployeeData {
 }
 
 interface EmployeeFullData extends EmployeeData {
+  name?: string;
+  employeeName?: string;
+  photograph?: string;
   dateOfBirth?: string;
   gender?: string;
+  permanentAddress?: string;
+  correspondenceAddress?: string;
   address?: string;
   city?: string;
   state?: string;
   pincode?: string;
+  fatherName?: string;
+  motherName?: string;
   emergencyContact?: {
     name?: string;
     relation?: string;
@@ -126,8 +133,8 @@ export default function EmployeeProfile() {
                   </div>
                 )}
                 <h2 className="text-xl font-bold text-slate-800">{fullName}</h2>
-                <p className="text-slate-600 mt-1">{fullEmployeeData.designation}</p>
-                <p className="text-sm text-slate-500 mt-1">{fullEmployeeData.employeeCode}</p>
+                <p className="text-slate-600 mt-1">{fullEmployeeData?.designation || 'Not provided'}</p>
+                <p className="text-sm text-slate-500 mt-1">{fullEmployeeData?.employeeCode}</p>
                 
                 <div className="mt-6 pt-6 border-t border-slate-200">
                   <div className="space-y-3 text-left">
@@ -135,19 +142,19 @@ export default function EmployeeProfile() {
                       <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                       </svg>
-                      <span className="text-sm text-slate-600 wrap-break-word">{fullEmployeeData.email}</span>
+                      <span className="text-sm text-slate-600 wrap-break-word">{fullEmployeeData?.email || 'Not provided'}</span>
                     </div>
                     <div className="flex items-center space-x-3">
                       <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                       </svg>
-                      <span className="text-sm text-slate-600">{fullEmployeeData.mobileNumber}</span>
+                      <span className="text-sm text-slate-600">{fullEmployeeData?.mobileNumber || 'Not provided'}</span>
                     </div>
                     <div className="flex items-center space-x-3">
                       <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                       </svg>
-                      <span className="text-sm text-slate-600">{fullEmployeeData.department}</span>
+                      <span className="text-sm text-slate-600">{fullEmployeeData?.department || 'Not provided'}</span>
                     </div>
                   </div>
                 </div>
@@ -157,6 +164,23 @@ export default function EmployeeProfile() {
 
           {/* Detailed Information */}
           <div className="lg:col-span-2 space-y-6">
+            {/* Missing Mandatory Fields Warning */}
+            {(!fullEmployeeData?.gender || !fullEmployeeData?.permanentAddress && !fullEmployeeData?.correspondenceAddress && !fullEmployeeData?.address) && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+                <div className="flex items-start">
+                  <svg className="w-5 h-5 text-yellow-600 mr-3 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4v2m0 0v2m0-6v-2m0 0V7a2 2 0 012-2h2.586a1 1 0 01.707.293l2.414 2.414a1 1 0 01.293.707V9a2 2 0 01-2 2h-.5a1 1 0 00-1 1v1a1 1 0 001 1h.5a2 2 0 012 2v2.586a1 1 0 01-.293.707l-2.414 2.414a1 1 0 01-.707.293H12a2 2 0 01-2-2v-2.5a1 1 0 00-1-1h-1a1 1 0 00-1 1v2.5a2 2 0 01-2 2H6a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 012 18.586V16a2 2 0 012-2h.5a1 1 0 001-1v-1a1 1 0 00-1-1H4a2 2 0 01-2-2V9.414a1 1 0 01.293-.707l2.414-2.414A1 1 0 016.414 6H8a2 2 0 012-2z" />
+                  </svg>
+                  <div>
+                    <h4 className="text-sm font-semibold text-yellow-800">Complete Your Profile</h4>
+                    <p className="text-sm text-yellow-700 mt-1">
+                      Please update your {!fullEmployeeData?.gender && 'Gender'}{!fullEmployeeData?.gender && (!fullEmployeeData?.permanentAddress && !fullEmployeeData?.correspondenceAddress && !fullEmployeeData?.address) && ' and '}{!fullEmployeeData?.permanentAddress && !fullEmployeeData?.correspondenceAddress && !fullEmployeeData?.address && 'Address'} information to complete your profile.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Personal Information */}
             <div className="bg-white rounded-xl shadow-md p-6 border border-slate-200">
               <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center">
@@ -169,21 +193,29 @@ export default function EmployeeProfile() {
                 <div>
                   <label className="text-sm font-medium text-slate-500">Date of Birth</label>
                   <p className="text-slate-800 mt-1">
-                    {fullEmployeeData.dateOfBirth 
+                    {fullEmployeeData?.dateOfBirth 
                       ? new Date(fullEmployeeData.dateOfBirth).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })
                       : 'Not provided'}
                   </p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-slate-500">Gender</label>
-                  <p className="text-slate-800 mt-1 capitalize">{fullEmployeeData?.gender || 'Not provided'}</p>
+                  <label className="text-sm font-medium text-slate-500 flex items-center">
+                    Gender
+                    {!fullEmployeeData?.gender && <span className="ml-2 px-2 py-1 bg-yellow-50 text-yellow-700 text-xs font-semibold rounded">Required</span>}
+                  </label>
+                  <p className={`text-slate-800 mt-1 capitalize ${!fullEmployeeData?.gender ? 'text-yellow-600 font-semibold' : ''}`}>
+                    {fullEmployeeData?.gender || 'Not provided - Please update'}
+                  </p>
                 </div>
                 <div className="md:col-span-2">
-                  <label className="text-sm font-medium text-slate-500">Address</label>
-                  <p className="text-slate-800 mt-1">
-                    {fullEmployeeData.address 
-                      ? `${fullEmployeeData.address}, ${fullEmployeeData.city || ''}, ${fullEmployeeData.state || ''} - ${fullEmployeeData.pincode || ''}`
-                      : 'Not provided'}
+                  <label className="text-sm font-medium text-slate-500 flex items-center">
+                    Address
+                    {!fullEmployeeData?.permanentAddress && !fullEmployeeData?.correspondenceAddress && !fullEmployeeData?.address && <span className="ml-2 px-2 py-1 bg-yellow-50 text-yellow-700 text-xs font-semibold rounded">Required</span>}
+                  </label>
+                  <p className={`text-slate-800 mt-1 ${(!fullEmployeeData?.permanentAddress && !fullEmployeeData?.correspondenceAddress && !fullEmployeeData?.address) ? 'text-yellow-600 font-semibold' : ''}`}>
+                    {fullEmployeeData?.permanentAddress || fullEmployeeData?.correspondenceAddress || fullEmployeeData?.address 
+                      ? `${fullEmployeeData?.permanentAddress || fullEmployeeData?.correspondenceAddress || fullEmployeeData?.address}${fullEmployeeData?.city ? ', ' + fullEmployeeData.city : ''}${fullEmployeeData?.state ? ', ' + fullEmployeeData.state : ''}${fullEmployeeData?.pincode ? ' - ' + fullEmployeeData.pincode : ''}`
+                      : 'Not provided - Please update'}
                   </p>
                 </div>
               </div>
@@ -200,32 +232,29 @@ export default function EmployeeProfile() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium text-slate-500">Employee Code</label>
-                  <p className="text-slate-800 mt-1 font-mono">{fullEmployeeData.employeeCode}</p>
+                  <p className="text-slate-800 mt-1 font-mono">{fullEmployeeData?.employeeCode || 'Not provided'}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-slate-500">Joining Date</label>
                   <p className="text-slate-800 mt-1">
-                    {fullEmployeeData?.joiningDate || fullEmployeeData?.dateOfJoining
-                      ? (() => {
-                          const date = new Date(fullEmployeeData.joiningDate || fullEmployeeData.dateOfJoining);
-                          return date.getTime ? date.toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' }) : 'Not provided';
-                        })()
+                    {fullEmployeeData?.joiningDate
+                      ? new Date(fullEmployeeData.joiningDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })
                       : 'Not provided'}
                   </p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-slate-500">Department</label>
-                  <p className="text-slate-800 mt-1">{fullEmployeeData.department}</p>
+                  <p className="text-slate-800 mt-1">{fullEmployeeData?.department || 'Not provided'}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-slate-500">Designation</label>
-                  <p className="text-slate-800 mt-1">{fullEmployeeData.designation}</p>
+                  <p className="text-slate-800 mt-1">{fullEmployeeData?.designation || 'Not provided'}</p>
                 </div>
               </div>
             </div>
 
             {/* Emergency Contact */}
-            {fullEmployeeData.emergencyContact && (
+            {fullEmployeeData?.emergencyContact && (
               <div className="bg-white rounded-xl shadow-md p-6 border border-slate-200">
                 <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center">
                   <svg className="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -236,22 +265,22 @@ export default function EmployeeProfile() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label className="text-sm font-medium text-slate-500">Name</label>
-                    <p className="text-slate-800 mt-1">{fullEmployeeData.emergencyContact.name || 'Not provided'}</p>
+                    <p className="text-slate-800 mt-1">{fullEmployeeData?.emergencyContact?.name || 'Not provided'}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-slate-500">Relation</label>
-                    <p className="text-slate-800 mt-1 capitalize">{fullEmployeeData.emergencyContact.relation || 'Not provided'}</p>
+                    <p className="text-slate-800 mt-1 capitalize">{fullEmployeeData?.emergencyContact?.relation || 'Not provided'}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-slate-500">Phone</label>
-                    <p className="text-slate-800 mt-1">{fullEmployeeData.emergencyContact.phone || 'Not provided'}</p>
+                    <p className="text-slate-800 mt-1">{fullEmployeeData?.emergencyContact?.phone || 'Not provided'}</p>
                   </div>
                 </div>
               </div>
             )}
 
             {/* Bank Details */}
-            {fullEmployeeData.bankDetails && (
+            {fullEmployeeData?.bankDetails && (
               <div className="bg-white rounded-xl shadow-md p-6 border border-slate-200">
                 <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center">
                   <svg className="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -262,19 +291,19 @@ export default function EmployeeProfile() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm font-medium text-slate-500">Account Number</label>
-                    <p className="text-slate-800 mt-1 font-mono">{fullEmployeeData.bankDetails.accountNumber || 'Not provided'}</p>
+                    <p className="text-slate-800 mt-1 font-mono">{fullEmployeeData?.bankDetails?.accountNumber || 'Not provided'}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-slate-500">Bank Name</label>
-                    <p className="text-slate-800 mt-1">{fullEmployeeData.bankDetails.bankName || 'Not provided'}</p>
+                    <p className="text-slate-800 mt-1">{fullEmployeeData?.bankDetails?.bankName || 'Not provided'}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-slate-500">IFSC Code</label>
-                    <p className="text-slate-800 mt-1 font-mono">{fullEmployeeData.bankDetails.ifscCode || 'Not provided'}</p>
+                    <p className="text-slate-800 mt-1 font-mono">{fullEmployeeData?.bankDetails?.ifscCode || 'Not provided'}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-slate-500">Branch</label>
-                    <p className="text-slate-800 mt-1">{fullEmployeeData.bankDetails.branchName || 'Not provided'}</p>
+                    <p className="text-slate-800 mt-1">{fullEmployeeData?.bankDetails?.branchName || 'Not provided'}</p>
                   </div>
                 </div>
               </div>

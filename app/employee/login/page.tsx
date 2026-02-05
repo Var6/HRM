@@ -115,7 +115,7 @@ export default function EmployeeLogin() {
           </form>
 
           <div className="mt-6 text-center text-sm text-slate-600">
-            <p>Need help? Contact HR at <span className="text-blue-600 font-medium">hr@cscc.org</span></p>
+            <p>Need help? Contact HR at <span className="text-blue-600 font-medium">hr@citizencooperative.in</span></p>
           </div>
         </div>
 
