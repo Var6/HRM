@@ -1,6 +1,16 @@
 // lib/attendance-utils.ts
 
 /**
+ * Get total calendar days in a month
+ * @param month - Month (0-11)
+ * @param year - Year
+ * @returns Total days in the month
+ */
+export function getDaysInMonth(month: number, year: number): number {
+  return new Date(year, month + 1, 0).getDate();
+}
+
+/**
  * Calculate total working days in a month (excluding Tuesdays and holidays)
  * @param month - Month (0-11)
  * @param year - Year

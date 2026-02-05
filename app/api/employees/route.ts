@@ -19,7 +19,7 @@ export async function GET() {
 
     return NextResponse.json({
       success: true,
-      employees,
+      data: employees,
     }, {
       headers: {
         'Cache-Control': `public, max-age=${CACHE_CONFIG.EMPLOYEE_CACHE_TIME}`,

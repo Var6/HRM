@@ -20,14 +20,15 @@ import {
   exportPayslipToExcel,
   generatePayslipHTML 
 } from '@/lib/payroll-export-helpers';
-import { calculateLOP, calculateLOPAmount } from '@/lib/attendance-utils';
+import { calculateLOP, calculateLOPAmount, getDaysInMonth } from '@/lib/attendance-utils';
 
 // Types
 import { SalaryStructure, PayrollRecord } from '@/types/types';
 import { useRouter } from 'next/navigation';
 import type { EmployeeSalaryData } from '@/lib/payslip-utils';
 
-const convertToEmployeeSalaryData = (emp: SalaryStructure): EmployeeSalaryData => {
+const convertToEmployeeSalaryData = (emp: SalaryStructure, month?: number, year?: number): EmployeeSalaryData => {
+  const totalDays = month !== undefined && year !== undefined ? getDaysInMonth(month, year) : 31;
   return {
     employeeId: String(emp.employeeCode || emp.employeeId),
     employeeName: emp.employeeName,
@@ -43,7 +44,7 @@ const convertToEmployeeSalaryData = (emp: SalaryStructure): EmployeeSalaryData =
     esiNumber: emp.esiNumber || "N/A",
     aadharNumber: emp.aadharNumber || "N/A",
     presentDays: emp.presentDays || 30,
-    totalDaysInMonth: 31,
+    totalDaysInMonth: totalDays,
     modeOfPay: emp.bankAccount && emp.bankAccount !== "N/A" ? "Bank Transfer" : "Cash",
     accountNumber: emp.bankAccount || "N/A",
 

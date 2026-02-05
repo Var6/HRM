@@ -3,6 +3,7 @@ import { connectDB } from '@/lib/mongodb';
 import Employee from '@/models/Employee';
 import Attendance from '@/models/Attendance';
 import { withCacheHeaders } from '@/lib/optimization-config';
+import { getDaysInMonth } from '@/lib/attendance-utils';
 
 export async function POST(req: NextRequest) {
   try {
@@ -57,7 +58,7 @@ export async function POST(req: NextRequest) {
       }).lean();
 
       const presentDays = attendance?.summary?.totalPresent || 0;
-      const totalDaysInMonth = 30; // Standard working days in a month
+      const totalDaysInMonth = getDaysInMonth(monthIndex, year); // Dynamic days based on actual month
 
       // Get current salary data
       const grossSalary = (employee.earnings

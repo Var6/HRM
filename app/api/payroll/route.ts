@@ -4,11 +4,12 @@ import Employee from "@/models/Employee";
 import PayrollHistory from "@/models/PayrollHistory";
 import MonthlyAttendance from "@/models/Attendance";
 import Holiday from "@/models/Holiday";
-import { calculateLOP, calculateLOPAmount, getAttendanceSummary, getWorkingDaysInMonth } from "@/lib/attendance-utils";
+import LeaveRequest from "@/models/LeaveRequest";
+import { calculateLOP, calculateLOPAmount, getAttendanceSummary, getWorkingDaysInMonth, getDaysInMonth } from "@/lib/attendance-utils";
 import { CACHE_CONFIG } from "@/lib/optimization-config";
 
-// Cache payroll data for 10 minutes (600 seconds)
-export const revalidate = 600;
+// Disable caching temporarily to ensure fresh data - TODO: re-enable after testing
+// export const revalidate = 600;
 
 export async function GET(req: Request) {
   try {
@@ -16,6 +17,7 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const monthParam = searchParams.get('month');
     const yearParam = searchParams.get('year');
+    const employeeIdParam = searchParams.get('employeeId');
     
     // Handle both number and string month parameters
     let monthIndex = 0;
@@ -30,7 +32,7 @@ export async function GET(req: Request) {
       year = Number(yearParam);
     }
 
-    console.log('Payroll API called with:', { monthParam, yearParam, monthIndex, year });
+    console.log('Payroll API called with:', { monthParam, yearParam, monthIndex, year, employeeIdParam });
 
     // Get all holidays for this month
     const holidays = await Holiday.find({
@@ -39,18 +41,30 @@ export async function GET(req: Request) {
     }).lean();
     const holidayDates = holidays.map(h => new Date(h.date));
 
-    const employees = await Employee.find({ 
+    // Build employee filter
+    let employeeFilter: any = { 
       $or: [
         { status: { $exists: false } },
         { status: { $ne: 'inactive' } }
       ]
-    }).sort({ createdAt: -1 }).lean();
+    };
+    
+    if (employeeIdParam) {
+      employeeFilter = { _id: employeeIdParam };
+    }
+
+    const employees = await Employee.find(employeeFilter).sort({ createdAt: -1 }).lean();
     console.log('Found employees:', employees.length);
 
     const payrollData = await Promise.all(
       employees.map(async (emp) => {
         const earnings = emp.salary?.earnings || {};
         const deductions = emp.salary?.deductions || {};
+        
+        // Initialize LOP variables
+        let absentDays = 0;
+        let lopDays = 0;
+        let lopAmount = 0;
         
         // Calculate total earnings (gross salary before any deductions)
         // Ensure all values are converted to numbers
@@ -67,20 +81,59 @@ export async function GET(req: Request) {
         }).lean();
 
         const workingDays = getWorkingDaysInMonth(monthIndex, year, holidayDates);
+        const totalDaysInMonth = getDaysInMonth(monthIndex, year);
         const attendanceSummary = attendance
           ? getAttendanceSummary(attendance.records || [], monthIndex, year)
           : null;
         const presentDays = attendanceSummary ? attendanceSummary.totalPresent : workingDays;
 
-        let lopDays = 0;
-        let lopAmount = 0;
-        let absentDays = 0;
+        // Detailed logging for debugging
+        if (attendance && (emp.employeeCode === 'CC-10041' || emp.employeeCode === 'CC-10023')) {
+          console.log(`[DEEPDEBUG - ${emp.employeeCode}] Records in DB:`, attendance.records.length);
+          console.log(`[DEEPDEBUG - ${emp.employeeCode}] Summary:`, JSON.stringify({
+            totalLeaves: attendance.summary?.totalLeaves,
+            casualLeavesTaken: attendance.summary?.casualLeavesTaken,
+            earnedLeavesTaken: attendance.summary?.earnedLeavesTaken
+          }));
+        }
 
+        console.log(`[Payroll API] Employee: ${emp.employeeCode}, Month: ${monthIndex}, Year: ${year}, TotalDays: ${totalDaysInMonth}, WorkingDays: ${workingDays}, PresentDays: ${presentDays}`);
+        
+        // Get approved leave requests for this month
+        const monthStart = new Date(year, monthIndex, 1);
+        const monthEnd = new Date(year, monthIndex + 1, 0);
+        const approvedLeaves = await LeaveRequest.find({
+          employeeId: emp._id,
+          status: 'approved',
+          startDate: { $lte: monthEnd },
+          endDate: { $gte: monthStart }
+        }).lean();
+        
+        // Calculate approved leave days in this month
+        let approvedLeaveDays = 0;
+        approvedLeaves.forEach((leave: any) => {
+          const leaveStart = new Date(leave.startDate);
+          const leaveEnd = new Date(leave.endDate);
+          
+          // Find overlap with current month
+          const overlapStart = new Date(Math.max(leaveStart.getTime(), monthStart.getTime()));
+          const overlapEnd = new Date(Math.min(leaveEnd.getTime(), monthEnd.getTime()));
+          
+          if (overlapStart <= overlapEnd) {
+            approvedLeaveDays += leave.numberOfDays || 0;
+          }
+        });
+        
+        console.log(`[Payroll API] Approved leave days for ${emp.employeeCode}: ${approvedLeaveDays}`);
+        
         if (attendance) {
-          // Count actual absent days
-          absentDays = attendance.records.filter((r: any) => 
-            r.status === 'onLeave' || r.status === 'absent'
-          ).length;
+          // Use the pre-calculated summary values instead of recounting
+          // The summary already has the correct totalLeaves count (including halfDays properly)
+          const attendanceLeaves = attendance.summary?.totalLeaves || 0;
+          const attendanceAbsences = attendance.summary?.totalAbsent || 0;
+          
+          // Total absent days = approved unofficial absences + leaves  
+          absentDays = attendanceAbsences + attendanceLeaves + approvedLeaveDays;
           
           // Calculate LOP: if absent > 2.25 days, deduct for excess
           lopDays = calculateLOP(
@@ -153,8 +206,10 @@ export async function GET(req: Request) {
           deductions: Number(totalDeductions) || 0,
           netSalary: Number(netSalary) || 0,
           grossSalary: Number(grossSalary) || 0,
+          absentDays: Number(absentDays) || 0,  // ✅ ADD THIS: Include correctly calculated absent days
           presentDays,
           workingDays,
+          totalDaysInMonth,
           earnings: {
             basic: Number(emp.salary?.earnings?.basic || 0),
             hra: Number(emp.salary?.earnings?.hra || 0),

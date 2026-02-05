@@ -35,6 +35,7 @@ const EmployeeSchema = new mongoose.Schema(
     name: { type: String, required: true },
     photograph: String,
     dateOfBirth: String,
+    gender: String,
     fatherName: String,
     motherName: String,
     spouseName: String,

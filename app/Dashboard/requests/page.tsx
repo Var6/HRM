@@ -17,8 +17,7 @@ interface LeaveRequest {
   hrRemarks?: string;
   rejectionReason?: string;
   employeeId: {
-    firstName?: string;
-    lastName?: string;
+    name?: string;
     email?: string;
     mobileNumber?: string;
   };
@@ -39,8 +38,7 @@ interface DataChangeRequest {
   hrRemarks?: string;
   rejectionReason?: string;
   employeeId: {
-    firstName?: string;
-    lastName?: string;
+    name?: string;
     email?: string;
     mobileNumber?: string;
   };
@@ -54,11 +52,12 @@ export default function RequestsPage() {
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
 
   const getEmployeeName = (data: LeaveRequest | DataChangeRequest): string => {
-    if (data.employeeName && data.employeeName.trim()) {
-      return data.employeeName;
+    // Prefer populated employee data over stored employeeName (which may contain 'undefined undefined')
+    if (data.employeeId?.name && data.employeeId.name.trim() && data.employeeId.name !== 'undefined') {
+      return data.employeeId.name;
     }
-    if (data.employeeId?.firstName && data.employeeId?.lastName) {
-      return `${data.employeeId.firstName} ${data.employeeId.lastName}`;
+    if (data.employeeName && data.employeeName.trim() && data.employeeName !== 'undefined undefined') {
+      return data.employeeName;
     }
     return 'Unknown Employee';
   };

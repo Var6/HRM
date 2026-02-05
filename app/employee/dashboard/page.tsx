@@ -8,13 +8,15 @@ import Link from 'next/link';
 interface EmployeeData {
   _id: string;
   employeeCode: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  department: string;
-  designation: string;
-  joiningDate: string;
-  mobileNumber: string;
+  firstName?: string;
+  lastName?: string;
+  name?: string;
+  employeeName?: string;
+  email?: string;
+  department?: string;
+  designation?: string;
+  joiningDate?: string;
+  mobileNumber?: string;
 }
 
 export default function EmployeeDashboard() {
@@ -31,9 +33,33 @@ export default function EmployeeDashboard() {
       return;
     }
 
-    setEmployee(JSON.parse(employeeData));
-    setLoading(false);
+    const empData = JSON.parse(employeeData);
+    setEmployee(empData);
+    
+    // Fetch full employee details from API to get the name field
+    fetchEmployeeDetails(empData._id);
   }, [router]);
+
+  const fetchEmployeeDetails = async (employeeId: string) => {
+    try {
+      const response = await fetch(`/api/employees/${employeeId}`);
+      if (response.ok) {
+        const data = await response.json();
+        // Map the API response to ensure we have all name fields
+        const mappedData = {
+          ...data,
+          employeeName: data.name || data.employeeName || '',
+          firstName: data.name?.split(' ')[0] || data.firstName || '',
+          lastName: data.name?.split(' ').slice(1).join(' ') || data.lastName || ''
+        };
+        setEmployee(prev => prev ? { ...prev, ...mappedData } : mappedData);
+      }
+    } catch (error) {
+      console.error('Error fetching employee details:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (loading || !employee) {
     return (
@@ -46,7 +72,15 @@ export default function EmployeeDashboard() {
     );
   }
 
-  const fullName = `${employee.firstName} ${employee.lastName}`;
+  // Build full name from available fields - check 'name' field first (primary field in database)
+  let fullName = 'Employee';
+  if (employee?.name && employee.name.trim()) {
+    fullName = employee.name;
+  } else if (employee?.employeeName && employee.employeeName.trim()) {
+    fullName = employee.employeeName;
+  } else if (employee?.firstName || employee?.lastName) {
+    fullName = `${employee.firstName || ''} ${employee.lastName || ''}`.trim();
+  }
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -55,7 +89,7 @@ export default function EmployeeDashboard() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Section */}
         <div className="bg-linear-to-r from-blue-600 to-blue-700 rounded-2xl shadow-xl p-8 text-white mb-8">
-          <h1 className="text-3xl font-bold mb-2">Welcome back, {employee.firstName}! 👋</h1>
+          <h1 className="text-3xl font-bold mb-2">Welcome back, {fullName.split(' ')[0]}! 👋</h1>
           <p className="text-blue-100">
             Manage your profile, request leaves, and stay updated with your work information.
           </p>
@@ -105,6 +139,21 @@ export default function EmployeeDashboard() {
               </div>
               <h3 className="text-lg font-semibold text-slate-800 mb-1">Data Requests</h3>
               <p className="text-sm text-slate-600">Request changes to your profile data</p>
+            </div>
+          </Link>
+
+          {/* Payslips Card */}
+          <Link href="/employee/payslips">
+            <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow cursor-pointer border border-slate-200">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center">
+                  <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+              </div>
+              <h3 className="text-lg font-semibold text-slate-800 mb-1">Payslips</h3>
+              <p className="text-sm text-slate-600">Download your salary slips</p>
             </div>
           </Link>
 

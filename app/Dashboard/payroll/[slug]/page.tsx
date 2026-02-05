@@ -13,6 +13,7 @@ import { SalaryStructure, PayrollStatus } from '@/types/types';
 import type { EmployeeSalaryData } from '@/lib/payslip-utils';
 import { downloadPayslip, downloadBulkPayslips } from '@/lib/payslip-utils';
 import { exportPayslipToExcel } from '@/lib/payroll-export-helpers';
+import { getDaysInMonth } from '@/lib/attendance-utils';
 import ApprovalModal from '@/components/payslip/ApprovalModal';
 import Link from 'next/link';
 
@@ -114,8 +115,10 @@ export default function PayrollSlugPage() {
             uanNumber: emp.uan || '',
             esiNumber: emp.esiNumber || '',
             aadharNumber: emp.aadharNumber || 'N/A',
-            presentDays: record.presentDays ?? record.workingDays ?? 0,
-            totalDaysInMonth: record.workingDays ?? 0,
+            presentDays: record.presentDays ?? 0,
+            totalDaysInMonth: record.totalDaysInMonth ?? getDaysInMonth(currentMonth, currentYear),
+            workingDays: record.workingDays ?? 0,
+            absentDays: record.absentDays ?? ((record.workingDays ?? 0) - (record.presentDays ?? 0)),
             bankAccount: record.bankAccount || emp.accountNumber || '',
             accountNumber: emp.accountNumber || '',
             baseSalary: baseSalary,
@@ -228,23 +231,42 @@ export default function PayrollSlugPage() {
       selectedEmployees.has(emp.employeeCode)
     );
 
-    const approvalEmployees = employeesToApprove.map(emp => ({
-      employeeCode: emp.employeeCode,
-      employeeName: emp.employeeName,
-      designation: emp.designation,
-      department: emp.department,
-      grossSalary: emp.grossSalary,
-      presentDays: emp.presentDays || 0,
-      totalDaysInMonth: 30,
-      currentDeductions: {
-        pf: emp.deductions?.pf || 0,
-        esic: emp.deductions?.esic || 0,
-        advance: emp.deductions?.advance || emp.deductions?.salaryAdvance || 0,
-        loan: emp.deductions?.loan || 0,
-        tds: emp.deductions?.tds || 0,
-        lop: emp.deductions?.lop || emp.lopAmount || 0,
-      },
-    }));
+    const approvalEmployees = employeesToApprove.map(emp => {
+      const totalDays = getDaysInMonth(currentMonth, currentYear);
+      const workingDays = emp.workingDays || 0;
+      const presentDays = emp.presentDays || 0;
+      // ✅ FIX: Use absentDays from API if available, otherwise calculate it
+      const absentDays = Number(emp.absentDays) !== undefined && emp.absentDays !== null 
+        ? Number(emp.absentDays)
+        : (workingDays - presentDays);
+      
+      console.log(`[HandleBulkProcess] ${emp.employeeCode}:`);
+      console.log(`  URL Month/Year: ${currentMonth}/${currentYear}`);
+      console.log(`  Calculated Total Days: ${totalDays}`);
+      console.log(`  Record Total Days In Month: ${emp.totalDaysInMonth}`);
+      console.log(`  Using Total Days: ${emp.totalDaysInMonth ?? totalDays}`);
+      console.log(`  Working Days: ${workingDays}, Present: ${presentDays}, Absent: ${absentDays}`);
+      
+      return {
+        employeeCode: emp.employeeCode,
+        employeeName: emp.employeeName,
+        designation: emp.designation,
+        department: emp.department,
+        grossSalary: emp.grossSalary,
+        presentDays: presentDays,
+        totalDaysInMonth: emp.totalDaysInMonth ?? totalDays,
+        workingDays: workingDays,
+        absentDays: absentDays,
+        currentDeductions: {
+          pf: emp.deductions?.pf || 0,
+          esic: emp.deductions?.esic || 0,
+          advance: emp.deductions?.advance || emp.deductions?.salaryAdvance || 0,
+          loan: emp.deductions?.loan || 0,
+          tds: emp.deductions?.tds || 0,
+          lop: emp.deductions?.lop || emp.lopAmount || 0,
+        },
+      };
+    });
 
     setEmployeesForApproval(approvalEmployees);
     setShowApprovalModal(true);
@@ -320,7 +342,9 @@ export default function PayrollSlugPage() {
       department: employee.department,
       grossSalary: employee.grossSalary,
       presentDays: employee.presentDays || 0,
-      totalDaysInMonth: 30,
+      totalDaysInMonth: employee.totalDaysInMonth || getDaysInMonth(currentMonth, currentYear),
+      workingDays: employee.workingDays || 0,
+      absentDays: employee.absentDays || 0,
       currentDeductions: {
         pf: employee.deductions?.pf || 0,
         esic: employee.deductions?.esic || 0,

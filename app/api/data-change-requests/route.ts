@@ -25,8 +25,8 @@ export async function GET(request: NextRequest) {
 
     const dataChangeRequests = await DataChangeRequest.find(query)
       .sort({ requestedOn: -1 })
-      .populate('employeeId', 'firstName lastName department designation')
-      .populate('reviewedBy', 'firstName lastName');
+      .populate('employeeId', 'name department designation')
+      .populate('reviewedBy', 'name');
 
     return NextResponse.json(
       { success: true, data: dataChangeRequests },
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
     const dataChangeRequest = await DataChangeRequest.create({
       employeeId,
       employeeCode: employee.employeeCode,
-      employeeName: `${employee.firstName} ${employee.lastName}`,
+      employeeName: employee.name,
       requestType,
       fieldName,
       currentValue,
@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
     // Create notification for HR
     await Notification.create({
       title: 'Data Change Request',
-      message: `${employee.firstName} ${employee.lastName} (${employee.employeeCode}) has requested to change ${fieldName} from "${currentValue}" to "${requestedValue}"`,
+      message: `${employee.name} (${employee.employeeCode}) has requested to change ${fieldName} from "${currentValue}" to "${requestedValue}"`,
       type: 'data_change_request',
       priority: 'medium',
       relatedId: dataChangeRequest._id.toString(),

@@ -14,6 +14,8 @@ interface ApprovalEmployee {
   grossSalary: number;
   presentDays: number;
   totalDaysInMonth: number;
+  workingDays: number;
+  absentDays?: number;
   currentDeductions: {
     pf: number;
     esic: number;
@@ -49,45 +51,74 @@ export default function ApprovalModal({
     if (isOpen) {
       setCurrentIndex(0);
       setApprovalData(
-        employees.map(emp => ({
-          employeeCode: emp.employeeCode,
-          lopDays: calculateLOPDays(emp.presentDays, emp.totalDaysInMonth),
-          adjustedPF: emp.currentDeductions.pf,
-          adjustedESIC: emp.currentDeductions.esic,
-          adjustedAdvance: emp.currentDeductions.advance,
-          adjustedLoan: emp.currentDeductions.loan,
-          adjustedTDS: emp.currentDeductions.tds,
-          adjustedLOP: calculateLOPDays(emp.presentDays, emp.totalDaysInMonth) * (emp.grossSalary / emp.totalDaysInMonth),
-          approvalDate: new Date().toISOString().split('T')[0],
-          approvalTime: new Date().toTimeString().split(' ')[0],
-          approvedBy: 'HR Admin',
-          comments: ''
-        }))
+        employees.map(emp => {
+          // Calculate LOP properly: only deduct for absences beyond 2.25 days/month allowance
+          const allowedLeaves = 2.25;
+          const grossSalary = Number(emp.grossSalary) || 0;
+          const totalDaysInMonth = Number(emp.totalDaysInMonth) || Number(emp.workingDays) || 0;
+          const workingDays = Number(emp.workingDays) || 0;
+          const presentDays = Number(emp.presentDays) || 0;
+          
+          // Calculate absent days - FIX: use proper null/undefined check, not || operator
+          let absentDays = 0;
+          if (emp.absentDays !== undefined && emp.absentDays !== null) {
+            absentDays = Number(emp.absentDays);
+          } else if (workingDays > 0) {
+            absentDays = workingDays - presentDays;
+          } else {
+            absentDays = totalDaysInMonth - presentDays;
+          }
+          
+          // Ensure absentDays is never negative
+          absentDays = Math.max(0, absentDays);
+          
+          // Calculate excess absent days: ONLY deduct for absences beyond 2.25 days
+          const excessAbsentDays = Math.max(0, absentDays - allowedLeaves);
+          
+          // Calculate LOP amount
+          const dailyRate = totalDaysInMonth > 0 ? (grossSalary / totalDaysInMonth) : 0;
+          const lopAmount = excessAbsentDays * dailyRate;
+          
+          console.log(`LOP Calculation for ${emp.employeeCode}: absentDays=${absentDays}, allowed=2.25, excess=${excessAbsentDays}, amount=${lopAmount}`);
+          
+          return {
+            employeeCode: emp.employeeCode,
+            absentDays: absentDays,  // Store for display
+            lopDays: excessAbsentDays,
+            adjustedPF: Number(emp.currentDeductions?.pf) || 0,
+            adjustedESIC: Number(emp.currentDeductions?.esic) || 0,
+            adjustedAdvance: Number(emp.currentDeductions?.advance) || 0,
+            adjustedLoan: Number(emp.currentDeductions?.loan) || 0,
+            adjustedTDS: Number(emp.currentDeductions?.tds) || 0,
+            adjustedLOP: isNaN(lopAmount) ? 0 : lopAmount,
+            approvalDate: new Date().toISOString().split('T')[0],
+            approvalTime: new Date().toTimeString().split(' ')[0],
+            approvedBy: 'HR Admin',
+            comments: ''
+          };
+        })
       );
     }
   }, [isOpen, employees]);
-
-  const calculateLOPDays = (presentDays: number, totalDays: number): number => {
-    return Math.max(0, totalDays - presentDays);
-  };
 
   const calculateNetSalary = (empIndex: number): number => {
     const emp = employees[empIndex];
     const data = approvalData[empIndex];
     if (!data || !emp) return 0;
 
-    const dailyRate = emp.grossSalary / emp.totalDaysInMonth;
-    const lopDeduction = data.lopDays * dailyRate;
+    // Ensure all values are numbers
+    const pf = Number(data.adjustedPF) || 0;
+    const esic = Number(data.adjustedESIC) || 0;
+    const advance = Number(data.adjustedAdvance) || 0;
+    const loan = Number(data.adjustedLoan) || 0;
+    const tds = Number(data.adjustedTDS) || 0;
+    const lop = Number(data.adjustedLOP) || 0;
+    const gross = Number(emp.grossSalary) || 0;
 
-    return (
-      emp.grossSalary -
-      (data.adjustedPF +
-        data.adjustedESIC +
-        data.adjustedAdvance +
-        data.adjustedLoan +
-        data.adjustedTDS +
-        lopDeduction)
-    );
+    const totalDeductions = pf + esic + advance + loan + tds + lop;
+    const netSalary = gross - totalDeductions;
+
+    return isNaN(netSalary) ? 0 : netSalary;
   };
 
   const handleLOPChange = (index: number, lopDays: number) => {
@@ -95,11 +126,22 @@ export default function ApprovalModal({
     if (!emp) return;
     
     const newData = [...approvalData];
-    const dailyRate = emp.grossSalary / emp.totalDaysInMonth;
+    const grossSalary = Number(emp.grossSalary) || 0;
+    const totalDaysInMonth = Number(emp.totalDaysInMonth) || Number(emp.workingDays) || 0;
+    const workingDays = Number(emp.workingDays) || 0;
+    
+    // Ensure LOP days don't exceed working days or total days
+    const maxDays = workingDays > 0 ? workingDays : totalDaysInMonth;
+    const validLopDays = Math.max(0, Math.min(lopDays, maxDays));
+    
+    // Calculate the daily rate and LOP amount
+    const dailyRate = totalDaysInMonth > 0 ? (grossSalary / totalDaysInMonth) : 0;
+    const lopAmount = validLopDays * dailyRate;
+    
     newData[index] = {
       ...newData[index],
-      lopDays: Math.max(0, Math.min(lopDays, emp.totalDaysInMonth)),
-      adjustedLOP: Math.max(0, Math.min(lopDays, emp.totalDaysInMonth)) * dailyRate,
+      lopDays: validLopDays,
+      adjustedLOP: isNaN(lopAmount) ? 0 : lopAmount,
     };
     setApprovalData(newData);
   };
@@ -110,9 +152,10 @@ export default function ApprovalModal({
     value: number
   ) => {
     const newData = [...approvalData];
+    const numValue = Number(value) || 0;
     newData[index] = {
       ...newData[index],
-      [field]: Math.max(0, value),
+      [field]: Math.max(0, numValue),
     };
     setApprovalData(newData);
   };
@@ -232,14 +275,29 @@ export default function ApprovalModal({
                 <input
                   type="number"
                   min="0"
-                  max={currentEmployee.totalDaysInMonth}
+                  max={currentEmployee.workingDays || currentEmployee.totalDaysInMonth}
+                  step="0.25"
                   value={currentData?.lopDays || 0}
                   onChange={(e) =>
-                    handleLOPChange(currentIndex, parseInt(e.target.value) || 0)
+                    handleLOPChange(currentIndex, parseFloat(e.target.value) || 0)
                   }
                   className="w-full px-4 py-2 bg-white border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-2xl font-bold text-red-600"
                 />
               </div>
+            </div>
+            <div className="mt-4 p-4 bg-white rounded-lg border border-purple-200">
+              <p className="text-sm text-slate-700 mb-2">
+                <span className="font-semibold">LOP Calculation Formula:</span>
+              </p>
+              <p className="text-sm text-slate-600 mb-2">
+                LOP Days = Absent Days - 2.25 days/month allowance
+              </p>
+              <p className="text-sm text-slate-600 mb-2">
+                LOP Amount = LOP Days × (Gross Salary / Days in Month)
+              </p>
+              <p className="text-sm text-slate-600">
+                Current: {(currentData?.absentDays || 0).toFixed(2)} absent - 2.25 allowed = <span className="font-semibold text-red-600">{(currentData?.lopDays || 0).toFixed(2)} LOP days</span>
+              </p>
             </div>
           </div>
 
@@ -338,8 +396,13 @@ export default function ApprovalModal({
                   </div>
                   <div>
                     <label className="block text-xs text-slate-600 mb-1">LOP Deduction</label>
-                    <div className="px-3 py-2 bg-red-50 border border-red-300 rounded-lg font-semibold text-red-600">
-                      ₹{(currentData?.adjustedLOP || 0).toFixed(2)}
+                    <div className="px-3 py-2 bg-red-50 border border-red-300 rounded-lg">
+                      <div className="font-semibold text-red-600">
+                        ₹{(currentData?.adjustedLOP || 0).toFixed(2)}
+                      </div>
+                      <div className="text-xs text-slate-500 mt-1">
+                        {currentData?.lopDays ? `${currentData.lopDays.toFixed(2)} days × ₹${(currentEmployee.grossSalary / currentEmployee.totalDaysInMonth).toFixed(2)}/day` : 'No LOP'}
+                      </div>
                     </div>
                   </div>
                 </div>

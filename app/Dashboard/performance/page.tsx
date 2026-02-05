@@ -13,8 +13,9 @@ import {
 
 interface Employee {
   _id: string;
+  name?: string;
   employeeCode: string;
-  employeeName: string;
+  employeeName?: string;
   designation: string;
   department: string;
   photograph?: string;
@@ -68,29 +69,41 @@ export default function PerformanceManagement() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    fetchData();
+    fetchEmployees();
+  }, []);
+
+  useEffect(() => {
+    fetchPerformances();
   }, [selectedMonth, selectedYear]);
 
-  const fetchData = async () => {
+  const fetchEmployees = async () => {
     try {
-      setLoading(true);
-      
-      // Fetch employees
       const empRes = await fetch('/api/employees');
       if (empRes.ok) {
         const empData = await empRes.json();
+        console.log('Employees fetched:', empData.data?.length);
         setEmployees(empData.data || []);
+      } else {
+        console.error('Failed to fetch employees:', empRes.status);
       }
+    } catch (error) {
+      console.error('Error fetching employees:', error);
+    }
+  };
 
-      // Fetch performance reviews
+  const fetchPerformances = async () => {
+    try {
+      setLoading(true);
       const perfRes = await fetch(`/api/performance?month=${selectedMonth}&year=${selectedYear}`);
       if (perfRes.ok) {
         const perfData = await perfRes.json();
         setPerformances(perfData.data || []);
         calculateStats(perfData.data || []);
+      } else {
+        console.error('Failed to fetch performances:', perfRes.status);
       }
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error('Error fetching performances:', error);
     } finally {
       setLoading(false);
     }
@@ -112,11 +125,15 @@ export default function PerformanceManagement() {
     // Group by employee and get average rating
     const employeeRatings = new Map();
     reviews.forEach(review => {
-      const empName = review.employee?.employeeName || 'Unknown';
-      if (!employeeRatings.has(empName)) {
-        employeeRatings.set(empName, { ratings: [], employee: review.employee });
+      // Get employee name from the populated employee object
+      const empName = review.employee?.name || review.employee?.employeeName || 'Unknown';
+      const empCode = review.employee?.employeeCode || '';
+      const displayName = empName !== 'Unknown' ? `${empName} (${empCode})` : 'Unknown';
+      
+      if (!employeeRatings.has(displayName)) {
+        employeeRatings.set(displayName, { ratings: [], employee: review.employee || review.employeeId });
       }
-      employeeRatings.get(empName).ratings.push(review.rating);
+      employeeRatings.get(displayName).ratings.push(review.rating);
     });
 
     const topPerformers = Array.from(employeeRatings.entries())
@@ -169,7 +186,8 @@ export default function PerformanceManagement() {
         setAchievements('');
         setImprovementAreas('');
         setSelectedView('overview');
-        fetchData();
+        fetchEmployees();
+        fetchPerformances();
       } else {
         alert('Failed to add review');
       }
@@ -505,7 +523,7 @@ export default function PerformanceManagement() {
                     <option value="">-- Choose an employee --</option>
                     {employees.map((emp) => (
                       <option key={emp._id} value={emp._id}>
-                        {emp.employeeName} ({emp.employeeCode}) - {emp.designation}
+                        {emp.name || emp.employeeName} ({emp.employeeCode})
                       </option>
                     ))}
                   </select>

@@ -22,6 +22,7 @@ export interface EmployeeFormData {
   name: string;
   photograph: File | null;
   dateOfBirth: string;
+  gender: string;
   fatherName: string;
   motherName: string;
   spouseName: string;

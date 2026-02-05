@@ -26,8 +26,8 @@ export async function GET(request: NextRequest) {
 
     const leaveRequests = await LeaveRequest.find(query)
       .sort({ appliedOn: -1 })
-      .populate('employeeId', 'firstName lastName department designation')
-      .populate('reviewedBy', 'firstName lastName');
+      .populate('employeeId', 'name department designation')
+      .populate('reviewedBy', 'name');
 
     return NextResponse.json(
       { success: true, data: leaveRequests },
@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
     const leaveRequest = await LeaveRequest.create({
       employeeId,
       employeeCode: employee.employeeCode,
-      employeeName: `${employee.firstName} ${employee.lastName}`,
+      employeeName: employee.name,
       leaveType,
       startDate: start,
       endDate: end,
@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
     // Create notification for HR
     await Notification.create({
       title: 'New Leave Request',
-      message: `${employee.firstName} ${employee.lastName} (${employee.employeeCode}) has requested ${leaveType} leave for ${numberOfDays} day(s) from ${start.toLocaleDateString()} to ${end.toLocaleDateString()}`,
+      message: `${employee.name} (${employee.employeeCode}) has requested ${leaveType} leave for ${numberOfDays} day(s) from ${start.toLocaleDateString()} to ${end.toLocaleDateString()}`,
       type: 'leave_request',
       priority: 'medium',
       relatedId: leaveRequest._id.toString(),

@@ -56,6 +56,12 @@ export default function EmployeeNavbar({ employeeName, employeeCode }: EmployeeN
               Leave Requests
             </Link>
             <Link 
+              href="/employee/payslips"
+              className="text-slate-700 hover:text-blue-600 font-medium transition-colors"
+            >
+              Payslips
+            </Link>
+            <Link 
               href="/employee/data-requests"
               className="text-slate-700 hover:text-blue-600 font-medium transition-colors"
             >

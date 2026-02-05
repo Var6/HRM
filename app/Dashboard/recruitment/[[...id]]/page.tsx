@@ -13,6 +13,7 @@ const emptyEmployee: EmployeeFormData = {
   name: '',
   photograph: null,
   dateOfBirth: '',
+  gender: '',
   fatherName: '',
   motherName: '',
   spouseName: '',
@@ -511,6 +512,23 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                       className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
                       required
                     />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                      Gender
+                    </label>
+                    <select
+                      name="gender"
+                      value={formData.gender}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
+                    >
+                      <option value="">Select Gender</option>
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                      <option value="Other">Other</option>
+                    </select>
                   </div>
 
                   <div>

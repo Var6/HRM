@@ -355,6 +355,10 @@ export default function EmployeeDetail() {
                       </p>
                     </div>
                     <div>
+                      <p className="text-sm text-slate-500 mb-1">Gender</p>
+                      <p className="font-medium text-slate-900">{employee.gender || 'N/A'}</p>
+                    </div>
+                    <div>
                       <p className="text-sm text-slate-500 mb-1">Blood Group</p>
                       <p className="font-medium text-slate-900">{employee.bloodGroup}</p>
                     </div>

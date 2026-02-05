@@ -1,4 +1,3 @@
-
 // API Route: /api/performance/route.ts
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
@@ -12,27 +11,53 @@ export async function GET(request: Request) {
     const month = parseInt(searchParams.get('month') || String(new Date().getMonth()));
     const year = parseInt(searchParams.get('year') || String(new Date().getFullYear()));
 
-    // Fetch all performance reviews and populate employee data
-    const reviews = await Performance.find({})
-      .populate('employeeId', 'employeeCode employeeName designation department branch photograph')
-      .sort({ date: -1 })
-      .lean();
+    // Fetch all performance reviews
+    const reviews = await Performance.find({}).sort({ date: -1 });
+
+    // For each review, fetch employee data separately
+    const reviewsWithEmployee = await Promise.all(
+      reviews.map(async (review) => {
+        try {
+          const emp = await Employee.findById(review.employeeId, 'name employeeCode designation department branch photograph');
+          return {
+            _id: review._id,
+            employeeId: review.employeeId,
+            employee: emp,
+            date: review.date,
+            rating: review.rating,
+            reviewer: review.reviewer,
+            comments: review.comments,
+            achievements: review.achievements,
+            improvementAreas: review.improvementAreas,
+            createdAt: review.createdAt
+          };
+        } catch (err) {
+          console.error('Error fetching employee:', err);
+          return {
+            _id: review._id,
+            employeeId: review.employeeId,
+            employee: null,
+            date: review.date,
+            rating: review.rating,
+            reviewer: review.reviewer,
+            comments: review.comments,
+            achievements: review.achievements,
+            improvementAreas: review.improvementAreas,
+            createdAt: review.createdAt
+          };
+        }
+      })
+    );
 
     // Filter by month and year if provided
-    const filteredReviews = reviews.filter(review => {
+    const filteredReviews = reviewsWithEmployee.filter(review => {
       const reviewDate = new Date(review.date);
       return reviewDate.getMonth() === month && reviewDate.getFullYear() === year;
     });
 
-    // Map to include employee data properly
-    const data = filteredReviews.map(review => ({
-      ...review,
-      employee: review.employeeId
-    }));
-
     return NextResponse.json({ 
       success: true, 
-      data,
+      data: filteredReviews,
       month,
       year
     });
@@ -52,13 +77,24 @@ export async function POST(req: Request) {
     
     const record = await Performance.create(body);
     
-    // Populate employee data
-    const populated = await Performance.findById(record._id)
-      .populate('employeeId', 'employeeCode employeeName designation department branch photograph')
-      .lean();
+    // Fetch employee data separately
+    const emp = await Employee.findById(record.employeeId, 'name employeeCode designation department branch photograph');
+
+    const response = {
+      _id: record._id,
+      employeeId: record.employeeId,
+      employee: emp,
+      date: record.date,
+      rating: record.rating,
+      reviewer: record.reviewer,
+      comments: record.comments,
+      achievements: record.achievements,
+      improvementAreas: record.improvementAreas,
+      createdAt: record.createdAt
+    };
 
     return NextResponse.json(
-      { success: true, record: populated },
+      { success: true, record: response },
       { status: 201 }
     );
   } catch (error: any) {
