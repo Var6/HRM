@@ -1,19 +1,22 @@
 'use client';
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { 
   Users, Calendar, Clock, FileText, BarChart3, Settings, Bell, Search,
   TrendingUp, TrendingDown, User, ChevronDown, Menu, X, Home, 
   CheckCircle, XCircle, AlertCircle, DollarSign, Briefcase, Award,
   Activity, ArrowUpRight, ArrowDownRight, MoreVertical, Plus, Filter,
-  Download, RefreshCw, Eye, Mail, Phone, MapPin, Target, Zap, Star, Trash2
+  Download, RefreshCw, Eye, Mail, Phone, MapPin, Target, Zap, Star, Trash2, LogOut
 } from 'lucide-react';
 
 export default function Dashboard() {
+  const router = useRouter();
   const [selectedPeriod, setSelectedPeriod] = useState('This Month');
   const [activeTab, setActiveTab] = useState('overview');
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showNotificationDropdown, setShowNotificationDropdown] = useState(false);
+  const [showSettingsDropdown, setShowSettingsDropdown] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [employees, setEmployees] = useState<any[]>([]);
   const [stats, setStats] = useState([
@@ -104,19 +107,43 @@ export default function Dashboard() {
     const handleClickOutside = (e: any) => {
       const notifButton = document.querySelector('[data-notif-button]');
       const notifDropdown = document.querySelector('[data-notif-dropdown]');
+      const settingsButton = document.querySelector('[data-settings-button]');
+      const settingsDropdown = document.querySelector('[data-settings-dropdown]');
       
       if (notifDropdown && notifButton) {
         if (!notifDropdown.contains(e.target) && !notifButton.contains(e.target)) {
           setShowNotificationDropdown(false);
         }
       }
+
+      if (settingsDropdown && settingsButton) {
+        if (!settingsDropdown.contains(e.target) && !settingsButton.contains(e.target)) {
+          setShowSettingsDropdown(false);
+        }
+      }
     };
 
-    if (showNotificationDropdown) {
+    if (showNotificationDropdown || showSettingsDropdown) {
       document.addEventListener('click', handleClickOutside);
       return () => document.removeEventListener('click', handleClickOutside);
     }
-  }, [showNotificationDropdown]);
+  }, [showNotificationDropdown, showSettingsDropdown]);
+
+  // Logout function
+  const handleLogout = async () => {
+    try {
+      // Call logout API if it exists
+      await fetch('/api/employee-auth/logout', { method: 'POST' });
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      // Clear localStorage
+      localStorage.removeItem('employeeData');
+      localStorage.removeItem('authToken');
+      // Redirect to login
+      router.push('/employee/login');
+    }
+  };
 
   // Stats Data
   // Now uses dynamic data from useEffect above
@@ -315,9 +342,56 @@ export default function Dashboard() {
                 </div>
 
                 {/* Settings */}
-                <button className="p-2.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-all">
-                  <Settings className="w-5 h-5" />
-                </button>
+                <div className="relative">
+                  <button 
+                    data-settings-button
+                    onClick={() => setShowSettingsDropdown(!showSettingsDropdown)}
+                    className="p-2.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-all"
+                  >
+                    <Settings className="w-5 h-5" />
+                  </button>
+
+                  {/* Settings Dropdown */}
+                  {showSettingsDropdown && (
+                    <div 
+                      data-settings-dropdown
+                      className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-slate-200 overflow-hidden z-50"
+                    >
+                      <div className="py-1">
+                        <button 
+                          onClick={() => {
+                            router.push('/employee/profile');
+                            setShowSettingsDropdown(false);
+                          }}
+                          className="w-full text-left px-4 py-3 hover:bg-slate-50 transition-colors flex items-center gap-3 text-slate-700"
+                        >
+                          <User className="w-4 h-4" />
+                          <span className="text-sm font-medium">My Profile</span>
+                        </button>
+                        
+                        <button 
+                          onClick={() => {
+                            setShowSettingsDropdown(false);
+                          }}
+                          className="w-full text-left px-4 py-3 hover:bg-slate-50 transition-colors flex items-center gap-3 text-slate-700"
+                        >
+                          <Settings className="w-4 h-4" />
+                          <span className="text-sm font-medium">Settings</span>
+                        </button>
+
+                        <div className="border-t border-slate-200 my-1"></div>
+
+                        <button 
+                          onClick={handleLogout}
+                          className="w-full text-left px-4 py-3 hover:bg-red-50 transition-colors flex items-center gap-3 text-red-600"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          <span className="text-sm font-medium">Logout</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>

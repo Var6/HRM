@@ -121,9 +121,6 @@ const fetchPayrollData = async () => {
       // Flatten the nested structure from API into format expected by the page
       const flattenedData = data.data.map((record: any) => {
         const emp = record.employeeId || {};
-        const baseSalary = record.baseSalary || 0;
-        const allowances = record.allowances || 0;
-        const grossSalary = baseSalary + allowances;
         
         return {
           _id: record._id,
@@ -133,16 +130,16 @@ const fetchPayrollData = async () => {
           department: emp.department || '',
           branch: emp.branch || 'Corporate Office',
           photograph: emp.photograph || null,
-          baseSalary: baseSalary,
-          allowances: allowances,
-          grossSalary: grossSalary,
-          deductions: record.deductions || 0,
-          netSalary: record.netSalary || 0,
-          totalDeductions: record.deductions || 0,
-          hra: emp.hra || 0,
-          conveyance: emp.conveyance || 0,
-          pf: emp.pf || 0,
-          esic: emp.esic || 0,
+          baseSalary: Number(record.baseSalary || 0),
+          allowances: Number(record.allowances || 0),
+          grossSalary: Number(record.grossSalary || 0),
+          deductions: Number(record.deductions || 0),
+          netSalary: Number(record.netSalary || 0),
+          totalDeductions: Number(record.deductions || 0),
+          hra: Number(emp.hra || 0),
+          conveyance: Number(emp.conveyance || 0),
+          pf: Number(emp.pf || 0),
+          esic: Number(emp.esic || 0),
           uan: emp.uan || '',
           pfNumber: emp.pfNumber || '',
           esiNumber: emp.esiNumber || '',
@@ -209,11 +206,11 @@ const filteredEmployees = salaryData.filter(emp =>
  // Calculate statistics
 const stats = {
   totalEmployees: salaryData.length,
-  totalPayroll: salaryData.reduce((sum, emp) => sum + (emp.netSalary || 0), 0),
+  totalPayroll: salaryData.reduce((sum, emp) => sum + (Number(emp.netSalary) || 0), 0),
   averageSalary: salaryData.length > 0 
-    ? salaryData.reduce((sum, emp) => sum + (emp.netSalary || 0), 0) / salaryData.length 
+    ? salaryData.reduce((sum, emp) => sum + (Number(emp.netSalary) || 0), 0) / salaryData.length 
     : 0, // ✅ Prevent division by zero
-  totalDeductions: salaryData.reduce((sum, emp) => sum + (emp.totalDeductions || 0), 0)
+  totalDeductions: salaryData.reduce((sum, emp) => sum + (Number(emp.deductions) || 0), 0)
 };
 
   const formatCurrency = (amount: number) => {

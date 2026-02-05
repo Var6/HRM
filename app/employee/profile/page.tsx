@@ -57,8 +57,10 @@ export default function EmployeeProfile() {
 
     const parsedEmployee = JSON.parse(employeeData);
     setEmployee(parsedEmployee);
+    // Initialize fullEmployeeData with parsed employee immediately
+    setFullEmployeeData(parsedEmployee as EmployeeFullData);
 
-    // Fetch full employee details
+    // Fetch full employee details to get additional data
     fetchEmployeeDetails(parsedEmployee._id);
   }, [router]);
 
@@ -67,17 +69,22 @@ export default function EmployeeProfile() {
       const response = await fetch(`/api/employees/${employeeId}`);
       const data = await response.json();
 
-      if (data.success) {
-        setFullEmployeeData(data.data);
+      if (data.success && data.employee) {
+        setFullEmployeeData(data.employee);
+      } else {
+        // If API fails, use basic employee data from localStorage
+        setFullEmployeeData(JSON.parse(localStorage.getItem('employeeData') || '{}'));
       }
     } catch (error) {
       console.error('Error fetching employee details:', error);
+      // Fallback: use data from localStorage
+      setFullEmployeeData(JSON.parse(localStorage.getItem('employeeData') || '{}'));
     } finally {
       setLoading(false);
     }
   };
 
-  if (loading || !employee || !fullEmployeeData) {
+  if (loading || !employee) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="text-center">
@@ -88,11 +95,11 @@ export default function EmployeeProfile() {
     );
   }
 
-  const fullName = `${employee.firstName} ${employee.lastName}`;
+  const fullName = `${employee?.firstName || ''} ${employee?.lastName || ''}`.trim();
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <EmployeeNavbar employeeName={fullName} employeeCode={employee.employeeCode} />
+      <EmployeeNavbar employeeName={fullName} employeeCode={employee?.employeeCode || ''} />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
@@ -107,9 +114,17 @@ export default function EmployeeProfile() {
           <div className="lg:col-span-1">
             <div className="bg-white rounded-xl shadow-md p-6 border border-slate-200">
               <div className="text-center">
-                <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-linear-to-br from-blue-500 to-blue-600 text-white text-3xl font-bold mb-4">
-                  {employee.firstName.charAt(0)}{employee.lastName.charAt(0)}
-                </div>
+                {(fullEmployeeData?.photograph) ? (
+                  <img 
+                    src={fullEmployeeData.photograph} 
+                    alt={fullName}
+                    className="w-24 h-24 rounded-full object-cover mb-4 mx-auto border-4 border-blue-100"
+                  />
+                ) : (
+                  <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-linear-to-br from-blue-500 to-blue-600 text-white text-3xl font-bold mb-4">
+                    {employee?.firstName?.charAt(0)}{employee?.lastName?.charAt(0)}
+                  </div>
+                )}
                 <h2 className="text-xl font-bold text-slate-800">{fullName}</h2>
                 <p className="text-slate-600 mt-1">{fullEmployeeData.designation}</p>
                 <p className="text-sm text-slate-500 mt-1">{fullEmployeeData.employeeCode}</p>
@@ -161,7 +176,7 @@ export default function EmployeeProfile() {
                 </div>
                 <div>
                   <label className="text-sm font-medium text-slate-500">Gender</label>
-                  <p className="text-slate-800 mt-1 capitalize">{fullEmployeeData.gender || 'Not provided'}</p>
+                  <p className="text-slate-800 mt-1 capitalize">{fullEmployeeData?.gender || 'Not provided'}</p>
                 </div>
                 <div className="md:col-span-2">
                   <label className="text-sm font-medium text-slate-500">Address</label>
@@ -190,11 +205,12 @@ export default function EmployeeProfile() {
                 <div>
                   <label className="text-sm font-medium text-slate-500">Joining Date</label>
                   <p className="text-slate-800 mt-1">
-                    {new Date(fullEmployeeData.joiningDate).toLocaleDateString('en-IN', { 
-                      day: '2-digit', 
-                      month: 'long', 
-                      year: 'numeric' 
-                    })}
+                    {fullEmployeeData?.joiningDate || fullEmployeeData?.dateOfJoining
+                      ? (() => {
+                          const date = new Date(fullEmployeeData.joiningDate || fullEmployeeData.dateOfJoining);
+                          return date.getTime ? date.toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' }) : 'Not provided';
+                        })()
+                      : 'Not provided'}
                   </p>
                 </div>
                 <div>

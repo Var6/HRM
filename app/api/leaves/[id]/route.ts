@@ -78,7 +78,7 @@ export async function PATCH(
     leaveRequest.status = status;
     leaveRequest.hrRemarks = hrRemarks;
     leaveRequest.rejectionReason = rejectionReason;
-    leaveRequest.reviewedBy = reviewedBy;
+    if (reviewedBy) leaveRequest.reviewedBy = reviewedBy;
     leaveRequest.reviewedOn = new Date();
 
     await leaveRequest.save();
@@ -91,11 +91,8 @@ export async function PATCH(
     await Notification.create({
       title: status === 'approved' ? 'Leave Approved' : 'Leave Rejected',
       message: notificationMessage,
-      type: 'leave_response',
-      priority: status === 'approved' ? 'low' : 'medium',
-      relatedId: leaveRequest._id.toString(),
-      relatedModel: 'LeaveRequest',
-      recipientId: leaveRequest.employeeId.toString()
+      type: 'leave_request',
+      priority: status === 'approved' ? 'low' : 'medium'
     });
 
     return NextResponse.json(
@@ -111,6 +108,59 @@ export async function PATCH(
     console.error('Error updating leave request:', error);
     return NextResponse.json(
       { success: false, message: 'Failed to update leave request' },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE - Cancel leave request
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    await connectDB();
+    const { id } = await params;
+
+    const leaveRequest = await LeaveRequest.findById(id);
+    
+    if (!leaveRequest) {
+      return NextResponse.json(
+        { success: false, message: 'Leave request not found' },
+        { status: 404 }
+      );
+    }
+
+    // Store request details before deletion
+    const leaveType = leaveRequest.leaveType;
+    const startDate = leaveRequest.startDate;
+    const endDate = leaveRequest.endDate;
+    const status = leaveRequest.status;
+
+    // Delete the leave request
+    await LeaveRequest.findByIdAndDelete(id);
+
+    // Create notification for cancellation/deletion
+    const notificationMessage = status === 'pending' 
+      ? `Your ${leaveType} leave request from ${new Date(startDate).toLocaleDateString()} to ${new Date(endDate).toLocaleDateString()} has been cancelled.`
+      : `Your ${leaveType} leave request from ${new Date(startDate).toLocaleDateString()} to ${new Date(endDate).toLocaleDateString()} has been deleted.`;
+
+    await Notification.create({
+      title: status === 'pending' ? 'Leave Request Cancelled' : 'Leave Request Deleted',
+      message: notificationMessage,
+      type: 'leave_request',
+      priority: 'low'
+    });
+
+    return NextResponse.json(
+      { success: true, message: 'Leave request deleted successfully' },
+      { status: 200 }
+    );
+
+  } catch (error) {
+    console.error('Error deleting leave request:', error);
+    return NextResponse.json(
+      { success: false, message: 'Failed to delete leave request' },
       { status: 500 }
     );
   }

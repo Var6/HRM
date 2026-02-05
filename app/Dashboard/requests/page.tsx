@@ -17,6 +17,8 @@ interface LeaveRequest {
   hrRemarks?: string;
   rejectionReason?: string;
   employeeId: {
+    firstName?: string;
+    lastName?: string;
     email?: string;
     mobileNumber?: string;
   };
@@ -37,6 +39,8 @@ interface DataChangeRequest {
   hrRemarks?: string;
   rejectionReason?: string;
   employeeId: {
+    firstName?: string;
+    lastName?: string;
     email?: string;
     mobileNumber?: string;
   };
@@ -48,6 +52,16 @@ export default function RequestsPage() {
   const [dataRequests, setDataRequests] = useState<DataChangeRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
+
+  const getEmployeeName = (data: LeaveRequest | DataChangeRequest): string => {
+    if (data.employeeName && data.employeeName.trim()) {
+      return data.employeeName;
+    }
+    if (data.employeeId?.firstName && data.employeeId?.lastName) {
+      return `${data.employeeId.firstName} ${data.employeeId.lastName}`;
+    }
+    return 'Unknown Employee';
+  };
   
   const [selectedRequest, setSelectedRequest] = useState<string | null>(null);
   const [actionType, setActionType] = useState<'approved' | 'rejected' | null>(null);
@@ -100,8 +114,7 @@ export default function RequestsPage() {
         body: JSON.stringify({
           status,
           hrRemarks: remarks,
-          rejectionReason: status === 'rejected' ? rejectionReason : undefined,
-          reviewedBy: 'HR' // You can replace this with actual HR user ID
+          rejectionReason: status === 'rejected' ? rejectionReason : undefined
         }),
       });
 
@@ -142,8 +155,7 @@ export default function RequestsPage() {
         body: JSON.stringify({
           status,
           hrRemarks: remarks,
-          rejectionReason: status === 'rejected' ? rejectionReason : undefined,
-          reviewedBy: 'HR' // You can replace this with actual HR user ID
+          rejectionReason: status === 'rejected' ? rejectionReason : undefined
         }),
       });
 
@@ -333,7 +345,7 @@ export default function RequestsPage() {
                       <div className="flex justify-between items-start mb-4">
                         <div className="flex-1">
                           <div className="flex items-center space-x-3 mb-2">
-                            <h3 className="text-lg font-semibold text-slate-800">{leave.employeeName}</h3>
+                            <h3 className="text-lg font-semibold text-slate-800">{getEmployeeName(leave)}</h3>
                             <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${getStatusBadgeColor(leave.status)}`}>
                               {leave.status.toUpperCase()}
                             </span>
@@ -507,7 +519,7 @@ export default function RequestsPage() {
                       <div className="flex justify-between items-start mb-4">
                         <div className="flex-1">
                           <div className="flex items-center space-x-3 mb-2">
-                            <h3 className="text-lg font-semibold text-slate-800">{request.employeeName}</h3>
+                            <h3 className="text-lg font-semibold text-slate-800">{getEmployeeName(request)}</h3>
                             <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${getStatusBadgeColor(request.status)}`}>
                               {request.status.toUpperCase()}
                             </span>

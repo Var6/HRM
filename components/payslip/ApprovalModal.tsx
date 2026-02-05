@@ -74,7 +74,7 @@ export default function ApprovalModal({
   const calculateNetSalary = (empIndex: number): number => {
     const emp = employees[empIndex];
     const data = approvalData[empIndex];
-    if (!data) return 0;
+    if (!data || !emp) return 0;
 
     const dailyRate = emp.grossSalary / emp.totalDaysInMonth;
     const lopDeduction = data.lopDays * dailyRate;
@@ -92,6 +92,8 @@ export default function ApprovalModal({
 
   const handleLOPChange = (index: number, lopDays: number) => {
     const emp = employees[index];
+    if (!emp) return;
+    
     const newData = [...approvalData];
     const dailyRate = emp.grossSalary / emp.totalDaysInMonth;
     newData[index] = {
@@ -140,6 +142,10 @@ export default function ApprovalModal({
 
   const currentEmployee = employees[currentIndex];
   const currentData = approvalData[currentIndex];
+  
+  // Safety check: return null if current employee or data is not available
+  if (!currentEmployee || !currentData) return null;
+  
   const netSalary = calculateNetSalary(currentIndex);
 
   return (

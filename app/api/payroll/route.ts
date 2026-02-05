@@ -53,7 +53,11 @@ export async function GET(req: Request) {
         const deductions = emp.salary?.deductions || {};
         
         // Calculate total earnings (gross salary before any deductions)
-        let grossSalary = Object.values(earnings).reduce((sum: number, val: any) => sum + Number(val || 0), 0);
+        // Ensure all values are converted to numbers
+        let grossSalary = Object.values(earnings).reduce((sum: number, val: any) => {
+          const num = Number(val || 0);
+          return sum + (isNaN(num) ? 0 : num);
+        }, 0);
         
         // Get attendance to calculate LOP
         const attendance = await MonthlyAttendance.findOne({
@@ -141,28 +145,31 @@ export async function GET(req: Request) {
           },
           month: monthIndex,
           year,
-          baseSalary: emp.salary?.earnings?.basic || 0,
-          allowances: Object.values(earnings).reduce((sum: number, val: any) => sum + Number(val || 0), 0) - (emp.salary?.earnings?.basic || 0),
-          deductions: totalDeductions,
-          netSalary,
-          grossSalary,
+          baseSalary: Number(emp.salary?.earnings?.basic || 0),
+          allowances: Object.values(earnings).reduce((sum: number, val: any) => {
+            const num = Number(val || 0);
+            return sum + (isNaN(num) ? 0 : num);
+          }, 0) - Number(emp.salary?.earnings?.basic || 0),
+          deductions: Number(totalDeductions) || 0,
+          netSalary: Number(netSalary) || 0,
+          grossSalary: Number(grossSalary) || 0,
           presentDays,
           workingDays,
           earnings: {
-            basic: emp.salary?.earnings?.basic || 0,
-            hra: emp.salary?.earnings?.hra || 0,
-            conveyance: emp.salary?.earnings?.conveyance || 0,
-            monthlyBonus: emp.salary?.earnings?.monthlyBonus || 0,
-            quarterlyBonus: emp.salary?.earnings?.quarterlyBonus || 0,
-            specialAllowance: emp.salary?.earnings?.specialAllowance || 0
+            basic: Number(emp.salary?.earnings?.basic || 0),
+            hra: Number(emp.salary?.earnings?.hra || 0),
+            conveyance: Number(emp.salary?.earnings?.conveyance || 0),
+            monthlyBonus: Number(emp.salary?.earnings?.monthlyBonus || 0),
+            quarterlyBonus: Number(emp.salary?.earnings?.quarterlyBonus || 0),
+            specialAllowance: Number(emp.salary?.earnings?.specialAllowance || 0)
           },
           deductionsBreakdown: {
-            pf: emp.salary?.deductions?.pf || 0,
-            esic: emp.salary?.deductions?.esic || 0,
-            advance: emp.salary?.deductions?.advance || emp.salary?.deductions?.salaryAdvance || 0,
-            loan: emp.salary?.deductions?.loan || 0,
-            tds: emp.salary?.deductions?.tds || 0,
-            lop: lopAmount
+            pf: Number(emp.salary?.deductions?.pf || 0),
+            esic: Number(emp.salary?.deductions?.esic || 0),
+            advance: Number(emp.salary?.deductions?.advance || emp.salary?.deductions?.salaryAdvance || 0),
+            loan: Number(emp.salary?.deductions?.loan || 0),
+            tds: Number(emp.salary?.deductions?.tds || 0),
+            lop: Number(lopAmount) || 0
           },
           salaryProcessed: history?.salaryProcessed ?? emp.salary?.salaryProcessed ?? false,
           salaryHold: history?.salaryHold ?? emp.salary?.salaryHold ?? false,

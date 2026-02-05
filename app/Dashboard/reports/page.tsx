@@ -85,14 +85,20 @@ export default function PayrollReports() {
         // Fetch payroll records
         const payRes = await fetch(`/api/payroll?month=${selectedMonth}&year=${selectedYear}`);
         const payData = await payRes.json();
-        const records = payData.data || [];
+        const records = (payData.data || []).map((r: any) => ({
+          ...r,
+          baseSalary: Number(r.baseSalary) || 0,
+          allowances: Number(r.allowances) || 0,
+          deductions: Number(r.deductions) || 0,
+          netSalary: Number(r.netSalary) || 0
+        }));
         setPayrollRecords(records);
 
         // Calculate stats
         if (records.length > 0) {
-          const totalGross = records.reduce((sum: number, r: PayrollRecord) => sum + (r.baseSalary + r.allowances), 0);
-          const totalNet = records.reduce((sum: number, r: PayrollRecord) => sum + r.netSalary, 0);
-          const totalDed = records.reduce((sum: number, r: PayrollRecord) => sum + r.deductions, 0);
+          const totalGross = records.reduce((sum: number, r: PayrollRecord) => sum + (Number(r.baseSalary) + Number(r.allowances)), 0);
+          const totalNet = records.reduce((sum: number, r: PayrollRecord) => sum + Number(r.netSalary), 0);
+          const totalDed = records.reduce((sum: number, r: PayrollRecord) => sum + Number(r.deductions), 0);
           
           setStats({
             totalPayroll: totalNet,
@@ -110,9 +116,9 @@ export default function PayrollReports() {
             deptMap[dept] = { department: dept, employees: 0, totalSalary: 0, totalPF: 0, totalESIC: 0 };
           }
           deptMap[dept].employees += 1;
-          deptMap[dept].totalSalary += record.baseSalary + record.allowances;
-          deptMap[dept].totalPF += record.employeeId?.pf || 0;
-          deptMap[dept].totalESIC += record.employeeId?.esic || 0;
+          deptMap[dept].totalSalary += Number(record.baseSalary) + Number(record.allowances);
+          deptMap[dept].totalPF += Number(record.employeeId?.pf) || 0;
+          deptMap[dept].totalESIC += Number(record.employeeId?.esic) || 0;
         });
 
         const deptStats = Object.values(deptMap).map((dept: any) => ({
@@ -129,11 +135,17 @@ export default function PayrollReports() {
           
           const trendRes = await fetch(`/api/payroll?month=${m}&year=${y}`);
           const trendData = await trendRes.json();
-          const trendRecords = trendData.data || [];
+          const trendRecords = (trendData.data || []).map((r: any) => ({
+            ...r,
+            baseSalary: Number(r.baseSalary) || 0,
+            allowances: Number(r.allowances) || 0,
+            deductions: Number(r.deductions) || 0,
+            netSalary: Number(r.netSalary) || 0
+          }));
           
-          const totalGross = trendRecords.reduce((sum: number, r: PayrollRecord) => sum + (r.baseSalary + r.allowances), 0);
-          const totalNet = trendRecords.reduce((sum: number, r: PayrollRecord) => sum + r.netSalary, 0);
-          const totalDed = trendRecords.reduce((sum: number, r: PayrollRecord) => sum + r.deductions, 0);
+          const totalGross = trendRecords.reduce((sum: number, r: PayrollRecord) => sum + (Number(r.baseSalary) + Number(r.allowances)), 0);
+          const totalNet = trendRecords.reduce((sum: number, r: PayrollRecord) => sum + Number(r.netSalary), 0);
+          const totalDed = trendRecords.reduce((sum: number, r: PayrollRecord) => sum + Number(r.deductions), 0);
           
           trends.push({
             month: months[m],

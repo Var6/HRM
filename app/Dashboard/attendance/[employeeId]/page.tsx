@@ -74,6 +74,7 @@ export default function EmployeeAttendance({ params }: { params: Promise<{ emplo
   const [selectedHolidayDate, setSelectedHolidayDate] = useState<Date | null>(null);
   const [holidayName, setHolidayName] = useState('');
   const [markingHoliday, setMarkingHoliday] = useState(false);
+  const [leaveRequests, setLeaveRequests] = useState<any[]>([]);
 
 
 const isTuesday = (date: Date) => {
@@ -85,6 +86,27 @@ const isHoliday = (date: Date) => {
     const holidayDate = new Date(holiday.date);
     return holidayDate.toDateString() === date.toDateString();
   });
+};
+
+const getLeaveRequestForDate = (date: Date) => {
+  return leaveRequests.find(leave => {
+    const startDate = new Date(leave.startDate);
+    const endDate = new Date(leave.endDate);
+    // Reset time to midnight for proper date comparison
+    const checkDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const leaveStart = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+    const leaveEnd = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+    return checkDate >= leaveStart && checkDate <= leaveEnd;
+  }) || null;
+};
+
+const hasApprovedLeaveOnDate = (date: Date) => {
+  const leave = getLeaveRequestForDate(date);
+  return leave && leave.status === 'approved';
+};
+
+const hasLeaveRequestOnDate = (date: Date) => {
+  return getLeaveRequestForDate(date) !== null;
 };
 
 const getHolidayName = (date: Date) => {
@@ -104,6 +126,18 @@ const fetchHolidays = async () => {
     }
   } catch (error) {
     console.error('Error fetching holidays:', error);
+  }
+};
+
+const fetchLeaveRequests = async () => {
+  try {
+    const response = await fetch(`/api/leaves?employeeId=${employeeId}`);
+    const data = await response.json();
+    if (data.success) {
+      setLeaveRequests(data.leaves || []);
+    }
+  } catch (error) {
+    console.error('Error fetching leave requests:', error);
   }
 };
 
@@ -308,6 +342,7 @@ const generateCalendar = () => {
     // Only fetch if we have the ID
     if (employeeId) {
       fetchEmployeeAttendance();
+      fetchLeaveRequests();
     }
     fetchHolidays();
   }, [selectedMonth, selectedYear, employeeId]);
@@ -436,11 +471,13 @@ const generateCalendar = () => {
   const record = getAttendanceForDate(date);
   const isToday = date.toDateString() === new Date().toDateString();
   const isFuture = date > new Date();
-  const isTues = isTuesday(date); // ✅ Check if Tuesday
-  const holiday = isHoliday(date); // ✅ Check if holiday
+  const isTues = isTuesday(date);
+  const holiday = isHoliday(date);
+  const approvedLeave = hasApprovedLeaveOnDate(date);
+  const leaveRequest = getLeaveRequestForDate(date);
   
   const isPast = date < new Date() && !isToday;
-  const displayAsPresent = !record && isPast && !isFuture && !isTues && !holiday; // ✅ Not present if Tuesday or holiday
+  const displayAsPresent = !record && isPast && !isFuture && !isTues && !holiday && !approvedLeave;
 
   return (
     <div
@@ -448,8 +485,10 @@ const generateCalendar = () => {
       className={`aspect-square border-2 rounded-lg p-2 transition-all flex flex-col items-center justify-center ${
         holiday
           ? 'bg-pink-100 border-pink-300'
+          : approvedLeave
+          ? 'bg-blue-100 border-blue-400'
           : isTues
-          ? 'bg-purple-50 border-purple-300 opacity-75' // ✅ Tuesday styling
+          ? 'bg-purple-50 border-purple-300 opacity-75'
           : displayAsPresent 
             ? 'bg-green-50 border-green-300'
             : getStatusColor(record)
@@ -469,14 +508,16 @@ const generateCalendar = () => {
     >
       <div className="flex flex-col items-center justify-center h-full w-full text-center">
         <span className={`text-sm font-semibold ${
-          isToday ? 'text-cyan-600' : isTues ? 'text-purple-600' : holiday ? 'text-pink-600' : 'text-slate-900'
+          isToday ? 'text-cyan-600' : isTues ? 'text-purple-600' : holiday ? 'text-pink-600' : approvedLeave ? 'text-blue-600' : 'text-slate-900'
         }`}>
           {date.getDate()}
         </span>
         {holiday ? (
           <span className="text-xs text-pink-600 font-bold text-center leading-tight wrap-break-word max-w-15">{getHolidayName(date)}</span>
+        ) : approvedLeave ? (
+          <span className="text-xs text-blue-600 font-semibold">{leaveRequest?.leaveType?.slice(0, 3).toUpperCase()}</span>
         ) : isTues ? (
-          <span className="text-xs text-purple-600 font-medium">OFF</span> // ✅ Show OFF for Tuesday
+          <span className="text-xs text-purple-600 font-medium">OFF</span>
         ) : displayAsPresent ? (
           <CheckCircle className="w-4 h-4 text-green-600" />
         ) : (
@@ -502,7 +543,7 @@ const generateCalendar = () => {
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 rounded bg-blue-100 border-2 border-blue-300"></div>
-                    <span className="text-xs text-slate-600">Leave</span>
+                    <span className="text-xs text-slate-600">Approved Leave</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 rounded bg-amber-100 border-2 border-amber-300"></div>
@@ -518,6 +559,27 @@ const generateCalendar = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Approved Leaves Summary */}
+              {leaveRequests.filter(l => l.status === 'approved').length > 0 && (
+                <div className="mt-6 bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+                  <h3 className="text-lg font-bold text-slate-900 mb-4">Approved Leaves</h3>
+                  <div className="space-y-3">
+                    {leaveRequests.filter(l => l.status === 'approved').map(leave => (
+                      <div key={leave._id} className="p-3 bg-blue-50 border-l-4 border-blue-400 rounded">
+                        <p className="font-semibold text-blue-900">
+                          {leave.leaveType.charAt(0).toUpperCase() + leave.leaveType.slice(1)} Leave
+                        </p>
+                        <p className="text-sm text-blue-700">
+                          {new Date(leave.startDate).toLocaleDateString('en-IN')} to {new Date(leave.endDate).toLocaleDateString('en-IN')}
+                        </p>
+                        <p className="text-xs text-blue-600 mt-1">{leave.numberOfDays} day(s)</p>
+                        {leave.hrRemarks && <p className="text-xs text-blue-600 mt-1">Remarks: {leave.hrRemarks}</p>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Quick Mark Attendance */}
