@@ -65,7 +65,7 @@ export default function HRLoginPage() {
           className="inline-flex items-center gap-2 text-slate-400 hover:text-white mb-8 transition-colors"
         >
           <ArrowRight className="w-4 h-4 rotate-180" />
-          <span>Back to Home</span>
+          <span>Back to Home page</span>
         </Link>
 
         {/* Login Card */}
@@ -85,7 +85,7 @@ export default function HRLoginPage() {
               {/* Username Field */}
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Username
+                  Username/Email
                 </label>
                 <div className="relative">
                   <div className="absolute left-4 top-1/2 -translate-y-1/2">
