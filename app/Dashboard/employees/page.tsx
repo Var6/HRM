@@ -16,31 +16,33 @@ type NotificationType = 'error' | 'warning' | 'info' | 'success';
 
 export default function EmployeesList() {
   const [employees, setEmployees] = useState<any[]>([]);
-const [loading, setLoading] = useState(true);
-
-React.useEffect(() => {
-  const fetchEmployees = async () => {
-    try {
-      const res = await fetch('/api/employees');
-      if (!res.ok) {
-        console.error('Failed to fetch employees');
-        return;
-      }
-      const data = await res.json();
-      setEmployees(data.employees);
-    } catch (error) {
-      console.error('Error fetching employees:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  fetchEmployees();
-}, []);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
+
+  React.useEffect(() => {
+    const fetchEmployees = async () => {
+      try {
+        const res = await fetch('/api/employees');
+        if (!res.ok) {
+          console.error('Failed to fetch employees');
+          setLoading(false);
+          return;
+        }
+        const data = await res.json();
+        setEmployees(data.data || []);
+      } catch (error) {
+        console.error('Error fetching employees:', error);
+        setEmployees([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEmployees();
+  }, []);
 
   // Get unique departments
   const departments = ['all', ...new Set(employees.map(emp => emp.department))];

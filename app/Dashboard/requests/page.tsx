@@ -82,15 +82,28 @@ export default function RequestsPage() {
       const leaveData = await leaveRes.json();
       const dataData = await dataRes.json();
 
-      if (leaveData.success) {
+      console.log('Leave Requests Response:', leaveData);
+      console.log('Data Change Requests Response:', dataData);
+
+      if (leaveData.success && Array.isArray(leaveData.data)) {
         setLeaveRequests(leaveData.data);
+        console.log('Set leave requests:', leaveData.data.length, 'records');
+      } else {
+        console.warn('Invalid leave requests response structure');
+        setLeaveRequests([]);
       }
 
-      if (dataData.success) {
+      if (dataData.success && Array.isArray(dataData.data)) {
         setDataRequests(dataData.data);
+        console.log('Set data change requests:', dataData.data.length, 'records');
+      } else {
+        console.warn('Invalid data change requests response structure');
+        setDataRequests([]);
       }
     } catch (error) {
       console.error('Error fetching requests:', error);
+      setLeaveRequests([]);
+      setDataRequests([]);
     } finally {
       setLoading(false);
     }

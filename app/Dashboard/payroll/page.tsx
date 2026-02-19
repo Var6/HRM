@@ -719,16 +719,16 @@ const stats = {
                       {formatCurrency(salaryData.reduce((sum, emp) => sum + (emp.earnings?.basic ?? 0), 0))}
                     </td>
                     <td className="px-4 py-4 text-right text-slate-900">
-                      {formatCurrency(salaryData.reduce((sum, emp) => sum + emp.earnings.hra, 0))}
+                      {formatCurrency(salaryData.reduce((sum, emp) => sum + (emp.earnings?.hra ?? 0), 0))}
                     </td>
                     <td className="px-4 py-4 text-right text-slate-900">
-                      {formatCurrency(salaryData.reduce((sum, emp) => sum + emp.earnings.conveyance, 0))}
+                      {formatCurrency(salaryData.reduce((sum, emp) => sum + (emp.earnings?.conveyance ?? 0), 0))}
                     </td>
                     <td className="px-4 py-4 text-right text-slate-900">
-                      {formatCurrency(salaryData.reduce((sum, emp) => sum + emp.earnings.monthlyBonus, 0))}
+                      {formatCurrency(salaryData.reduce((sum, emp) => sum + (emp.earnings?.monthlyBonus ?? 0), 0))}
                     </td>
                     <td className="px-4 py-4 text-right text-slate-900">
-                      {formatCurrency(salaryData.reduce((sum, emp) => sum + emp.earnings.specialAllowance, 0))}
+                      {formatCurrency(salaryData.reduce((sum, emp) => sum + (emp.earnings?.specialAllowance ?? 0), 0))}
                     </td>
                     <td className="px-4 py-4 text-right text-green-700 bg-green-100">
                       {formatCurrency(salaryData.reduce((sum, emp) => sum + (emp.grossSalary ?? 0), 0))}
