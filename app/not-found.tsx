@@ -41,6 +41,7 @@ export default function NotFound() {
               <p className="text-slate-400 text-lg">
                 Oops! The page you're looking for doesn't exist or has been moved.
               </p>
+              <p>Please contact Rishabh about this</p>
             </div>
 
             {/* Action Buttons */}
