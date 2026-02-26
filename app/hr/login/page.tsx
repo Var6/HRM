@@ -86,6 +86,8 @@ export default function HRLoginPage() {
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">
                   Username/Email
+                  <br/>
+                  kjh
                 </label>
                 <div className="relative">
                   <div className="absolute left-4 top-1/2 -translate-y-1/2">
