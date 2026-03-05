@@ -48,7 +48,7 @@ export default function NotFound() {
               <Link href="/">
                 <button className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-semibold rounded-xl transition-all shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 flex items-center justify-center gap-2">
                   <Home className="w-5 h-5" />
-                  <span>Go Home</span>
+                  <span>Go Home Now</span>
                 </button>
               </Link>
 
