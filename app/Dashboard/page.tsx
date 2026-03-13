@@ -1,12 +1,12 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { 
-  Users, Calendar, Clock, FileText, BarChart3, Settings, Bell, Search,
-  TrendingUp, TrendingDown, User, ChevronDown, Menu, X, Home, 
+import {
+  Users, Calendar, Clock, FileText, BarChart3, Settings, Search,
+  TrendingUp, TrendingDown, User, ChevronDown, Home, Bell,
   CheckCircle, XCircle, AlertCircle, DollarSign, Briefcase, Award,
-  Activity, ArrowUpRight, ArrowDownRight, MoreVertical, Plus, Filter,
-  Download, RefreshCw, Eye, Mail, Phone, MapPin, Target, Zap, Star, Trash2, LogOut
+  Activity, ArrowUpRight, ArrowDownRight, MoreVertical, Plus,
+  Star, Trash2, LogOut
 } from 'lucide-react';
 
 export default function Dashboard() {
@@ -15,9 +15,7 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showNotificationDropdown, setShowNotificationDropdown] = useState(false);
   const [showSettingsDropdown, setShowSettingsDropdown] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
   const [employees, setEmployees] = useState<any[]>([]);
   const [stats, setStats] = useState([
     { 
@@ -87,8 +85,6 @@ export default function Dashboard() {
         const notifRes = await fetch('/api/notifications');
         const notifData = await notifRes.json();
         setNotifications(notifData.notifications || []);
-        const unread = notifData.notifications?.filter((n: any) => !n.read).length || 0;
-        setUnreadCount(unread);
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
@@ -102,19 +98,11 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   }, []);
 
-  // Close notification dropdown when clicking outside
+  // Close settings dropdown when clicking outside
   React.useEffect(() => {
     const handleClickOutside = (e: any) => {
-      const notifButton = document.querySelector('[data-notif-button]');
-      const notifDropdown = document.querySelector('[data-notif-dropdown]');
       const settingsButton = document.querySelector('[data-settings-button]');
       const settingsDropdown = document.querySelector('[data-settings-dropdown]');
-      
-      if (notifDropdown && notifButton) {
-        if (!notifDropdown.contains(e.target) && !notifButton.contains(e.target)) {
-          setShowNotificationDropdown(false);
-        }
-      }
 
       if (settingsDropdown && settingsButton) {
         if (!settingsDropdown.contains(e.target) && !settingsButton.contains(e.target)) {
@@ -123,11 +111,11 @@ export default function Dashboard() {
       }
     };
 
-    if (showNotificationDropdown || showSettingsDropdown) {
+    if (showSettingsDropdown) {
       document.addEventListener('click', handleClickOutside);
       return () => document.removeEventListener('click', handleClickOutside);
     }
-  }, [showNotificationDropdown, showSettingsDropdown]);
+  }, [showSettingsDropdown]);
 
   // Logout function
   const handleLogout = async () => {
@@ -230,115 +218,6 @@ export default function Dashboard() {
                     <option>This Year</option>
                   </select>
                   <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-                </div>
-
-                {/* Notifications */}
-                <div className="relative">
-                  <button 
-                    data-notif-button
-                    onClick={() => setShowNotificationDropdown(!showNotificationDropdown)}
-                    className="relative p-2.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-all group"
-                  >
-                    <Bell className="w-5 h-5" />
-                    {unreadCount > 0 && (
-                      <>
-                        <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white animate-pulse"></span>
-                        <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-white text-xs font-bold flex items-center justify-center">
-                          {unreadCount > 9 ? '9+' : unreadCount}
-                        </span>
-                      </>
-                    )}
-                  </button>
-
-                  {/* Notification Dropdown */}
-                  {showNotificationDropdown && (
-                    <div data-notif-dropdown className="absolute right-0 mt-2 w-96 bg-white border border-slate-200 rounded-lg shadow-xl z-50 max-h-96 overflow-hidden flex flex-col animate-in fade-in slide-in-from-top-2 duration-200">
-                      {/* Header */}
-                      <div className="bg-linear-to-r from-slate-900 to-slate-800 px-6 py-4 flex items-center justify-between sticky top-0">
-                        <h3 className="text-white font-bold text-lg flex items-center gap-2">
-                          <Bell className="w-5 h-5" />
-                          Notifications
-                        </h3>
-                        {unreadCount > 0 && (
-                          <span className="bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold">
-                            {unreadCount} New
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Notifications List */}
-                      <div className="overflow-y-auto flex-1">
-                        {notifications.length === 0 ? (
-                          <div className="p-8 text-center text-slate-500">
-                            <Bell className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                            <p>No notifications</p>
-                          </div>
-                        ) : (
-                          notifications.slice(0, 8).map((notification: any) => {
-                            const typeIcons: any = {
-                              birthday: '🎂',
-                              retirement: '🎉',
-                              payslip: '📋',
-                              attendance: '📅',
-                              missing_field: '⚠️',
-                              emergency_contact: '🚨',
-                            };
-
-                            return (
-                              <div
-                                key={notification._id}
-                                className={`border-b border-slate-100 p-4 hover:bg-slate-50 transition-colors cursor-pointer ${
-                                  !notification.read ? 'bg-blue-50' : ''
-                                }`}
-                              >
-                                <div className="flex items-start gap-3">
-                                  <span className="text-2xl">{typeIcons[notification.type] || '📌'}</span>
-                                  <div className="flex-1 min-w-0">
-                                    <p className="font-semibold text-slate-900 text-sm">
-                                      {notification.title}
-                                    </p>
-                                    <p className="text-xs text-slate-600 mt-1 line-clamp-2">
-                                      {notification.message}
-                                    </p>
-                                    <p className="text-xs text-slate-400 mt-2">
-                                      {new Date(notification.createdAt).toLocaleDateString('en-IN', {
-                                        month: 'short',
-                                        day: 'numeric',
-                                        hour: '2-digit',
-                                        minute: '2-digit'
-                                      })}
-                                    </p>
-                                  </div>
-                                  <button
-                                    onClick={async (e) => {
-                                      e.stopPropagation();
-                                      await fetch(`/api/notifications/${notification._id}`, {
-                                        method: 'DELETE',
-                                      });
-                                      setNotifications(notifications.filter((n: any) => n._id !== notification._id));
-                                      setUnreadCount(Math.max(0, unreadCount - (notification.read ? 0 : 1)));
-                                    }}
-                                    className="p-1 text-slate-300 hover:text-red-600 hover:bg-slate-200 rounded transition-colors"
-                                  >
-                                    <X className="w-4 h-4" />
-                                  </button>
-                                </div>
-                              </div>
-                            );
-                          })
-                        )}
-                      </div>
-
-                      {/* Footer */}
-                      {notifications.length > 0 && (
-                        <div className="border-t border-slate-200 bg-slate-50 px-6 py-3 sticky bottom-0">
-                          <button className="text-cyan-600 hover:text-cyan-700 text-sm font-medium w-full text-center py-2">
-                            View All Notifications
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )}
                 </div>
 
                 {/* Settings */}

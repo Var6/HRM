@@ -4,11 +4,22 @@ import Notification from "@/models/Notification";
 
 /**
  * GET ALL NOTIFICATIONS
+ * Automatically excludes expired notifications (where expiresAt has passed)
  */
 export async function GET() {
   try {
     await connectDB();
-    const notifications = await Notification.find()
+
+    const now = new Date();
+
+    // Filter: include docs where expiresAt is null/missing OR expiresAt is in the future
+    const notifications = await Notification.find({
+      $or: [
+        { expiresAt: null },
+        { expiresAt: { $exists: false } },
+        { expiresAt: { $gt: now } },
+      ],
+    })
       .sort({ createdAt: -1 })
       .populate('employeeId', 'name email designation');
 

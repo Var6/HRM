@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import type { EmployeeFormData, WorkExperience, ActiveTab } from '@/types/types';
 import { useRouter } from 'next/navigation';
+import { useToast } from '@/components/ui/ToastProvider';
 
 
 const emptyEmployee: EmployeeFormData = {
@@ -94,7 +95,8 @@ export default function CreateEmployee() {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const router=useRouter();
+  const router = useRouter();
+  const { showToast } = useToast();
 
   // Validate phone number (10 digits for India)
   const isValidIndianPhone = (phone: string): boolean => {
@@ -335,12 +337,30 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     
     setShowSuccess(true);
     setErrorMessage('');
-    setTimeout(() => {
-      setShowSuccess(false);
-      if (!isEditMode) {
+
+    if (isEditMode) {
+      // Show ribbon immediately on the same page for edits
+      showToast(
+        `${formData.name || 'Employee'} has been updated successfully.`,
+        'success',
+        'Employee Updated'
+      );
+      setTimeout(() => setShowSuccess(false), 2000);
+    } else {
+      // Store toast for display after redirect to employees list
+      sessionStorage.setItem(
+        'pendingToast',
+        JSON.stringify({
+          message: `${formData.name || 'New employee'} has been added successfully!`,
+          type: 'success',
+          title: 'Employee Created',
+        })
+      );
+      setTimeout(() => {
+        setShowSuccess(false);
         router.push('/Dashboard/employees');
-      }
-    }, 2000);
+      }, 1500);
+    }
   } catch (error) {
     console.error('Error submitting form:', error);
     setShowError(true);

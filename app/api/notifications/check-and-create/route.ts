@@ -6,16 +6,33 @@ import Notification from "@/models/Notification";
 /**
  * CHECK AND CREATE NOTIFICATIONS
  * POST /api/notifications/check-and-create
+ * - Deletes expired notifications automatically
+ * - Creates birthday notifications with an expiry (auto-disappear after the day)
  */
 export async function POST(req: Request) {
   try {
     await connectDB();
 
-    const today = new Date();
+    const now = new Date();
+
+    const today = new Date(now);
     today.setHours(0, 0, 0, 0);
 
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
+
+    // End of today — birthday "on the day" notifications expire at midnight tonight
+    const endOfToday = new Date(today);
+    endOfToday.setHours(23, 59, 59, 999);
+
+    // End of tomorrow — "upcoming birthday" notifications expire at end of tomorrow
+    const endOfTomorrow = new Date(tomorrow);
+    endOfTomorrow.setHours(23, 59, 59, 999);
+
+    // === AUTO-DELETE EXPIRED NOTIFICATIONS ===
+    await Notification.deleteMany({
+      expiresAt: { $ne: null, $lt: now },
+    });
 
     // Get all employees
     const employees = await Employee.find();
@@ -23,13 +40,13 @@ export async function POST(req: Request) {
     const notificationsToCreate = [];
 
     for (const employee of employees) {
-      // 1. BIRTHDAY NOTIFICATIONS (1 day prior and on the day)
+      // 1. BIRTHDAY NOTIFICATIONS (on the day and 1 day prior)
       if (employee.dateOfBirth) {
         const dob = new Date(employee.dateOfBirth);
         const currentYear = today.getFullYear();
         const birthdayThisYear = new Date(currentYear, dob.getMonth(), dob.getDate());
 
-        // Check if birthday is today
+        // Check if birthday is TODAY
         if (
           birthdayThisYear.getDate() === today.getDate() &&
           birthdayThisYear.getMonth() === today.getMonth()
@@ -45,15 +62,17 @@ export async function POST(req: Request) {
               type: 'birthday',
               employeeId: employee._id,
               employeeName: employee.name,
-              title: `${employee.name}'s Birthday`,
-              message: `Today is ${employee.name}'s birthday! Send your wishes.`,
+              title: `🎂 ${employee.name}'s Birthday Today!`,
+              message: `Today is ${employee.name}'s birthday! Don't forget to send your wishes.`,
               priority: 'high',
               actionUrl: `/Dashboard/employees/${employee._id}`,
+              // Expires at end of today — auto-removed after midnight
+              expiresAt: endOfToday,
             });
           }
         }
 
-        // Check if birthday is tomorrow (1 day prior)
+        // Check if birthday is TOMORROW (1 day prior reminder)
         if (
           birthdayThisYear.getDate() === tomorrow.getDate() &&
           birthdayThisYear.getMonth() === tomorrow.getMonth()
@@ -61,7 +80,8 @@ export async function POST(req: Request) {
           const existingPriorNotif = await Notification.findOne({
             employeeId: employee._id,
             type: 'birthday',
-            createdAt: { $gte: tomorrow },
+            title: { $regex: /Upcoming Birthday/i },
+            createdAt: { $gte: today },
           });
 
           if (!existingPriorNotif) {
@@ -69,10 +89,12 @@ export async function POST(req: Request) {
               type: 'birthday',
               employeeId: employee._id,
               employeeName: employee.name,
-              title: `Upcoming Birthday`,
-              message: `${employee.name}'s birthday is tomorrow!`,
+              title: `Upcoming Birthday: ${employee.name}`,
+              message: `${employee.name}'s birthday is tomorrow! Prepare your wishes.`,
               priority: 'medium',
               actionUrl: `/Dashboard/employees/${employee._id}`,
+              // Expires at end of tomorrow — gone once the birthday day ends
+              expiresAt: endOfTomorrow,
             });
           }
         }
@@ -82,14 +104,15 @@ export async function POST(req: Request) {
       if (employee.dateOfBirth) {
         const dob = new Date(employee.dateOfBirth);
         const retirementDate = new Date(dob.getFullYear() + 60, dob.getMonth(), dob.getDate());
-        const daysUntilRetirement = Math.floor((retirementDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        const daysUntilRetirement = Math.floor(
+          (retirementDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+        );
 
-        // Notify when retirement is within 6 months
         if (daysUntilRetirement > 0 && daysUntilRetirement <= 180) {
           const existingRetirementNotif = await Notification.findOne({
             employeeId: employee._id,
             type: 'retirement',
-            createdAt: { $gte: new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000) }, // Check last 7 days
+            createdAt: { $gte: new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000) },
           });
 
           if (!existingRetirementNotif) {
@@ -115,13 +138,15 @@ export async function POST(req: Request) {
         'department', 'designation', 'branchName', 'modeOfPayment'
       ];
 
-      const missingFields = requiredFields.filter(field => !employee[field] || (typeof employee[field] === 'string' && !employee[field].trim()));
+      const missingFields = requiredFields.filter(
+        field => !employee[field] || (typeof employee[field] === 'string' && !employee[field].trim())
+      );
 
       if (missingFields.length > 0) {
         const existingMissingNotif = await Notification.findOne({
           employeeId: employee._id,
           type: 'missing_field',
-          createdAt: { $gte: new Date(today.getTime() - 24 * 60 * 60 * 1000) }, // Check last 24 hours
+          createdAt: { $gte: new Date(today.getTime() - 24 * 60 * 60 * 1000) },
         });
 
         if (!existingMissingNotif) {
@@ -143,7 +168,7 @@ export async function POST(req: Request) {
         const existingEmergencyNotif = await Notification.findOne({
           employeeId: employee._id,
           type: 'emergency_contact',
-          createdAt: { $gte: new Date(today.getTime() - 24 * 60 * 60 * 1000) }, // Check last 24 hours
+          createdAt: { $gte: new Date(today.getTime() - 24 * 60 * 60 * 1000) },
         });
 
         if (!existingEmergencyNotif) {
@@ -199,7 +224,6 @@ export async function POST(req: Request) {
       }
     }
 
-    // Create all notifications
     if (notificationsToCreate.length > 0) {
       await Notification.insertMany(notificationsToCreate);
     }
