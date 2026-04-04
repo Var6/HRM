@@ -175,6 +175,8 @@ export interface SalaryStructure {
   lopAmount?: number;
   standardDeductions?: number;
   workingDays?: number;
+  absentDays?: number | string | null;
+  totalDaysInMonth?: number;
 }
 export interface PayrollRecord {
   id: number;

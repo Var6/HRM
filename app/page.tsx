@@ -47,7 +47,7 @@ export default function Home() {
           {/* Login Options */}
           <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto mb-16">
             {/* Employee Portal */}
-            <Link href="/employee/login">
+            <Link href="/login">
               <div className="group relative cursor-pointer">
                 <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/20 to-blue-600/20 rounded-2xl blur-xl group-hover:blur-2xl transition-all"></div>
                 <div className="relative bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-8 hover:border-cyan-500/50 transition-all shadow-2xl">
@@ -71,7 +71,7 @@ export default function Home() {
             </Link>
 
             {/* HR Portal */}
-            <Link href="/hr/login">
+            <Link href="/login">
               <div className="group relative cursor-pointer">
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-purple-600/20 rounded-2xl blur-xl group-hover:blur-2xl transition-all"></div>
                 <div className="relative bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-8 hover:border-blue-500/50 transition-all shadow-2xl">

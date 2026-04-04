@@ -5,13 +5,14 @@ import Employee from '@/models/Employee';
 
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
+    const { id } = await params;
 
     // Fetch payroll record
-    const payroll = await PayrollHistory.findById(params.id).lean();
+    const payroll = await PayrollHistory.findById(id).lean();
     if (!payroll) {
       return NextResponse.json({ error: 'Payroll record not found' }, { status: 404 });
     }

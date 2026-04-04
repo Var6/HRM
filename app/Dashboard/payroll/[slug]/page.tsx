@@ -235,8 +235,7 @@ export default function PayrollSlugPage() {
       const totalDays = getDaysInMonth(currentMonth, currentYear);
       const workingDays = emp.workingDays || 0;
       const presentDays = emp.presentDays || 0;
-      // ✅ FIX: Use absentDays from API if available, otherwise calculate it
-      const absentDays = Number(emp.absentDays) !== undefined && emp.absentDays !== null 
+      const absentDays = emp.absentDays != null
         ? Number(emp.absentDays)
         : (workingDays - presentDays);
       
