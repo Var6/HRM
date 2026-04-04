@@ -56,7 +56,7 @@ export default function EmployeeDataRequests() {
     setEmployee(parsedEmployee);
 
     fetchDataRequests(parsedEmployee._id);
-  }, [router]);
+  }, []);
 
   const fetchDataRequests = async (employeeId: string) => {
     try {

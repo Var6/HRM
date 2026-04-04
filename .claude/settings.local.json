@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -rn \"}, \\\\[{\" --include=\"*.tsx\")",
+      "Bash(./node_modules/.bin/next dev:*)"
+    ]
+  }
+}

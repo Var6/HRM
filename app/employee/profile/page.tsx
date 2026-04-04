@@ -69,7 +69,7 @@ export default function EmployeeProfile() {
 
     // Fetch full employee details to get additional data
     fetchEmployeeDetails(parsedEmployee._id);
-  }, [router]);
+  }, []);
 
   const fetchEmployeeDetails = async (employeeId: string) => {
     try {

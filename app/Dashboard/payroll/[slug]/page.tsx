@@ -232,7 +232,6 @@ export default function PayrollSlugPage() {
     );
 
     const approvalEmployees = employeesToApprove.map(emp => {
-      interface absentDays:{String || Number}
       const totalDays = getDaysInMonth(currentMonth, currentYear);
       const workingDays = emp.workingDays || 0;
       const presentDays = emp.presentDays || 0;

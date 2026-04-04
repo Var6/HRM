@@ -38,7 +38,7 @@ export default function EmployeeDashboard() {
     
     // Fetch full employee details from API to get the name field
     fetchEmployeeDetails(empData._id);
-  }, [router]);
+  }, []);
 
   const fetchEmployeeDetails = async (employeeId: string) => {
     try {

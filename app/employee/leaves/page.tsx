@@ -82,7 +82,7 @@ export default function EmployeeLeaves() {
 
     fetchLeaveRequests(parsedEmployee._id);
     fetchHolidays();
-  }, [router]);
+  }, []);
 
   useEffect(() => {
     if (holidays.length > 0) {

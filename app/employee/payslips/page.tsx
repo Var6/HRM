@@ -80,7 +80,7 @@ export default function PayslipsPage() {
     };
     
     initializeData();
-  }, [router]);
+  }, []);
 
   const fetchEmployeeDetails = async (employeeId: string) => {
     try {
